@@ -81,7 +81,7 @@ public class DCObject implements Serializable, MongoObject
 	// }
 	
 	// read in all features in memory
-	List<PropertyName> allProps = Arrays.asList(PropertyName.values());
+	List<PropertyName> allProps = Arrays.asList(PropertyName.values());//driver.DCTest.dimNames;
 	
 	for(PropertyName pName:allProps){
 	    if (pName.value.equals("image.caseid"))

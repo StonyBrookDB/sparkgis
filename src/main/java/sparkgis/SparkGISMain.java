@@ -164,7 +164,7 @@ public class SparkGISMain
 			  );
 	
 	// shutdown this spark context
-	SparkGIS.sc.stop();
+	spgis.stop();
 	
     }
 
@@ -218,7 +218,7 @@ public class SparkGISMain
 		       result_analysis_exe_id
 		       );
 	// shutdown this spark context
-	SparkGIS.sc.stop();
+	spgis.stop();
 	
 	if (returnResults)
 	    System.out.println("Results are stored at: ");

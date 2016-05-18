@@ -118,8 +118,11 @@ public class HDFSDataAccess extends HadoopSupported implements Serializable
     // 	    });
     // }
 
-    public String writeTileStats(JavaRDD<TileStats> data, String... args){
-	String caseID = args[0];
+    //public String writeTileStats(JavaRDD<TileStats> data, String... args){
+    public String writeTileStats(JavaRDD<TileStats> data, Map<String, String> args){
+	// CHECK FOR ERRORS
+	//String caseID = args[0];
+	String caseID = args.get("caseid");
 	data.saveAsTextFile(resultsDir + "/" + caseID);
 	return (resultsDir + "/" + caseID);
     }

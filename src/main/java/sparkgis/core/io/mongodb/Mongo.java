@@ -12,6 +12,16 @@ import sparkgis.SparkGISConfig;
 
 public class Mongo
 {
+    public static void validate(final Map<String, Object> params){
+	if (
+	    !params.containsKey("host") ||
+	    !params.containsKey("port") || 
+	    !params.containsKey("db") || 
+	    !params.containsKey("collection")
+	    )
+	    throw new RuntimeException("[SparkGIS] Missing mongodb connection parameters (host, port, db, collection)");
+    }
+    
     /**
      * prepare mongoDB query from all keys passed in Map
      * Note: Currently only supports equality operators

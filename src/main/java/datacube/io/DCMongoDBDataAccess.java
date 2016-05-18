@@ -1,4 +1,3 @@
-
 package datacube.io;
 /* Java imports */
 import java.util.Map;
@@ -31,15 +30,10 @@ import datacube.data.PropertyName;
 
 public class DCMongoDBDataAccess extends MongoDBDataAccess implements Serializable{
  
-    //private long objectCount = 1000; // Total number of objects to read during this invocation
     private static final String host = sparkgis.SparkGISConfig.mongoHost;
     private static final int port = sparkgis.SparkGISConfig.mongoPort;
 
     public DCMongoDBDataAccess(){}
-
-    // public DCMongoDBDataAccess(Long batchSize){
-    // 	this.objectCount = batchSize;
-    // }
 
     /**
      * ISparkGISIO concrete function for MongoDB
@@ -99,11 +93,19 @@ public class DCMongoDBDataAccess extends MongoDBDataAccess implements Serializab
     /**
      * @param option 0:aggregation, 1:sort, 2:mapReduce
      */
-    public void getMinMax(List<DCDimension> dimensions, String dbName, String col, int option, Map<String, Object> dataParams){
+    public void getMinMax(List<DCDimension> dimensions, int option, Map<String, Object> params){
 
+	if (
+	    !params.containsKey("db") || 
+	    !params.containsKey("collection")
+	    )
+	    throw new RuntimeException("[SparkGIS] Missing required parameters (db OR collection)");
+	final String dbName = (String)params.get("db");
+	final String col = (String)params.get("collection");
+	
 	final MongoClient mongoClient = new MongoClient(host , port);
 	// check if we already have calculated results
-	DBObject metaResult = metaDataExists(dbName, dataParams, mongoClient);
+	DBObject metaResult = metaDataExists(dbName, params, mongoClient);
 	if (metaResult != null){
 	    System.out.println("[Datacube] Exists .....");
 	    DBObject result = (DBObject)metaResult.get("min_max");
@@ -129,7 +131,7 @@ public class DCMongoDBDataAccess extends MongoDBDataAccess implements Serializab
 		DB db =  mongoClient.getDB(dbName);
 		DBCollection collection = db.getCollection(col);
 
-		DBObject matchValues = Mongo.prepareQuery(dataParams);
+		DBObject matchValues = Mongo.prepareQuery(params);
 		//new BasicDBObject("provenance.analysis_execution_id", "yi-algo-v2");
 		//matchValues.put("image.caseid", "TCGA-CS-4941-01Z-00-DX1");
 		DBObject match = new BasicDBObject("$match", matchValues);
@@ -150,7 +152,7 @@ public class DCMongoDBDataAccess extends MongoDBDataAccess implements Serializab
 		    AggregationOutput minMax = collection.aggregate(match, group);
 		
 		    // save to speedup future uses
-		    insertMetaData(dbName, dataParams, minMax, mongoClient);
+		    insertMetaData(dbName, params, minMax, mongoClient);
 		
 		    System.out.println(TimeUnit.SECONDS.convert(System.nanoTime()-start, TimeUnit.NANOSECONDS) + " s");
 		

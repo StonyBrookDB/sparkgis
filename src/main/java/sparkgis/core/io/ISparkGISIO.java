@@ -21,7 +21,8 @@ public interface ISparkGISIO //implements Serializable
      * args[1]: analysis_execution_id - mongoDB only
      * args[2]: title - mongoDB only
      */
-    public String writeTileStats(JavaRDD<TileStats> result, String... args);
+    //public String writeTileStats(JavaRDD<TileStats> result, String... args);
+    public String writeTileStats(JavaRDD<TileStats> result, Map<String, String> args);
     
     public void writeRDD(JavaRDD data, String outPath);
     

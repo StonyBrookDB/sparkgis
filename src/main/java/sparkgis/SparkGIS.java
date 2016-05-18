@@ -2,6 +2,7 @@ package sparkgis;
 /* Java imports */
 import java.util.List;
 import java.util.ArrayList;
+import java.lang.reflect.Field;
 import java.util.concurrent.Future;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ExecutorService;
@@ -10,17 +11,18 @@ import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaSparkContext;
 /* Local imports*/
 import sparkgis.pia.HMType;
-import sparkgis.core.enums.Delimiter;
+import sparkgis.SparkGISConfig;
+import sparkgis.task.HeatMapTask;
 import sparkgis.core.io.ISparkGISIO;
+import sparkgis.core.enums.Delimiter;
 import sparkgis.core.enums.Predicate;
 import sparkgis.task.SpatialJoinTask;
-import sparkgis.task.HeatMapTask;
 
 public class SparkGIS 
 {
-    public static JavaSparkContext sc;
     public static final char TAB = '\t';
-    
+
+    public static JavaSparkContext sc;
     private final int threadCount = 8;
     
     public final ISparkGISIO inputSrc;
@@ -39,6 +41,30 @@ public class SparkGIS
 	SparkGIS.Debug("Default parallelism: " + sc.defaultParallelism());
     }
 
+    public static JavaSparkContext getContext() {return sc;}
+    public void stop() {sc.stop();}
+    
+
+    /**
+     * Added on April 29th, 2016
+     * Dynamically load native libraries
+     * Native libraries are bundled in jar and should be in 'lib/' folder
+     * Add this folder to classpath
+     */
+    private void setEnvironment(){
+	System.setProperty( "java.library.path", SparkGISConfig.jarPath + "/lib/" );
+	/*
+	 * Hack:
+	 * Java library path is check before application starts therefore it cannot be modified
+	 * However, if 'sys_paths' field of class loader is set to 'null', jvm is forced to reload it on any dependent library call
+	 */
+	try{
+	    Field fieldSysPath = ClassLoader.class.getDeclaredField( "sys_paths" );
+	    fieldSysPath.setAccessible( true );
+	    fieldSysPath.set( null, null );
+	}catch(Exception e){e.printStackTrace();}
+    }
+    
     public void spatialJoin(String dataPath1, String dataPath2, Delimiter delim, Predicate pred, int pSize, String outPath){
 	SpatialJoinTask t = new SpatialJoinTask(inputSrc, dataPath1, dataPath2, delim, pred, outDest);
 	// set optional parameters

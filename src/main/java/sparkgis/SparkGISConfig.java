@@ -7,6 +7,8 @@ import java.util.Properties;
 
 public class SparkGISConfig
 {
+    // Jar path
+    public static String jarPath;
     // HDFS configurations    
     public static String hdfsCoreSitePath;
     public static String hdfsHdfsSitePath;
@@ -29,7 +31,7 @@ public class SparkGISConfig
      */
     static{
 	try {
-	    String jarPath = SparkGISConfig.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath();
+	    jarPath = SparkGISConfig.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath();
 	    File jarFile = new File(jarPath);
 	    String jarDir = jarFile.getParentFile().getPath();
 	    Properties prop = new Properties();

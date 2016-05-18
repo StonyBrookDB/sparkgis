@@ -58,7 +58,7 @@ public abstract class HadoopSupported implements ISparkGISIO, Serializable{
      * args[1]: analysis_execution_id - mongoDB only
      * args[2]: title - mongoDB only
      */
-    public abstract String writeTileStats(JavaRDD<TileStats> result, String... args);
+    public abstract String writeTileStats(JavaRDD<TileStats> result, Map<String, String> args);
 
     public void writeRDD(JavaRDD data, String outPath){
 	data.saveAsTextFile(outPath);
@@ -71,7 +71,7 @@ public abstract class HadoopSupported implements ISparkGISIO, Serializable{
      */
     protected JavaRDD<String> getDataAsText(String datapath, final String delimiter){
 	JavaRDD<String> rawTextData = 
-	    SparkGIS.sc.textFile(datapath, SparkGIS.sc.defaultParallelism()).filter(new Function<String, Boolean>(){
+	    SparkGIS.getContext().textFile(datapath, SparkGIS.sc.defaultParallelism()).filter(new Function<String, Boolean>(){
 		    public Boolean call(String s) {
 			return (!s.isEmpty() && (s.split(delimiter).length >= 2));
 		    }
