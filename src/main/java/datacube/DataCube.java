@@ -24,6 +24,7 @@ import org.apache.spark.api.java.function.PairFunction;
 /* Spark Streaming */
 import org.apache.spark.streaming.Duration;
 import org.apache.spark.streaming.Durations;
+import org.apache.spark.streaming.api.java.JavaPairDStream;
 import org.apache.spark.streaming.api.java.JavaStreamingContext;
 import org.apache.spark.streaming.api.java.JavaReceiverInputDStream;
 /* Local imports */
@@ -36,7 +37,8 @@ import datacube.data.DoubleProperty;
 import datacube.data.PropertyName;
 //import datacube.data.BucketDimension;
 
-import datacube.io.streaming.MongoStream;
+//import datacube.io.streaming.MongoStream;
+import sparkgis.core.io.mongodb.MongoStream;
 
 /* SparkGIS core imports */
 import sparkgis.SparkGIS;
@@ -49,7 +51,7 @@ public class DataCube implements Serializable{
     private final boolean DEBUG = true;
     // profile
     private final String jobTime;
-    private String logFile = "datacube-wo-sort-dims-crap.log";
+    private String logFile = "datacube-stream-8-dim.log";
 
     private final String savePath;
     private DCMongoDBDataAccess mongoIn;
@@ -120,10 +122,14 @@ public class DataCube implements Serializable{
 	// each dimensions' resolution
 	// each dimensions' min/max
     }
-    
+
     public void buildCube(LinkedHashMap<String, Object> params){
     //public void buildCube(LinkedHashMap<String, String> params){
 
+	// basic error checking
+	if (dimensions.size() == 0)
+	    throw new RuntimeException("[DataCube] No dimension specified");
+	
 	profile(-1, "***************************************\nDataCube");
 	profile(-1, "Dimensions (Name, # of Buckets)");
 	profile(-1, "---------------------------------------");
@@ -144,7 +150,7 @@ public class DataCube implements Serializable{
 	long loadStart = System.nanoTime();
 	if (data == null){
 	    data = load((long)10000, params);
-	    return;
+	    //return;
 	}
 	
 	profile(-1, "Total # of objects: " + data.count());
@@ -154,7 +160,7 @@ public class DataCube implements Serializable{
 	profile(loadStart, "Data Load Time: ");
 
 	long start = System.nanoTime();
-	//mongoIn.getMinMax(dimensions, 0, params);
+	mongoIn.getMinMax(dimensions, 0, params);
 	profile(start, "MongoDB min/maxTime: ");
 
 	for (DCDimension dim : dimensions)
@@ -180,9 +186,9 @@ public class DataCube implements Serializable{
 	long hdfsOut = System.nanoTime();
 
 	// for DEBUGGING
-	//mappedValues.saveAsTextFile(this.savePath);
+	mappedValues.saveAsTextFile(this.savePath);
 
-	//profile(hdfsOut, "HDFS Out: ");
+	profile(hdfsOut, "HDFS Out: ");
 	
 	// List<Integer> mappedKeys =  mappedValues.groupByKey().keys().collect();
 	// System.out.println("Mapped Count: " + mappedValues.count())
@@ -193,16 +199,39 @@ public class DataCube implements Serializable{
 	SparkGIS.sc.stop();
     }
 
-    public void loadStreaming(Long loadBatchSize, LinkedHashMap<String, Object> params){
+    
+    /**
+     * 
+     */
+    public void buildStreaming(LinkedHashMap<String, Object> params){
+	//mongoIn = new DCMongoDBDataAccess();
+	
+	// basic error checking
+	if (dimensions.size() == 0)
+	    throw new RuntimeException("[DataCube] No dimension specified");
+
+	profile(-1, "HDFS save path: " + this.savePath);
+
+	profile(-1, "MongoDB min/max ...");
 	mongoIn = new DCMongoDBDataAccess();
-    	// configure input
+	mongoIn.getMinMax(dimensions, 0, params);
+	
+	for (DCDimension dim : dimensions)
+	    System.out.println(dim.getNameStr() + ": Min:" + dim.getMin() + ", Max: " + dim.getMax());
+
+	// configure input
     	final SparkGIS spgis = new SparkGIS(mongoIn, mongoIn);
 	
-	JavaStreamingContext jsc = new JavaStreamingContext(SparkGIS.sc, Durations.minutes(1));
+	JavaStreamingContext jsc = new JavaStreamingContext(SparkGIS.sc, Durations.seconds(10));//Durations.minutes(1));
 
-	JavaReceiverInputDStream<String> stream =
-	    jsc.receiverStream(new MongoStream(10, mongoIn, params));
+	JavaReceiverInputDStream<DCObject> stream = 
+	    jsc.receiverStream(new MongoStream(params, DCObject.class.getName()));
 
+	JavaPairDStream<Integer, String> mappedValues =
+	    stream.mapToPair(new DCObjectMap());
+
+	mappedValues.dstream().saveAsTextFiles(this.savePath + "/stream", "part");
+	
 	//System.out.println("Stream Count: " + stream.count());
 	//System.out.println("Accum Value: " + MongoStream.objectsRead.value());
 	
@@ -210,9 +239,14 @@ public class DataCube implements Serializable{
 
 	jsc.start();
 	jsc.awaitTermination();
+	// timeout 12 seconds
+	//jsc.awaitTerminationOrTimeout(50000);
+	jsc.stop(true, true);
+	//SparkGIS.sc.stop();
     }
-    
-    private JavaRDD<DCObject> load(Long loadBatchSize, LinkedHashMap<String, Object> params){
+
+    // make this private. public just for testing
+    public JavaRDD<DCObject> load(Long loadBatchSize, LinkedHashMap<String, Object> params){
     //private JavaRDD<DCObject> load(Long loadBatchSize, LinkedHashMap<String, String> params){
 	mongoIn = new DCMongoDBDataAccess();
     	// configure input
@@ -222,12 +256,14 @@ public class DataCube implements Serializable{
 	//JavaPairRDD<>
 	//System.out.println("MongoIn Count: " + mongoIn.getDataRDDMongoHadoop(params).count());
 
-
+	
 	//return null;
+
+	System.out.println("Before getDataRDD ...");
 	
     	// keep all data in memory as a central data referencing system
     	// e.g. like star/snow flake schema
-	JavaRDD<DCObject> objRDD = mongoIn.getDataRDD(params).cache();
+	JavaRDD<DCObject> objRDD = mongoIn.getDataRDD(params, DCObject.class.getName()).cache();
 	
 	// Streaming load
 	//JavaRDD<DCObject> objRDD = mongoIn.getDataRDD(params, (long)0).cache();

@@ -12,7 +12,7 @@ import org.apache.spark.api.java.JavaRDD;
 /* SparkGIS core includes */
 import sparkgis.SparkGIS;
 import sparkgis.core.io.mongodb.Mongo;
-import sparkgis.core.io.mongodb.ReadMongoSplit;
+//import sparkgis.core.io.mongodb.ReadMongoSplit;
 import sparkgis.core.io.mongodb.MongoDBDataAccess;
 /* MongoDB imports */
 import com.mongodb.DBObject;
@@ -28,67 +28,75 @@ import datacube.data.DCObject;
 import datacube.data.DCDimension;
 import datacube.data.PropertyName;
 
-public class DCMongoDBDataAccess extends MongoDBDataAccess implements Serializable{
- 
+public class DCMongoDBDataAccess
+    extends MongoDBDataAccess
+    implements Serializable
+{
     private static final String host = sparkgis.SparkGISConfig.mongoHost;
     private static final int port = sparkgis.SparkGISConfig.mongoPort;
 
     public DCMongoDBDataAccess(){}
-
-    /**
-     * ISparkGISIO concrete function for MongoDB
-     * Simply reads in ALL the data in memory distributedly and returns an RDD
-     */
-    @Override
-    public JavaRDD getDataRDD(Map<String, Object> params){
-	
-	// get objects count from default method i.e. all qualified objects
-	long objectCount = super.getObjectsCount(params, null);
-
-	final int nSplits = SparkGIS.sc.defaultParallelism();
-	final int splitSize = (int)objectCount/nSplits;
-
-	System.out.println("Object Count: " + objectCount);
-	System.out.println("Split Size: " + splitSize);
-
-	// use the default method to get the splits for all the objects
-	JavaRDD<Long> splits = super.getSplits(objectCount, splitSize);
-	
-	//return splits;
-	
-	return splits.flatMap(new ReadMongoSplit(host, port, params, splitSize, DCObject.class));
-    }
-
-    /**
-     * Overloaded method to allow for streaming data read from MongoDB
-     */
-    public JavaRDD getDataRDD(Map<String, Object> params, Long batchStart, long batchSize){
-	
-	// get objects count from default method i.e. all qualified objects
-	//long objectCount = super.getObjectsCount(params, null);
-	final int nSplits = SparkGIS.sc.defaultParallelism();
-	final int splitSize = (int)batchSize/nSplits;
-
-	JavaRDD<Long> splits = getSplits(batchStart, batchSize, splitSize);
-
-	return splits.flatMap(new ReadMongoSplit(host, port, params, splitSize, DCObject.class));
-    }
     
-    public JavaRDD<Long> getSplits(
-				   Long batchStart,
-				   Long batchSize,
-				   int splitSize
-				   ){
+    // public DCMongoDBDataAccess(Class dataClass){
+    // 	super(dataClass);  
+    // }
+    
+    // /**
+    //  * ISparkGISIO concrete function for MongoDB
+    //  * Simply reads in ALL the data in memory distributedly and returns an RDD
+    //  */
+    // @Override
+    // public JavaRDD getDataRDD(Map<String, Object> params){
 	
-	// create list of splits
-	List<Long> splits = new ArrayList<Long>();
-	final Long batchEnd = (batchStart + batchSize);
-	for (long i=batchStart; i<=batchEnd; i+=splitSize)
-	    splits.add(i);
-	// distribute splits among nodes
-	JavaRDD<Long> splitsRDD = SparkGIS.sc.parallelize(splits);
-	return splitsRDD;
-    }
+    // 	// // get objects count from default method i.e. all qualified objects
+    // 	// long objectCount = super.getObjectsCount(params, null);
+
+    // 	// final int nSplits = SparkGIS.sc.defaultParallelism();
+    // 	// final int splitSize = (int)objectCount/nSplits;
+
+    // 	// System.out.println("Object Count: " + objectCount);
+    // 	// System.out.println("Split Size: " + splitSize);
+
+    // 	// // use the default method to get the splits for all the objects
+    // 	// JavaRDD<Long> splits = super.getSplits(objectCount, splitSize);
+	
+    // 	// return splits.flatMap(new ReadMongoSplit(host, port, params, splitSize, DCObject.class));
+
+    // 	super.getDataRDD(params);
+    // }
+
+    //public getDataRDDStream
+
+    // /**
+    //  * Overloaded method to allow for streaming data read from MongoDB
+    //  */
+    // public JavaRDD getDataRDD(Map<String, Object> params, Long batchStart, long batchSize){
+	
+    // 	// get objects count from default method i.e. all qualified objects
+    // 	//long objectCount = super.getObjectsCount(params, null);
+    // 	final int nSplits = SparkGIS.sc.defaultParallelism();
+    // 	final int splitSize = (int)batchSize/nSplits;
+
+    // 	JavaRDD<Long> splits = getSplits(batchStart, batchSize, splitSize);
+
+    // 	return splits.flatMap(new ReadMongoSplit(host, port, params, splitSize, DCObject.class));
+    // }
+    
+    // public JavaRDD<Long> getSplits(
+    // 				   Long batchStart,
+    // 				   Long batchSize,
+    // 				   int splitSize
+    // 				   ){
+	
+    // 	// create list of splits
+    // 	List<Long> splits = new ArrayList<Long>();
+    // 	final Long batchEnd = (batchStart + batchSize);
+    // 	for (long i=batchStart; i<=batchEnd; i+=splitSize)
+    // 	    splits.add(i);
+    // 	// distribute splits among nodes
+    // 	JavaRDD<Long> splitsRDD = SparkGIS.sc.parallelize(splits);
+    // 	return splitsRDD;
+    // }
 
     /**
      * @param option 0:aggregation, 1:sort, 2:mapReduce
@@ -207,6 +215,7 @@ public class DCMongoDBDataAccess extends MongoDBDataAccess implements Serializab
 		    metaData.append(key, (String)value);
 		}
 		else if(value instanceof Map){
+		    @SuppressWarnings("unchecked")
 		    BasicDBList clauses = Mongo.getClauses((Map<String, Object>) value, true);
 		    metaData.append(key, clauses);
 		}
@@ -246,6 +255,7 @@ public class DCMongoDBDataAccess extends MongoDBDataAccess implements Serializab
 		    metaData.append(key,(String)value);
 		}
 		else if(value instanceof Map){
+		    @SuppressWarnings("unchecked")
 		    BasicDBList clauses = Mongo.getClauses((Map<String, Object>) value, true);
 		    metaData.append(key, clauses);
 		}

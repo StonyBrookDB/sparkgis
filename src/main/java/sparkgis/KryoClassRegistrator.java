@@ -5,7 +5,7 @@ import sparkgis.core.data.Polygon;
 import sparkgis.core.data.TileStats;
 import sparkgis.core.data.SPJResult;
 import sparkgis.core.data.DataConfig;
-import sparkgis.core.io.mongodb.ReadMongoSplit;
+//import sparkgis.core.io.mongodb.ReadMongoSplit;
 //import sparkgis.io.hdfs.HDFSDataAccess;
 //import sparkgis.io.mongodb.MongoDBDataAccess;
 import sparkgis.core.executionlayer.Partitioner;
@@ -37,7 +37,7 @@ public class KryoClassRegistrator implements KryoRegistrator{
 	kryo.register(SparkSpatialJoin.class, new FieldSerializer(kryo, SparkSpatialJoin.class));
 	kryo.register(SparkSpatialJoinHM.class, new FieldSerializer(kryo, SparkSpatialJoinHM.class));
 	// sparkgis.io.*
-	kryo.register(ReadMongoSplit.class, new FieldSerializer(kryo, ReadMongoSplit.class));
+	//kryo.register(ReadMongoSplit.class, new FieldSerializer(kryo, ReadMongoSplit.class));
 	//kryo.register(HDFSDataAccess.class, new FieldSerializer(kryo, HDFSDataAccess.class));
 	//kryo.register(MongoDBDataAccess.class, new FieldSerializer(kryo, MongoDBDataAccess.class));
 	// sparkgis.executionlayer.sparkspatialindex.*

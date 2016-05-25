@@ -14,7 +14,7 @@ import sparkgis.core.data.Polygon;
 import sparkgis.core.data.MongoPolygon;
 // import sparkgis.data.Polygon;
 import sparkgis.SparkGISConfig;
-import sparkgis.core.io.mongodb.ReadMongoSplit;
+//import sparkgis.core.io.mongodb.ReadMongoSplit;
 import sparkgis.core.io.hdfs.HDFSDataAccess;
 
 public class MongoToHDFS
@@ -65,14 +65,17 @@ public class MongoToHDFS
 	    params.put("db", dbName);
 	    params.put("algorithm", algo);
 	    params.put("caseID", caseID);
-	    ReadMongoSplit mongo = new ReadMongoSplit(host, port, params, 0, MongoPolygon.class);
-	    List<Polygon> data = mongo.getData((long)0);	
-	    // write data to HDFS
-	    hdfs.writePolygons(data, algo+"/"+caseID);
-	    try{
-		out.println(algo + "-" + caseID + ":" + data.size() + " Done!");
-		out.flush();
-	    }catch(Exception e){e.printStackTrace();}
+
+	    throw new RuntimeException("[SparkGIS] Unimplemented MongoToHDFS");
+	    
+	    // ReadMongoSplit mongo = new ReadMongoSplit(host, port, params, 0, MongoPolygon.class);
+	    // List<Polygon> data = mongo.getData((long)0);	
+	    // // write data to HDFS
+	    // hdfs.writePolygons(data, algo+"/"+caseID);
+	    // try{
+	    // 	//out.println(algo + "-" + caseID + ":" + data.size() + " Done!");
+	    // 	out.flush();
+	    // }catch(Exception e){e.printStackTrace();}
     	}
     }
 }

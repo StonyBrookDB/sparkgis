@@ -1,11 +1,13 @@
 package sparkgis.core.io.mongodb;
 /* Java imports */
-import java.util.List;
-import java.util.ArrayList;
-import java.io.Serializable;
 import java.util.Map;
+import java.util.List;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.lang.reflect.*;
+import java.util.ArrayList;
+import java.io.Serializable;
+import java.lang.RuntimeException;
 /* Spark imports */
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaPairRDD;
@@ -18,10 +20,6 @@ import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
 import com.mongodb.MongoClient;
-/* Mongo through Hadoop connector */
-import org.bson.BSONObject;
-import org.bson.BasicBSONObject;
-import org.apache.hadoop.conf.Configuration;
 /* Local imports */
 import sparkgis.SparkGIS;
 import sparkgis.SparkGISConfig;
@@ -33,85 +31,48 @@ import sparkgis.core.enums.Delimiter;
 /* Local datacube imports*/
 import datacube.data.DCObject;
 
+/* Mongo through Hadoop connector */
+// import org.bson.BSONObject;
+// import org.bson.BasicBSONObject;
+//import org.apache.hadoop.conf.Configuration;
+
 public class MongoDBDataAccess 
     implements ISparkGISIO
 {    
-    // private final String host = SparkGISConfig.mongoHost;
-    // private final int port = SparkGISConfig.mongoPort;
-    // // FIX: MUST BE REMOVED ...
-    // private final String dbName = SparkGISConfig.mongoDB;
+    public MongoDBDataAccess(){}
 
-    /**
-     * Default constructor for BMI MongoDB
-     */
-    public MongoDBDataAccess(){
-	//super(host, port, params, maxSplitSize);
-    }
-
-    public JavaRDD getDataRDD(Map<String, Object> params){
+    public JavaRDD getDataRDD(Map<String, Object> params, String dataClassName){
 	
 	Mongo.validate(params);
-
+	
 	final String host = (String)params.get("host");
 	final int port = Integer.parseInt((String)params.get("port"));
 	
 	long objectsCount = 0;
 	try{
     	    final MongoClient mongoClient = new MongoClient(host , port);
-	    objectsCount = getObjectsCount(params, mongoClient);
+	    objectsCount = Mongo.getObjectsCount(params, mongoClient);
 	}catch(Exception e){System.out.println(e.toString());}
+
+	if (objectsCount == 0)
+	    throw new RuntimeException("[MongoDBDataAccess] Query Objects count: " +
+				       objectsCount);
 	
 	final int nSplits = SparkGIS.sc.defaultParallelism();
 	final int splitSize = (int)objectsCount/nSplits;
+
+	System.out.println("[MongoDBDataAccess] Total Objects: " +
+			   objectsCount +
+			   ", Total Splits: " +
+			   nSplits +
+			   ", Split Size: " +
+			   splitSize);
 	
-	JavaRDD<Long> splits = getSplits(objectsCount, splitSize);
+	JavaRDD<Long> splits = Mongo.getSplits(objectsCount, splitSize);
 	//return splits.flatMap(new ReadMongoSplit<MongoPolygon>(host, port, params, splitSize, MongoPolygon.class));
-	return splits.flatMap(new ReadMongoSplit(host, port, params, splitSize, MongoPolygon.class));
-    }
-
-    /**
-     * Mongo through Hadoop connector configurations
-     * Prevous Version: Load all collection in memory prior to running any query
-     * Current Version: 
-     *        - mongo.input.query 'can filter data before loading in memory ???'
-     *        - makes tooo many child processes which run out of memory
-     */
-    public JavaPairRDD getDataRDDMongoHadoop(Map<String, Object> params){
-
-	Mongo.validate(params);
-	    
-	if (!params.containsKey("query"))
-	    throw new RuntimeException("[SparkGIS] Missing mongodb query parameter");
-
+	//return splits.flatMap(new ReadMongoSplit(params, splitSize, MongoPolygon.class));
 	
-	final String host = (String)params.get("host");
-	final int port = Integer.parseInt((String)params.get("port"));
-	final String dbName = (String)params.get("db");
-	final String collection = (String)params.get("collection");
-	final String query = (String)params.get("query");
-	
-	final String inputUri =
-	    "mongodb://" + host + ":" + port + "/" + dbName + "." + collection;
-
-	System.out.println("Input URI: " + inputUri);
-	
-	Configuration config = new Configuration();
-	config.set("mongo.input.uri", inputUri);
-	config.set("mongo.input.query", query);
-	//config.set("mongo.output.uri", outputUri);
-
-	JavaPairRDD<Object, BSONObject> data =
-	    SparkGIS.sc.newAPIHadoopRDD(
-					config,
-					com.mongodb.hadoop.MongoInputFormat.class,
-					Object.class,
-					BSONObject.class
-					);
-
-	System.out.println("Data Count: " + data.count());
-
-	return data;
-	//return null;
+	return splits.flatMap(new ReadMongoSplit(params, splitSize, dataClassName));
     }
     
     /**
@@ -124,35 +85,18 @@ public class MongoDBDataAccess
      *
      */
     public JavaRDD<Polygon> getPolygonsRDD(Map<String, Object> filterParams){
-	return (JavaRDD<Polygon>)getDataRDD(filterParams);
+	return (JavaRDD<Polygon>)getDataRDD(filterParams, MongoPolygon.class.getName());
     }
-    
-    //private JavaRDD getRDD(Map<String, String> filterParams){
-    public JavaRDD<Long> getSplits(Long objectsCount, int splitSize){
-	
-	//final int nSplits = SparkGIS.sc.defaultParallelism();
-	//final int splitSize = (int)objectsCount/nSplits;
-	
-	// create list of splits
-	List<Long> splits = new ArrayList<Long>();
-	for (long i=0; i<=objectsCount; i+=splitSize)
-	    splits.add(i);
-	// distribute splits among nodes
-	JavaRDD<Long> splitsRDD = SparkGIS.sc.parallelize(splits);
-	return splitsRDD;
-	//return splitsRDD.flatMap(new ReadMongoSplit(host, port, filterParams, splitSize));
-    }
-    
+
     public void writeRDD(JavaRDD data, String outPath){
 	// TODO
     }
 
     /**
-     * Sequential (Non-Distributed) write results to MongoDB
+     * Sequential (Non-Distributed) write results to MongoDB for caMicroscope
      *    1. Collect results from all nodes
      *    2. Upload results to MongoDB
      */
-    //public String writeTileStats(JavaRDD<TileStats> result, String... args){
     public String writeTileStats(JavaRDD<TileStats> result, Map<String, String> args){
 	// String caseID = args[0];
 	// String orig_analysis_exe_id = args[1];
@@ -229,34 +173,132 @@ public class MongoDBDataAccess
 	return "";
     }
 
-    /*********************************** Private methods ****************************/
+
+    /**
+     * Inner class
+     */
+    class ReadMongoSplit
+	implements Serializable, FlatMapFunction<Long, Object>
+    {
+	private final String host;
+	private final int port;
+	private final Map<String, Object> params;
+	private final int maxSplitSize;
     
-    public long getObjectsCount(final Map<String, Object> params, MongoClient mongoClient){
+	//for reflection
+	private final String dataClassName;
 
-	Mongo.validate(params);
+	public ReadMongoSplit(Map<String, Object> params,
+			      int maxSplitSize,
+			      String dataClassName
+			      ){
+	    if (!params.containsKey("db") || 
+		!params.containsKey("collection")
+		)
+		throw new RuntimeException("[SparkGIS] Invalid filter parameters");
+	    this.host = (String)params.get("host");
+	    this.port = Integer.parseInt((String)params.get("port"));
+	    this.params = params;
+	    this.maxSplitSize = maxSplitSize;
+       
+	    this.dataClassName = dataClassName;
+	}    
+
+	/** 
+	 * Called by Spark flatMap
+	 */
+	public Iterable<Object> call(Long start){
+
+	    // Reflection to get data extraction method
+	    Method extractDataMethod = null;
+	    Object dataClass = null;
+	    try{
+		Class<?> c = Class.forName(dataClassName);
+		dataClass = c.newInstance();
+		extractDataMethod = c.getDeclaredMethod("extractData", new Class[]{DBObject.class});
+	    }catch(Exception e){e.printStackTrace();}
+
+	    MongoClient mongoClient = null;
+	    List<Object> ret = new ArrayList<Object>();
+	    DBCursor cursor = null;
 	    
-	final String host = (String)params.get("host");
-	final int port = Integer.parseInt((String)params.get("port"));
-	final String dbName = (String)params.get("db");
-	final String collection = (String)params.get("collection");
-
-	long count = -1;
-	DBCursor cursor = null;
-	try{
-	    if (mongoClient == null)
+	    try{
 		mongoClient = new MongoClient(host , port);
-	    DB db =  mongoClient.getDB(dbName); // FIX: remove class variable
-	    DBCollection results = db.getCollection(collection);
-	    BasicDBObject query = Mongo.prepareQuery(params);
-	    cursor = results.find(query);
-	    count = cursor.count();
-	}catch(Exception e){e.printStackTrace();}
-	finally{
-	    if (cursor != null)
-		cursor.close();
-	    if (mongoClient != null)
-	     	mongoClient.close();
+		cursor = Mongo.getDataSplit(params, start, maxSplitSize, mongoClient);
+		
+		while(cursor.hasNext()){
+		    Object data = extractDataMethod.invoke(dataClass, cursor.next());  
+		    if (data != null)
+			ret.add(data);
+		    else
+			System.out.println("[ReadMongoSplit] Data is NULL");
+		}
+	    }catch(Exception e){e.printStackTrace();}
+	    finally{
+		if (cursor != null)
+		    cursor.close();
+		if (mongoClient != null)
+		    mongoClient.close();
+	    }
+	    return ret;
 	}
-	return count;
+
+    
+	// /**
+	//  * For MongoToHDFS. Just for convenience
+	//  */
+	// public List<Polygon> getData(long splitStart){
+	//     // NOT good practice but this code is just for convinience
+	//     return (List<Polygon>)(Object)getDataSplit(splitStart);
+	// }
+
     }
+
+
+    /************************* Test Code ****************************/
+    
+    // /**
+    //  * Mongo through Hadoop connector configurations
+    //  * Prevous Version: Load all collection in memory prior to running any query
+    //  * Current Version: 
+    //  *        - mongo.input.query 'can filter data before loading in memory ???'
+    //  *        - makes tooo many child processes which run out of memory
+    //  */
+    // public JavaPairRDD getDataRDDMongoHadoop(Map<String, Object> params){
+
+    // 	Mongo.validate(params);
+	    
+    // 	if (!params.containsKey("query"))
+    // 	    throw new RuntimeException("[SparkGIS] Missing mongodb query parameter");
+
+	
+    // 	final String host = (String)params.get("host");
+    // 	final int port = Integer.parseInt((String)params.get("port"));
+    // 	final String dbName = (String)params.get("db");
+    // 	final String collection = (String)params.get("collection");
+    // 	final String query = (String)params.get("query");
+	
+    // 	final String inputUri =
+    // 	    "mongodb://" + host + ":" + port + "/" + dbName + "." + collection;
+
+    // 	System.out.println("Input URI: " + inputUri);
+	
+    // 	Configuration config = new Configuration();
+    // 	config.set("mongo.input.uri", inputUri);
+    // 	config.set("mongo.input.query", query);
+    // 	//config.set("mongo.output.uri", outputUri);
+
+    // 	JavaPairRDD<Object, BSONObject> data =
+    // 	    SparkGIS.sc.newAPIHadoopRDD(
+    // 					config,
+    // 					com.mongodb.hadoop.MongoInputFormat.class,
+    // 					Object.class,
+    // 					BSONObject.class
+    // 					);
+
+    // 	System.out.println("Data Count: " + data.count());
+
+    // 	return data;
+    // 	//return null;
+    // }
 }

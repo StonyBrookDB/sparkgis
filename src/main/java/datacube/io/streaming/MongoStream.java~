@@ -1,0 +1,39 @@
+/**
+ * Algo:
+ * DCMongoDBDataAccess.java has an overloaded version of 
+ *      JavaRDD getDataRDD(Map<String, Object> params, Long batchStart, long batchSize)
+ *      JavaRDD<Long> getSplits(Long batchStart,Long batchSize,int splitSize)
+ * 
+ * Spark Streaming can save/update state using 
+ *      updateStateByKey()
+ * Or instead, Spark's accumulator can be used for the same purpose??
+ *
+ * Using this, keep track of number of mongodb objects in one stream
+ * For the next stream, start reading after the number of objects read in previous stream
+ */
+package sparkgis.core.io.streaming;
+
+/* Spark imports */
+import org.apache.spark.storage.StorageLevel;
+import org.apache.spark.streaming.receiver.Receiver;
+
+public class MongoStream extends Receiver{
+    
+
+    public MongoStream(){
+	super(StorageLevel.MEMORY_AND_DISK_2());
+    }
+
+    /********* Interface methods ********/
+    public void onStart(){
+	new Thread(){
+	    public void run(){
+		
+	    }
+	}.start();
+    }
+    
+    public void onStop(){
+	
+    }
+}
