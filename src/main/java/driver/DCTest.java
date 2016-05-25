@@ -48,12 +48,13 @@ public class DCTest{
 
 	LinkedHashMap<String, Object> params = objectsQuery(caseIDCount);
 
-	LinkedHashMap<String, String> params1 = mongoHadoopQuery();
+	//LinkedHashMap<String, String> params1 = mongoHadoopQuery();
 	//System.out.println(params1);
-	
+
+	System.out.println(params);
 	//dc.buildCube(params);
 
-	dc.loadStreaming((long)1, params);
+	dc.buildStreaming(params);
 	
     }
 
@@ -88,7 +89,7 @@ public class DCTest{
 	    params.put("provenance.analysis_execution_id", analysis_exe_id);
 	    params.put("image.caseid", caseID2);
 	}
-	else if (caseIDCount == 1){
+	else if (caseIDCount == 2){
 	    List<String> orClauses = new ArrayList<String>();
 	    orClauses.add(caseID1);
 	    orClauses.add(caseID2);

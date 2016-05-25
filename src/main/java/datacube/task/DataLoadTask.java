@@ -10,32 +10,32 @@ import org.apache.spark.api.java.JavaRDD;
 import datacube.data.DCObject;
 import datacube.io.DCMongoDBDataAccess;
 
-public class DataLoadTask implements Callable<JavaRDD<DCObject>>
+public class DataLoadTask //implements Callable<JavaRDD<DCObject>>
 {
-    private final DCMongoDBDataAccess inputSrc;
+    // private final DCMongoDBDataAccess inputSrc;
 
-    private final Long batchStart;
-    //private final ExecutorService exeService;
+    // private final Long batchStart;
+    // //private final ExecutorService exeService;
 
-    private final Map<String, Object> filterParams;
+    // private final Map<String, Object> filterParams;
 
-    public DataLoadTask(
-			final Long batchStart, 
-			final DCMongoDBDataAccess inputSrc,
-			final Map<String, Object> filterParams
-			){
-	this.inputSrc = inputSrc;
-	this.batchStart = batchStart;
-	//exeService = Executors.newFixedThreadPool(loadBatchSize);
+    // public DataLoadTask(
+    // 			final Long batchStart, 
+    // 			final DCMongoDBDataAccess inputSrc,
+    // 			final Map<String, Object> filterParams
+    // 			){
+    // 	this.inputSrc = inputSrc;
+    // 	this.batchStart = batchStart;
+    // 	//exeService = Executors.newFixedThreadPool(loadBatchSize);
 
-	this.filterParams = filterParams;
-    }
+    // 	this.filterParams = filterParams;
+    // }
 
-    public JavaRDD<DCObject> call(){
+    // public JavaRDD<DCObject> call(){
 	
-	return inputSrc.getDataRDD(filterParams, batchStart, (long)10000);
+    // 	return inputSrc.getDataRDD(filterParams, batchStart, (long)10000);
 	
-	//return "";
-    }
+    // 	//return "";
+    // }
 
 }

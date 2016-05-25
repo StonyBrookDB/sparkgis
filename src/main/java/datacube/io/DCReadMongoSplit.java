@@ -7,7 +7,7 @@ import java.util.concurrent.Callable;
 import sparkgis.core.data.Polygon;
 import org.apache.spark.api.java.function.FlatMapFunction;
 /* SparkGIS core includes */
-import sparkgis.core.io.mongodb.ReadMongoSplit;
+//import sparkgis.core.io.mongodb.ReadMongoSplit;
 /* Local imports */
 import datacube.data.DCObject;
 

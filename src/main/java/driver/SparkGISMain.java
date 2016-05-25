@@ -26,6 +26,7 @@ import sparkgis.core.io.ISparkGISIO;
 import sparkgis.core.enums.Predicate;
 import sparkgis.core.enums.Delimiter;
 import sparkgis.core.data.DataConfig;
+import sparkgis.core.data.MongoPolygon;
 import sparkgis.core.io.hdfs.HDFSDataAccess;
 import sparkgis.core.io.local.LocalDataAccess;
 import sparkgis.core.io.mongodb.MongoDBDataAccess;

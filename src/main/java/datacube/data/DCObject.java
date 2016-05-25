@@ -56,10 +56,13 @@ public class DCObject implements Serializable, MongoObject
 
     public String toString(){
 	String ret = id;
-	System.out.println("Num of Props: " + props.size());
-	for (Property p:props){
-	    ret += "\t"+p.getNameStr()+": "+p.getValue() + "\n";
-	}
+
+	// UNCOMMENT THIS: Just for debugging streaming 
+	// System.out.println("Num of Props: " + props.size());
+	// for (Property p:props){
+	//     ret += "\t"+p.getNameStr()+": "+p.getValue() + "\n";
+	// }
+	
 	return ret;
     }
     

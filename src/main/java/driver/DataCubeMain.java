@@ -20,11 +20,11 @@ public class DataCubeMain{
 
 	DCTest test = new DCTest();
 	//for (dimCount=2; dimCount<=8; dimCount+=2){
-	for (dimCount=2; dimCount<=2; dimCount+=2){
+	for (dimCount=8; dimCount<=8; dimCount+=2){
 	    test.start(
 		       dimCount,    // number of dimensions
 		       1000, // number of buckets for each dimension
-		       1     // corresponds to the number of objects
+		       2     // corresponds to the number of objects
 		       );
 	}
 	
