@@ -43,16 +43,52 @@ public class MongoDBDataAccess
 
     public JavaRDD getDataRDD(Map<String, Object> params, String dataClassName){
 	
+  System.out.println("111");
+ 
 	Mongo.validate(params);
 	
+ System.out.println("222");
+ 
+ 
 	final String host = (String)params.get("host");
 	final int port = Integer.parseInt((String)params.get("port"));
+ 
+ //final int portNum = (Integer)params.get("port");
+ //final String port = String.valueOf(portNum);
+ 
+ //final int port   = (Integer)params.get("port");
 	
+ System.out.println("test host"+host);
+  System.out.println("test host"+port);
+  
+  String db =  (String)params.get("db");
+  
+  String collection =  (String)params.get("collection");
+  String  id =  (String)params.get("analysis_execution_id");
+  
+  String image =  (String)params.get("image.caseid");
+  
+  
+  
+  System.out.println("db:"+db);
+  System.out.println("collection:"+collection);
+  System.out.println("analysis_execution_id:"+id);
+  System.out.println("image.caseid:"+image);
+  
+  
+  
+   
+ 
 	long objectsCount = 0;
 	try{
     	    final MongoClient mongoClient = new MongoClient(host , port);
 	    objectsCount = Mongo.getObjectsCount(params, mongoClient);
-	}catch(Exception e){System.out.println(e.toString());}
+         
+         System.out.println(params.toString());
+	}catch(Exception e){
+  
+  System.out.println("error here");
+  System.out.println(e.toString());}
 
 	if (objectsCount == 0)
 	    throw new RuntimeException("[MongoDBDataAccess] Query Objects count: " +

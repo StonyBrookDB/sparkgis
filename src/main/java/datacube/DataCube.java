@@ -1,7 +1,6 @@
 package datacube;
 /* Java imports */
 import java.util.List;
-import java.util.Set;
 import java.util.ArrayList;
 import java.io.Serializable;
 import java.util.LinkedHashMap;
@@ -14,51 +13,33 @@ import java.text.SimpleDateFormat;
 import java.util.concurrent.TimeUnit;
 /* Spark imports */
 import scala.Tuple2;
-import org.apache.spark.Accumulator;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaPairRDD;
-import org.apache.spark.broadcast.Broadcast;
 import org.apache.spark.api.java.function.Function;
-import org.apache.spark.api.java.function.Function2;
-import org.apache.spark.api.java.function.PairFunction;
-/* Spark Streaming */
-import org.apache.spark.streaming.Duration;
-import org.apache.spark.streaming.Durations;
-import org.apache.spark.streaming.api.java.JavaPairDStream;
-import org.apache.spark.streaming.api.java.JavaStreamingContext;
-import org.apache.spark.streaming.api.java.JavaReceiverInputDStream;
 /* Local imports */
-import datacube.task.DataLoadTask;
 import datacube.data.DCObject;
-//import datacube.data.Bucket;
-import datacube.data.DCDimension;
-import datacube.data.Property;
-import datacube.data.DoubleProperty;
 import datacube.data.PropertyName;
-//import datacube.data.BucketDimension;
-
-//import datacube.io.streaming.MongoStream;
-import sparkgis.core.io.mongodb.MongoStream;
-
+import datacube.data.DCDimension;
 /* SparkGIS core imports */
 import sparkgis.SparkGIS;
-import sparkgis.core.io.ISparkGISIO;
-//import sparkgis.core.io.mongodb.MongoDBDataAccess;
 import datacube.io.DCMongoDBDataAccess;
 
 public class DataCube implements Serializable{
 
-    private final boolean DEBUG = true;
+    protected static SparkGIS spgis;
+
+    public static final boolean DEBUG = true;
     // profile
-    private final String jobTime;
-    private String logFile = "datacube-stream-8-dim.log";
+    private String jobTime;
+    private static String logFile = "seq.log";
 
-    private final String savePath;
-    private DCMongoDBDataAccess mongoIn;
+    public static String savePath;
+    protected DCMongoDBDataAccess mongoIn;
 
+    // all data
     private JavaRDD<DCObject> data = null;
 
-    private List<DCDimension> dimensions;
+    protected List<DCDimension> dimensions;
     
     public DataCube(){
 	dimensions = new ArrayList<DCDimension>();
@@ -67,14 +48,14 @@ public class DataCube implements Serializable{
 	SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy-HH-mm");
 	jobTime = sdf.format(cal.getTime());
 
-	savePath = "hdfs://10.10.10.11/user/fbaig/datacube/datacube-"+jobTime;
+	DataCube.savePath = "hdfs://10.10.10.11/user/fbaig/datacube/datacube-"+jobTime;
     }
     
     public void addDimension(PropertyName name, int bucketCount){
 	dimensions.add(new DCDimension(name, bucketCount));
     }
     
-    private void profile(long start, String desc){
+    public static void profile(long start, String desc){
 	String str = null;
 	if (start == -1)
 	    str = desc;
@@ -90,13 +71,12 @@ public class DataCube implements Serializable{
 	}
 	try {
 
-	    String outFileName = "logs/datacube/"+this.logFile;
+	    String outFileName = "logs/datacube/stream-vs-seq/"+DataCube.logFile;
 	    
     	    PrintWriter out = 
     		new PrintWriter(new BufferedWriter(new FileWriter(outFileName, true)));
 	    System.out.println(str);
 	    out.println(str);
-	    //out.println("*****************************************************");
 	    out.close();
 	}catch(Exception e){e.printStackTrace();}
     }
@@ -117,56 +97,46 @@ public class DataCube implements Serializable{
 	// }
     }
     
-    public void storeCube(){
-	// dimensions
-	// each dimensions' resolution
-	// each dimensions' min/max
-    }
-
     public void buildCube(LinkedHashMap<String, Object> params){
     //public void buildCube(LinkedHashMap<String, String> params){
 
 	// basic error checking
 	if (dimensions.size() == 0)
 	    throw new RuntimeException("[DataCube] No dimension specified");
-	
-	profile(-1, "***************************************\nDataCube");
-	profile(-1, "Dimensions (Name, # of Buckets)");
-	profile(-1, "---------------------------------------");
-	String dimStr = "";
-	for (DCDimension dim : dimensions){
-	    dimStr += dim.getNameStr() + ", ";
-	    dimStr += dim.getBucketCount() + ", ";
-	    //dimStr += dim.getMin() + ", " + dim.getMax();
-	    dimStr += "\n";
-	}
-	profile(-1, dimStr);
-	profile(-1, "---------------------------------------");
 		
 	// load all data in memory
-	// FIX: Not suitable for large amount of data
-	//      Add streaming data load capability
-
-	long loadStart = System.nanoTime();
+      	long loadStart = System.nanoTime();
 	if (data == null){
 	    data = load((long)10000, params);
-	    //return;
 	}
 	
-	profile(-1, "Total # of objects: " + data.count());
-	profile(-1, "---------------------------------------");
-	profile(-1, "HDFS save path: " + this.savePath);
-	profile(-1, "---------------------------------------");
+ 
+ 		List<DCObject> datalist = data.collect();
+    
+    
+    System.out.println("hey!!!!!"); 
+    
+    for (DCObject ts : datalist)
+			System.out.println(ts);
+    
+    
+   // for(int i=0; i< 10;i++)
+   // {
+   //   System.out.println(i+":  "+datalist.get[2]);   
+   // }
+    
+ 
+	// Ignore this. This just logs datacube properties to console and file
+	logDataCubeProperties("DataCube", data.count());
+
 	profile(loadStart, "Data Load Time: ");
-
-	long start = System.nanoTime();
-	mongoIn.getMinMax(dimensions, 0, params);
-	profile(start, "MongoDB min/maxTime: ");
-
-	for (DCDimension dim : dimensions)
-	    System.out.println(dim.getNameStr() + ": Min:" + dim.getMin() + ", Max: " + dim.getMax());
-	//inMemoryMinMax();
 	
+	/*
+	 * Issue query to mongoDB to get min/max for all dimensions.
+	 * Calculated only once for a set of dimensions. Subsequent calls get saved values
+	 * Potential Bug: In case some data is updated in MongoDB
+	 */ 
+	logNgetMongoMinMax(params);
 	
 	long dcBuildStart = System.nanoTime();
 
@@ -174,7 +144,7 @@ public class DataCube implements Serializable{
 	// //dims = SparkGIS.sc.broadcast(dimensions);
 
 	JavaPairRDD<Integer, String> mappedValues = 
-	    data.mapToPair(new DCObjectMap())
+	    data.mapToPair(new DCObjectMap(dimensions))
 	    .filter(new Function<Tuple2<Integer, String>, Boolean>(){
 	    	    public Boolean call(Tuple2<Integer, String> t){return (t==null)?false:true;}
 	    	});
@@ -190,6 +160,8 @@ public class DataCube implements Serializable{
 
 	profile(hdfsOut, "HDFS Out: ");
 	
+	profile(loadStart, "Total Time: ");
+	
 	// List<Integer> mappedKeys =  mappedValues.groupByKey().keys().collect();
 	// System.out.println("Mapped Count: " + mappedValues.count())
 	
@@ -199,195 +171,53 @@ public class DataCube implements Serializable{
 	SparkGIS.sc.stop();
     }
 
-    
-    /**
-     * 
-     */
-    public void buildStreaming(LinkedHashMap<String, Object> params){
-	//mongoIn = new DCMongoDBDataAccess();
-	
-	// basic error checking
-	if (dimensions.size() == 0)
-	    throw new RuntimeException("[DataCube] No dimension specified");
-
-	profile(-1, "HDFS save path: " + this.savePath);
-
-	profile(-1, "MongoDB min/max ...");
-	mongoIn = new DCMongoDBDataAccess();
-	mongoIn.getMinMax(dimensions, 0, params);
-	
-	for (DCDimension dim : dimensions)
-	    System.out.println(dim.getNameStr() + ": Min:" + dim.getMin() + ", Max: " + dim.getMax());
-
-	// configure input
-    	final SparkGIS spgis = new SparkGIS(mongoIn, mongoIn);
-	
-	JavaStreamingContext jsc = new JavaStreamingContext(SparkGIS.sc, Durations.seconds(10));//Durations.minutes(1));
-
-	JavaReceiverInputDStream<DCObject> stream = 
-	    jsc.receiverStream(new MongoStream(params, DCObject.class.getName()));
-
-	JavaPairDStream<Integer, String> mappedValues =
-	    stream.mapToPair(new DCObjectMap());
-
-	mappedValues.dstream().saveAsTextFiles(this.savePath + "/stream", "part");
-	
-	//System.out.println("Stream Count: " + stream.count());
-	//System.out.println("Accum Value: " + MongoStream.objectsRead.value());
-	
-	stream.print();
-
-	jsc.start();
-	jsc.awaitTermination();
-	// timeout 12 seconds
-	//jsc.awaitTerminationOrTimeout(50000);
-	jsc.stop(true, true);
-	//SparkGIS.sc.stop();
-    }
-
     // make this private. public just for testing
     public JavaRDD<DCObject> load(Long loadBatchSize, LinkedHashMap<String, Object> params){
-    //private JavaRDD<DCObject> load(Long loadBatchSize, LinkedHashMap<String, String> params){
 	mongoIn = new DCMongoDBDataAccess();
     	// configure input
-    	SparkGIS spgis = new SparkGIS(mongoIn, mongoIn);
-	
-
-	//JavaPairRDD<>
-	//System.out.println("MongoIn Count: " + mongoIn.getDataRDDMongoHadoop(params).count());
-
-	
-	//return null;
+    	spgis = new SparkGIS(mongoIn, mongoIn);
 
 	System.out.println("Before getDataRDD ...");
 	
     	// keep all data in memory as a central data referencing system
     	// e.g. like star/snow flake schema
 	JavaRDD<DCObject> objRDD = mongoIn.getDataRDD(params, DCObject.class.getName()).cache();
-	
-	// Streaming load
-	//JavaRDD<DCObject> objRDD = mongoIn.getDataRDD(params, (long)0).cache();
-	// Long totalObjects = mongoIn.getObjectsCount(params, null);
-	// List<DataLoadTask> tasks = new ArrayList<DataLoadTask>();
-	// for (long i=0; i<totalObjects; i+=loadBatchSize){
-	//     tasks.add(new DataLoadTask(i, mongoIn, params));
-	// }
 
     	System.out.println("Count: " + objRDD.count());
     	return objRDD;
-    }
-        
-    /**
-     * Calculate appropriate datacube bucket-id for each object
-     * @return 'DataCube Bucket-ID', 'Object-ID'
-     */
-    class DCObjectMap implements PairFunction<DCObject, Integer, String>{
-
-	private int getMultiplier(int index){
-	    int multiplier = 1;
-	    for (int i=dimensions.size()-1; i>index; --i){
-		multiplier *= dimensions.get(i).getBucketCount();
-	    }
-	    return multiplier;
-	}
-	
-	/**
-	 * Area 0-100, resolution: 10, buckets = 10 (i=0: 0<=Area<10, i=1: 10<=Area<20 ...)
-	 * ELongation 0-2, resolution: 0.1, buckets = 20 (j=0: 0<=Elongation<0.1, j=1: 0.1<=ELongation<0.2 ...)
-	 */
-	private int mapIndex(int...  indices){
-	    if (indices.length != dimensions.size())
-		throw new RuntimeException("[DataCube] Invalid indices");
-	    // change to more than int
-	    int linearIndex = 0;
-	    int i;
-	    for (i=0; i<(indices.length-1); ++i){
-		if (indices[i] > (dimensions.get(i).getBucketCount()-1)){
-		    String str = "[DataCube] Index out of bound, index: "+
-			indices[i]+", max: "+(dimensions.get(i).getBucketCount()-1);
-		    throw new RuntimeException(str);
-		}
-		
-		linearIndex += indices[i] * getMultiplier(i);
-	    }
-	    if (indices[i] > (dimensions.get(i).getBucketCount()-1)){
-		String str = "[DataCube] Index out of bound, index: "+indices[i]+", max: "+(dimensions.get(i).getBucketCount()-1);
-		throw new RuntimeException(str);
-	    }
-	     	
-	    linearIndex += indices[i];
-	    return linearIndex;
-	}
-	
-	private Double getValue(PropertyName prop, DCObject obj){
-	    for (Property p : obj.props){
-		if ((p instanceof DoubleProperty) && (p.getNameStr().equals(prop.value))){
-		    return ((DoubleProperty)p).getValue();
-		}
-	    }
-	    return null;
-	}
-
-	private int getIndex(Double value, DCDimension dim){
-	    // do it using max ...
-	    int index = 0;
-	    final Double resolution = dim.getResolution();
-	    // (resolution < 1) -> larger index value
-	    //if (resolution >= 1){
-		int ret = (int)(value/resolution);
-		// croner case: (value = max) -> (ret = bucketCount)
-		return (ret >= dim.getBucketCount()) ? dim.getBucketCount()-1 : ret; 
-		//}
-	    // else{
-	    // 	for (double i=dim.getMin(); i<dim.getMax() ; i+=dim.getResolution()){
-	    // 	    if ((value >= i) && (value < (i+dim.getResolution())) )
-	    // 		return index;
-	    // 	    index++;
-	    // 	}
-	    // }
-	    // return (index-1);
-	}
-	
-    	public Tuple2<Integer, String> call(DCObject obj){
-
-	    String ret = obj.getID();
-	    
-	    int[] indices = new int[dimensions.size()];
-	    int i=0;
-	    for (DCDimension dim:dimensions){
-		Double curr_value = getValue(dim.getName(), obj);
-		int index = getIndex(curr_value, dim);
-	
-		if (index > (dim.getBucketCount()-1) || (index < 0)){
-		    throw new RuntimeException("[DataCube] Index out of bound"+
-					       ", index: "+ index +
-					       ", max: "+ (dimensions.get(i).getBucketCount()-1)+
-					       ", value: " + curr_value + 
-					       ", name: " + dim.getNameStr()
-					       );
-		}
-		indices[i++] = index;
-		
-		if (DEBUG){
-		    // ret += "\t" + dim.getName().value + ":" + curr_value + "\tMin:"+dim.getMin() + "\tMax:" + dim.getMax() + "\tResolution:" + dim.getResolution() + "\t";
-		    ret += "\t" + dim.getName().value + ":" + curr_value + "\t";
-		}
-	    }
-
-	    if (DEBUG){
-		ret += "(";
-		for (int ind:indices)
-		    ret += ind + ",";
-		ret += ")";
-	    }
-	    
-	    // map indices
-	    int lIndex = mapIndex(indices);
-	    
-	    return new Tuple2<Integer, String>(lIndex, ret);
-    	}
-    }
+    }    
     
+    protected void logNgetMongoMinMax(LinkedHashMap<String, Object> params){
+	long start = System.nanoTime();
+	mongoIn = new DCMongoDBDataAccess();
+	mongoIn.getMinMax(dimensions, 0, params);
+	profile(start, "MongoDB min/maxTime: ");
+
+	for (DCDimension dim : dimensions)
+	    System.out.println(dim.getNameStr() + ": Min:" + dim.getMin() + ", Max: " + dim.getMax());
+	
+	//inMemoryMinMax();
+    }
+
+    protected void logDataCubeProperties(String name, long count){
+	profile(-1, "***************************************\n" + name);
+	profile(-1, "Dimensions (Name, # of Buckets)");
+	profile(-1, "---------------------------------------");
+	String dimStr = "";
+	for (DCDimension dim : dimensions){
+	    dimStr += dim.getNameStr() + ", ";
+	    dimStr += dim.getBucketCount() + ", ";
+	    //dimStr += dim.getMin() + ", " + dim.getMax();
+	    dimStr += "\n";
+	}
+	profile(-1, dimStr);
+	profile(-1, "---------------------------------------");
+
+	profile(-1, "Total # of objects: " + count);
+	profile(-1, "---------------------------------------");
+	profile(-1, "HDFS save path: " + this.savePath);
+	profile(-1, "---------------------------------------");
+    }
     
     /********************* IN MEMORY Min/Max *****************************/
 

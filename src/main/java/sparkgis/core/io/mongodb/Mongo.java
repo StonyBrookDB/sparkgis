@@ -108,7 +108,7 @@ public class Mongo
 	    cursor = results.find(query);
 	    count = cursor.count();
 
-	    System.out.println("getObjectsCount: " + count);
+	    System.out.println("[Mongo] getObjectsCount: " + count);
 	    
 	}catch(Exception e){e.printStackTrace();}
 	finally{

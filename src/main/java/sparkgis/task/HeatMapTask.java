@@ -2,6 +2,10 @@
  * PATHOLOGY IMAGE ANALYTICS PLUGIN
  */
 package sparkgis.task;
+import java.io.*;
+import java.io.PrintWriter;
+import java.io.IOException;
+ import java.io.File; 
 // /* Java imports */
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -58,6 +62,10 @@ public class HeatMapTask extends Task implements Callable<String>{
 	    //params.put("delimiter", "\t");
 	    //params.put("dataDir", SparkGISConfig.hdfsAlgoData);
 	    /* MongoDB params */
+         
+           params.put("host", SparkGISConfig.mongoHost);
+    params.put("port", String.valueOf(SparkGISConfig.mongoPort));
+         
 	    params.put("db", SparkGISConfig.mongoDB);
 	    params.put("collection", "results");
 	    /* Common params */
@@ -68,7 +76,10 @@ public class HeatMapTask extends Task implements Callable<String>{
 	try{
 	    for (int i=0; i<super.batchFactor; ++i)
 		configs[i] = futures.get(i).get();
-	}catch(Exception e){e.printStackTrace();}
+	}catch(Exception e){e.printStackTrace();
+ 
+  
+    }
 	// close thread pool
 	exeService.shutdown();
 

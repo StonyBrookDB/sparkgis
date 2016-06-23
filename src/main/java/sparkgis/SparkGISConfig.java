@@ -20,6 +20,8 @@ public class SparkGISConfig
     public static int mongoPort;
     public static String mongoDB;
     
+    public static int partition_size;
+    
     /**
      * Considering maven directory structure
      * src
@@ -35,6 +37,10 @@ public class SparkGISConfig
 	    File jarFile = new File(jarPath);
 	    String jarDir = jarFile.getParentFile().getPath();
 	    Properties prop = new Properties();
+         
+         System.out.println("jarDir: "+  jarDir);
+      
+         
 	    FileInputStream inputStream = new FileInputStream(jarDir + "/../resources/sparkgis.properties");   
 	    if (inputStream == null){
 		System.out.println("Properties file Not found!!!");
@@ -52,6 +58,8 @@ public class SparkGISConfig
 	    mongoHost = prop.getProperty("mongo-host");
 	    mongoPort = Integer.parseInt(prop.getProperty("mongo-port"));
 	    mongoDB = prop.getProperty("mongo-db");
+         
+        // partition_size = prop.getProperty("partition-size");
 
 	    inputStream.close();
 	} catch (Exception e) {e.printStackTrace();} 

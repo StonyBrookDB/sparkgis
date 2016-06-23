@@ -47,6 +47,8 @@ public class SparkGISMain
     
     public static void main(String[] args) 
     {	
+    
+    String partitionSize = "512";
 	String jobID = null;
 	Predicate predicate = Predicate.INTERSECTS;
 	HMType hmType = null;
@@ -57,6 +59,7 @@ public class SparkGISMain
 	/******************************************************/
 	final CommandLineParser parser = new BasicParser();
 	final Options options = new Options();
+ options.addOption("n", "p_num", true, "partition_num");
 	options.addOption("u", "uid", true, "32-bit unique ID");
 	options.addOption("a", "algos", true, "Comma separated list of algorithms [yi-algorithm-v1 | yi-algorithm-v11]");
 	options.addOption("c", "caseids", true, "Comma separated list of caseIDs");
@@ -67,7 +70,15 @@ public class SparkGISMain
 	HelpFormatter formatter = new HelpFormatter();
 	
 	try{
-	    final CommandLine commandLine = parser.parse(options, args);	    
+	    final CommandLine commandLine = parser.parse(options, args);	
+      
+      
+      if (commandLine.hasOption('n')){
+		partitionSize = getOption('n', commandLine);
+	    }
+      
+      
+          
 	    /* Job ID */
 	    if (commandLine.hasOption('u')){
 		jobID = getOption('u', commandLine);
@@ -117,7 +128,7 @@ public class SparkGISMain
 	    // remove from list
 	    //for (int i=caseIDs.size()-1; i>(10-1); --i)
 	    //	caseIDs.remove(i);
-	    
+	  //  Integer.parseInt(partitionSize)
 	    callHeatMap(jobID, spIn, caseIDs, algos, predicate, hmType, 512, spOut, result_analysis_exe_id);
 	    
 	    // for (int i=128; i<=512; i+=128){

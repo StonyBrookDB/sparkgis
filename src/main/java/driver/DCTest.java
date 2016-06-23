@@ -8,6 +8,7 @@ import java.util.LinkedHashMap;
 import sparkgis.SparkGISConfig;
 /* Local imports */
 import datacube.DataCube;
+import datacube.DataCubeStreaming;
 import datacube.data.PropertyName;
 
 public class DCTest{
@@ -52,10 +53,23 @@ public class DCTest{
 	//System.out.println(params1);
 
 	System.out.println(params);
-	//dc.buildCube(params);
+	dc.buildCube(params);
+	
+    }
+
+    public void startStreaming(int dimCount,
+			       int bucketCount,
+			       int caseIDCount){
+	
+	DataCubeStreaming dc = new DataCubeStreaming();
+	for (int i=0; i<dimCount; ++i)
+	    dc.addDimension(dimensions.get(i), bucketCount);
+
+	LinkedHashMap<String, Object> params = objectsQuery(caseIDCount);
+
+	System.out.println(params);
 
 	dc.buildStreaming(params);
-	
     }
 
     private LinkedHashMap<String, String> mongoHadoopQuery(){
