@@ -1,0 +1,21 @@
+package sparkgis.data;
+import java.io.Serializable;
+
+public class MongoTileStats implements Serializable, Comparable<TileStats>
+{
+    public Tile tile;
+    public double avgJaccardCoEff = -1;
+    
+    @Override
+    public int compareTo(TileStats t){
+    	// descending order
+    	Double d1 = new Double(this.avgJaccardCoEff);
+    	Double d2 = new Double(t.avgJaccardCoEff);
+    	return d2.compareTo(d1);
+    	//return t.avgJaccardCoEff - thisavgJaccardCoEff;
+    }
+    
+    public String toString(){
+	return avgJaccardCoEff + "\t" + tile.toString();
+    }
+}

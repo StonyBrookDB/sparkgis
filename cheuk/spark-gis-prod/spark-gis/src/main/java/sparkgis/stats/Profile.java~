@@ -1,0 +1,142 @@
+package sparkgis.stats;
+// import java.io.PrintWriter;
+// import java.io.BufferedWriter;
+// import java.io.FileWriter;
+// import java.util.concurrent.TimeUnit;
+// /* for asyncHeatMap */
+// import java.util.List;
+// import sparkgis.SparkGIS;
+// import sparkgis.data.RawData;
+// import sparkgis.data.TileStats;
+// import sparkgis.data.DataConfig;
+// import sparkgis.executionlayer.AsyncGenerateHeatMap;
+// import sparkgis.executionlayer.SparkPrepareData;
+// import sparkgis.storagelayer.mongodb.MongoDBDataAccess;
+// import sparkgis.storagelayer.hdfs.HDFSDataAccess;
+
+public class Profile
+{
+    // public final String caseID;
+
+    // public long mongoTime1; // [IO] MongoDB access time for algorithm 1
+    // public long mongoTime2; // [IO] MongoDB access time for algorithm 2
+
+    // public long prepDataTime1;
+    // public long prepDataTime2;
+    
+    // public long objects1;
+    // public long objects2;
+
+    // public long sparkExeTime; // [EXE] Time spend in Spark for heatmap generation
+    
+    // private boolean title = false;
+
+    // public Profile(String caseID){
+    // 	this.caseID = caseID;
+    // }
+    
+    /**
+     * Wrapper function for profiling
+     * 1-thread:  Linear execution
+     * 2-threads: Algo1 and Algo2 parallelised only
+     * 3-threads: Separate threads for each image. Algo1 and Algo2 parallelized
+     */
+    public static void asyncHeatMaps(SparkGIS sparkgis, String algo1, String algo2, List<String> images, String predicate, int threadCount, boolean ioOnly){
+    	long start;
+    	/* Sequential - No parallelism */
+    	if (threadCount == 1){
+    	    start = System.nanoTime();
+    	    for (String image : images){
+    		if (SparkGIS.inputSrc instanceof MongoDBDataAccess){
+    		    final MongoDBDataAccess inputSrc = (MongoDBDataAccess) SparkGIS.inputSrc;
+    		    // download image data from MongoDB
+    		    RawData data1 = inputSrc.getData(algo1, image);
+    		    RawData data2 = inputSrc.getData(algo2, image);
+    		    if (!ioOnly){
+    			// prepare data
+    			DataConfig config1 = SparkGIS.prepareData(data1);
+    			DataConfig config2 = SparkGIS.prepareData(data2);
+    			// generate heatmap
+    			SparkGIS.generateHeatMap(config1, config2, SparkGIS.INTERSECTS);
+    		    }		
+    		}
+    		else if (SparkGIS.inputSrc instanceof HDFSDataAccess){
+    		    final HDFSDataAccess inputSrc = (HDFSDataAccess) SparkGIS.inputSrc;
+    		    SparkPrepareData job1 = new SparkPrepareData(image);
+    		    DataConfig config1 = job1.execute(inputSrc.getData(algo1, image));
+    		    SparkPrepareData job2 = new SparkPrepareData(image);
+    		    DataConfig config2 = job2.execute(inputSrc.getData(algo2, image));
+    		    // generate heatmap
+    		    SparkGIS.generateHeatMap(config1, config2, SparkGIS.INTERSECTS);
+    		}
+    	    }
+    	}
+    	else if (threadCount == 2){
+    	    start = System.nanoTime();
+    	    for (String image : images){
+    		/* Algo1 and Algo2 parallelised in seperate threads */
+    		(new AsyncGenerateHeatMap(algo1, algo2, image, predicate, ioOnly)).run();
+    	    }
+    	}
+    	else{
+    	    start = System.nanoTime();
+    	    sparkgis.asyncGenerateHeatMaps(algo1, algo2, images, predicate, (threadCount/2), ioOnly);
+    	}
+    	System.out.print( images.size() + " Heat Maps generated in ");
+    	System.out.print(TimeUnit.SECONDS.convert(
+    						  System.nanoTime() - start, 
+    						  TimeUnit.NANOSECONDS
+    						  ) 
+    			 + " s\n");
+    }
+    
+
+
+
+    // public void yank(String file){
+    // 	try {
+    // 	    PrintWriter out = 
+    // 		new PrintWriter(new BufferedWriter(new FileWriter("logs/"+file+".log", true)));
+    // 	    out.println(this.toString());
+    // 	    out.close();
+    // 	} catch (Exception e) {e.printStackTrace();}
+    // 	// csv
+    // 	try {
+    // 	    PrintWriter out = 
+    // 		new PrintWriter(new BufferedWriter(new FileWriter("logs/"+file+".tsv", true)));
+    // 	    //if (!title){
+    // 		//out.println("caseID, Algo1-objects, Algo2-objects, Algo1-IO, Algo2-IO, Algo1-DataPrep, Algo2-DataPrep, Heatmap");
+    // 	    //	title = true;
+    // 	    //}
+    // 	    out.println(this.toTSV());
+    // 	    out.close();
+    // 	} catch (Exception e) {e.printStackTrace();}
+    // }
+
+    // /**
+    //  * caseID, Algo1 Objects, Algo2 Objects, IO Algo1, IO Algo2, Prep Algo1, Prep Algo2, Heatmap
+    //  */
+    // private String toTSV(){
+    // 	return "" +
+    // 	    caseID + "\t" +
+    // 	    objects1 + "\t" +
+    // 	    objects2 + "\t" +
+    // 	    TimeUnit.SECONDS.convert(mongoTime1, TimeUnit.NANOSECONDS) + "\t" +
+    // 	    TimeUnit.SECONDS.convert(mongoTime2, TimeUnit.NANOSECONDS) + "\t" +
+    // 	    TimeUnit.SECONDS.convert(prepDataTime1, TimeUnit.NANOSECONDS) + "\t" +
+    // 	    TimeUnit.SECONDS.convert(prepDataTime2, TimeUnit.NANOSECONDS) + "\t" +
+    // 	    TimeUnit.SECONDS.convert(sparkExeTime, TimeUnit.NANOSECONDS)
+    // 	    ;
+    // 	    }
+    // public String toString(){
+    // 	return
+    // 	    "\n**************************************" + "\n" +
+    // 	    "caseID: " + this.caseID + "\n" +
+    // 	    "[IO] MongoDB Access Time for Algo1: " + TimeUnit.SECONDS.convert(mongoTime1, TimeUnit.NANOSECONDS) + " s for Objects: " + objects1 + "\n" +
+    // 	    "[IO] MongoDB Access Time for Algo2: " + TimeUnit.SECONDS.convert(mongoTime2, TimeUnit.NANOSECONDS) + " s for Objects: " + objects2 + "\n" +
+    // 	    "[SPARK] Prepare data time for Algo1: " + TimeUnit.SECONDS.convert(prepDataTime1, TimeUnit.NANOSECONDS) + " s\n" +
+    // 	    "[SPARK] Prepare data time for Algo2: " + TimeUnit.SECONDS.convert(prepDataTime2, TimeUnit.NANOSECONDS) + " s\n" +
+    // 	    "[SPARK] HeatMap generation time: " + TimeUnit.SECONDS.convert(sparkExeTime, TimeUnit.NANOSECONDS) + " s\n" +
+    // 	    "**************************************";
+    // }
+}
