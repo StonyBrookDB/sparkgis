@@ -183,44 +183,6 @@ console.log("taskId: "+job_id2);
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
   app.post('/api/upload_and_get_heatmap', function(req, res) {
 
 
