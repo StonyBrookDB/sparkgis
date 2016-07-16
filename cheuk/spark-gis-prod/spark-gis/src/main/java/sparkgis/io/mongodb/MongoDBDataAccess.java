@@ -29,14 +29,24 @@ public class MongoDBDataAccess implements ISparkGISIO
     
  
     
-    private String host = "nfs011";
-    private int port = 27015;
-    private String dbName = "u24_segmentation";
-    private String collection ="results";
+    // private String host = "nfs011";
+    // private int port = 27015;
+    // private String dbName = "u24_segmentation";
+    // private String collection ="results";
 
 //private String host = SparkGISConfig.mongoHost;
    // private int port = SparkGISConfig.mongoPort;
     //private String dbName = SparkGISConfig.mongoDB;
+
+ private String dbName = "";
+    private String collection ="";
+
+      private String host = "";
+    private int port = 0;
+    private String inputdbName = "";
+    private String inputdbCollection ="";
+     private String outputdbName = "";
+    private String outputdbCollection ="";
 
 
 
@@ -44,7 +54,18 @@ public class MongoDBDataAccess implements ISparkGISIO
     /**
      * Default constructor for BMI MongoDB
      */
-    public MongoDBDataAccess(){}
+    public MongoDBDataAccess(){
+
+		this.host = SparkGISConfig.mongoHost;
+    	this.port = SparkGISConfig.mongoPort;
+    	this.inputdbName = SparkGISConfig.input_mongoDB;
+    	this.inputdbCollection = SparkGISConfig.input_collection_name;
+    	this.outputdbName =   SparkGISConfig.output_mongoDB;
+    	this.outputdbCollection = SparkGISConfig.output_collection_name;
+
+    	  
+
+    }
     /**
      * @param host MongoDB host name
      * @param port MongoDB server port number
@@ -77,7 +98,7 @@ public class MongoDBDataAccess implements ISparkGISIO
 	    splits.add(i);
 	// distribute splits among nodes
 	JavaRDD<Long> splitsRDD = SparkGIS.sc.parallelize(splits);
-	return splitsRDD.flatMap(new ReadMongoSplit(host, port, dbName, caseID, algo, splitSize));
+	return splitsRDD.flatMap(new ReadMongoSplit(host, port, inputdbName, inputdbCollection,caseID, algo, splitSize));
     }
 
     /**
@@ -99,13 +120,13 @@ System.out.println("sadsadasd");
 	List<TileStats> resultList = result.collect();
 	try{
     	    final MongoClient mongoClient = new MongoClient(host , port);
-	    DB db =  mongoClient.getDB(dbName);
+	    DB db =  mongoClient.getDB(outputdbName);
 
 	    System.out.println("helloworld!!!!!!!!!!!");
 
-	     System.out.println(collection);
+	     System.out.println(outputdbCollection);
 	    
-	    DBCollection results = db.getCollection(collection);
+	    DBCollection results = db.getCollection(outputdbCollection);
          // DBCollection ad_hoc_results = db.getCollection(SparkGISConfig.collection_name);
 	    
 	    BasicDBObject query = new BasicDBObject();
@@ -171,8 +192,8 @@ System.out.println("sadsadasd");
 	long count = -1;
 	DBCursor cursor = null;
 	try{
-	    DB db =  mongoClient.getDB(dbName);
-	    DBCollection results = db.getCollection("results");
+	    DB db =  mongoClient.getDB(inputdbName);
+	    DBCollection results = db.getCollection(inputdbCollection);
 	    DBObject query = new BasicDBObject("analysis_execution_id", algo).
 		append("image.caseid", caseID);
 	    cursor = results.find(query);

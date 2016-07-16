@@ -19,9 +19,18 @@ public class SparkGISConfig
     // MongoDB configurations
     public static String mongoHost;
     public static int mongoPort;
-    public static String mongoDB;
-    public static String collection_name;
-    public static String collection_name_temp;
+    // public static String mongoDB;
+    // public static String collection_name;
+    // public static String collection_name_temp;
+
+
+    public static String input_mongoDB;
+    public static String input_collection_name;
+
+     public static String output_mongoDB;
+    public static String output_collection_name;
+   
+
     
     public static int partition_size  ;
     
@@ -56,9 +65,9 @@ public class SparkGISConfig
 	    // MongoDB configurations
 	    mongoHost = prop.getProperty("mongo-host");
 	    mongoPort = Integer.parseInt(prop.getProperty("mongo-port"));
-	    mongoDB = prop.getProperty("mongo-db");
-        collection_name = prop.getProperty("mongo-collection");
-        collection_name_temp = prop.getProperty("mongo-collection_temp");
+	    // mongoDB = prop.getProperty("mongo-db");
+     //    collection_name = prop.getProperty("mongo-collection");
+     //    collection_name_temp = prop.getProperty("mongo-collection_temp");
 
 
       partition_size = Integer.parseInt(prop.getProperty("partition-size"));

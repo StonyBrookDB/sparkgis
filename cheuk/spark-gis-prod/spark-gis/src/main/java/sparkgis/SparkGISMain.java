@@ -62,11 +62,11 @@ public class SparkGISMain
 	
 	System.out.println(SparkGISConfig.mongoHost);
 	System.out.println(SparkGISConfig.mongoPort);
-	System.out.println(SparkGISConfig.mongoDB);
-	System.out.println(SparkGISConfig.collection_name);
-	System.out.println(SparkGISConfig.collection_name_temp);
+	// System.out.println(SparkGISConfig.mongoDB);
+	// System.out.println(SparkGISConfig.collection_name);
+	// System.out.println(SparkGISConfig.collection_name_temp);
 
-	String collection_name=SparkGISConfig.collection_name;
+	// String collection_name=SparkGISConfig.collection_name;
 
 	
 	String jobID = null;
@@ -85,6 +85,26 @@ public class SparkGISMain
 	options.addOption("c", "caseids", true, "Comma separated list of caseIDs");
 	options.addOption("i", "input", true, "Input source [hdfs|mongodb]");
 	options.addOption("o", "output", true, "Output destination [hdfs|mongodb|client]");
+
+		options.addOption("q", "inputdb", true, "Input source [hdfs|mongodb]");
+	options.addOption("w", "inputcollection", true, "Output destination [hdfs|mongodb|client]");
+
+	options.addOption("z", "outputdb", true, "Input source [hdfs|mongodb]");
+	options.addOption("x", "outputcollection", true, "Output destination [hdfs|mongodb|client]");
+	
+
+
+
+
+
+
+
+
+
+
+
+
+
 	options.addOption("m", "metric", true, "Metric type [jaccard|dice|tile_dice] Default:jaccard");
 	options.addOption("r", "result_exe_id", true, "execution_analysis_id for result to show in caMicroscope");
 	HelpFormatter formatter = new HelpFormatter();
@@ -119,13 +139,13 @@ public class SparkGISMain
 	      if (commandLine.hasOption('l')){
 		String tmp = getOption('l', commandLine);
 
-		spIn = IO.MONGODB;
-		 spOut = IO.MONGODB;
+		// spIn = IO.MONGODB;
+		//  spOut = IO.MONGODB;
 
-		if(tmp.equalsIgnoreCase("yes"))
-			collection_name = SparkGISConfig.collection_name_temp;
-			else
-				collection_name =SparkGISConfig.collection_name ;
+		// if(tmp.equalsIgnoreCase("yes"))
+		// 	collection_name = SparkGISConfig.collection_name_temp;
+		// 	else
+		// 		collection_name =SparkGISConfig.collection_name ;
 	    }
 	    else{
 
@@ -134,7 +154,27 @@ public class SparkGISMain
 	    if (commandLine.hasOption('i')){
 		String in = commandLine.getOptionValue('i');		    
 		if (in.equalsIgnoreCase("hdfs")) spIn = IO.HDFS;
-		else if (in.equalsIgnoreCase("mongodb")) spIn = IO.MONGODB;
+		else if (in.equalsIgnoreCase("mongodb")) 
+		{
+			if (commandLine.hasOption('q')  &&   commandLine.hasOption('w')      ){
+
+				String inputdb = commandLine.getOptionValue('q');
+				String inputcol = commandLine.getOptionValue('w');
+
+				SparkGISConfig.input_mongoDB = inputdb;
+				SparkGISConfig.input_collection_name = inputcol;
+
+
+				System.out.println("inputdbname: "+SparkGISConfig.input_mongoDB );
+				System.out.println("inputdbcollection:  "+SparkGISConfig.input_collection_name);
+			}
+
+
+			spIn = IO.MONGODB;
+		}
+
+
+
 		else throw new ParseException("Invalid input source");
 	    }
 	    else throw new ParseException("Invalid input source");
@@ -142,6 +182,23 @@ public class SparkGISMain
 		String out = commandLine.getOptionValue('o');
 		if (out.equalsIgnoreCase("hdfs")) spOut = IO.HDFS;
 		else if (out.equalsIgnoreCase("mongodb")){
+
+
+			if (commandLine.hasOption('q')  &&   commandLine.hasOption('w')      ){
+
+				String outputdb = commandLine.getOptionValue('z');
+				String outputcol = commandLine.getOptionValue('x');
+
+				SparkGISConfig.output_mongoDB = outputdb;
+				SparkGISConfig.output_collection_name = outputcol;
+
+
+				System.out.println("outputdbname: "+SparkGISConfig.output_mongoDB );
+				System.out.println("outputdbcollection:  "+SparkGISConfig.output_collection_name);
+			}
+
+
+
 		    spOut = IO.MONGODB;
 		    // MongoDB output requires further values to be specified
 		    
@@ -182,7 +239,7 @@ public class SparkGISMain
 	    System.out.println("Input:\t" + ((spIn==IO.HDFS)?"hdfs":"mongo"));
 	    System.out.println("Output:\t" + ((spOut==IO.MONGODB)?"mongo":"hdfs"));
 
-	    callHeatMap(jobID,collection_name, spIn, caseIDs, algos, predicate, hmType, partitionSize, spOut, result_analysis_exe_id);
+	    callHeatMap(jobID, spIn, caseIDs, algos, predicate, hmType, partitionSize, spOut, result_analysis_exe_id);
 	    // for (int i=128; i<=512; i+=128){
 	    // 	jobID = UUID.randomUUID().toString();
 	    //Profile.heatmaps(jobID, caseIDs, algos, predicate, hmType, i);
@@ -198,7 +255,7 @@ public class SparkGISMain
 	/******************************************************/
     } 
     // function to instentiate spark and generate heatmaps
-    public static void callHeatMap(String jID,String collection_name, IO in, List<String> caseIDs, List<String> algos, Predicate predicate, HMType hmType, int partitionSize, IO out, String result_analysis_exe_id){
+    public static void callHeatMap(String jID, IO in, List<String> caseIDs, List<String> algos, Predicate predicate, HMType hmType, int partitionSize, IO out, String result_analysis_exe_id){
 	    
 	boolean returnResults = false;
 	// HDFS configuration
@@ -228,12 +285,13 @@ public class SparkGISMain
 							 );
 	//final MongoDBDataAccess mongoInOut = new MongoDBDataAccess();
  
-   String host = SparkGISConfig.mongoHost;
-      int port = SparkGISConfig.mongoPort;
-      String dbName = SparkGISConfig.mongoDB;
+   // String host = SparkGISConfig.mongoHost;
+   //    int port = SparkGISConfig.mongoPort;
+   //    String dbName = SparkGISConfig.mongoDB;
  	
  
- final MongoDBDataAccess mongoInOut = new MongoDBDataAccess(host,port,dbName,collection_name);
+ // final MongoDBDataAccess mongoInOut = new MongoDBDataAccess(host,port,dbName,collection_name);
+      final MongoDBDataAccess mongoInOut = new MongoDBDataAccess();
 
  
  

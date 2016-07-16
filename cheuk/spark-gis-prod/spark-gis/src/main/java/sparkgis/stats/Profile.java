@@ -41,9 +41,9 @@ public class Profile
     // 	this.caseID = caseID;
     // }
 
-    public static void heatmaps(String jID, String collection,IO spIn, List<String> caseIDs, List<String> algos, Predicate predicate, HMType hmType, int partitionSize, IO spOut, String result_analysis_exe_id){
+    public static void heatmaps(String jID, IO spIn, List<String> caseIDs, List<String> algos, Predicate predicate, HMType hmType, int partitionSize, IO spOut, String result_analysis_exe_id){
 	long start = System.nanoTime();
-	sparkgis.SparkGISMain.callHeatMap(jID, collection,spIn, caseIDs, algos, predicate, hmType, partitionSize, spOut, result_analysis_exe_id);
+	sparkgis.SparkGISMain.callHeatMap(jID,spIn, caseIDs, algos, predicate, hmType, partitionSize, spOut, result_analysis_exe_id);
 	long exeTime = System.nanoTime() - start; 
 	try {
     	    PrintWriter out = 

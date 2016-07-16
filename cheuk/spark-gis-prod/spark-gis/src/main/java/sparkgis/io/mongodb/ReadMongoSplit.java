@@ -26,12 +26,14 @@ public class ReadMongoSplit implements Serializable, FlatMapFunction<Long, Polyg
     private final String caseID;
     private final String algo;
     private final int maxSplitSize;
+    private final String collection;
     //private final Broadcast<MongoClient> bMongoClient;
 
-    public ReadMongoSplit(String host, int port, String dbName, String caseID, String algo, int maxSplitSize){
+    public ReadMongoSplit(String host, int port, String dbName, String collection,String caseID, String algo, int maxSplitSize){
 	this.host = host;
 	this.port = port;
 	this.dbName = dbName;
+	this.collection = collection;
 	this.caseID = caseID;
 	this.algo = algo;
 	this.maxSplitSize = maxSplitSize;
@@ -65,7 +67,7 @@ public class ReadMongoSplit implements Serializable, FlatMapFunction<Long, Polyg
 	try{
 	    mongoClient = new MongoClient(host , port);
 	    DB db =  mongoClient.getDB(dbName);
-	    DBCollection results = db.getCollection("results");
+	    DBCollection results = db.getCollection(collection);
 	    DBObject query = new BasicDBObject("analysis_execution_id", algo).
 		append("image.caseid", caseID);
 	    if ((maxSplitSize == 0) && (start == 0))
