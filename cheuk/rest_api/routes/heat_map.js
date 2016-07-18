@@ -48,24 +48,28 @@ var MongoClient = require('mongodb').MongoClient;
 var assert = require('assert');
 
 
-
+// curl -X GET http://localhost:8127/api/job_status/144a7580-4d08-11e6-aaf9-5b317fa79b4e
 router.get('/job_status/:id', function(req, res) {
   fun_job_status(req, res);
 }); 
 
 
+// curl -X GET http://localhost:8127/api/heat_map_result/ae997af0-4d08-11e6-aaf9-5b317fa79b4e
 
     router.get('/heat_map_result/:id',function(req, res) {
   fun_heat_map_result(req, res);
 }); 
 
-    router.post('/upload_and_get_heatmap',function(req, res) {
-  fun_upload_and_get_heatmap(req, res);
+    router.post('/upload_and_generate_heatmap',function(req, res) {
+  fun_upload_and_generate_heatmap(req, res);
 }); 
 
 
-    router.post('/generate_get_heatmap', function(req, res) {
-  fun_generate_get_heatmap(req, res);
+
+// curl -X POST --data "algos=yi-algorithm-v1,yi-algorithm-v11&caseids=TCGA-02-0001-01Z-00-DX1&metric=jaccard&input=mongodb&output=mongodb&inputdb=u24_segmentation&inputcollection=results&outputdb=u24_segmentation&outputcollection=results&result_exe_id=cheuk_testabc" http://localhost:8127/api/generate_heatmap
+
+    router.post('/generate_heatmap', function(req, res) {
+  fun_generate_heatmap(req, res);
 }); 
 
 
@@ -117,21 +121,16 @@ var fun_heat_map_result =  function(req, res) {
 			'jobId': job_id2
 		});
 
-		var count = db.collection(COLLECTION1).find({
-			'jobId': job_id2
-		}).count(function(e, count) {
-			console.log(count);
-                  // return cb(e, count);
-              });
+		// var count = db.collection(COLLECTION1).find({
+		// 	'jobId': job_id2
+		// }).count(function(e, count) {
+		// 	console.log(count);
+                 
+  //             });
 
 		cursor.toArray(function(err, results) {
 			db.close();
 
-			var result_json = {}
-
-			for (var i = 0; i < results.length; i++) {
-				result_json[i] = results[i]
-			}
 
 			if (!err) {
 
@@ -149,14 +148,18 @@ var fun_heat_map_result =  function(req, res) {
 
 
 
- var fun_upload_and_get_heatmap =  function(req, res) {
+ var fun_upload_and_generate_heatmap =  function(req, res) {
 
 
   	var form = new multiparty.Form();
 
   	form.parse(req, function(err, fields, files) {
 
-  		var params_array = ['algos', 'caseids', 'metric', 'result_exe_id']
+
+
+
+
+  	    var params_array = ['algos', 'caseids', 'metric', 'input', 'output',   'inputdb', 'inputcollection' , 'outputdb' ,'outputcollection' ,'result_exe_id']
   		var cmd_params = '';
   		var uni_job_id = uuid.v1();
 
@@ -166,8 +169,7 @@ var fun_heat_map_result =  function(req, res) {
   			cmd_params = cmd_params + tmp;
   		}
 
-  		cmd_params = cmd_params + " --upload yes" + " --uid " + uni_job_id
-
+  
   		console.log("upload_and_get_heatmap_cmd/;   " + cmd_params);
 
   		var ele = files.image
@@ -188,14 +190,14 @@ var fun_heat_map_result =  function(req, res) {
 
 
 
-  var fun_generate_get_heatmap =  function(req, res) {
+  var fun_generate_heatmap =  function(req, res) {
 
 
   	var data_body = req.body;
 
   	console.log(data_body);
 
-  	var params_array = ['algos', 'caseids', 'metric', 'input', 'output', 'result_exe_id']
+            var params_array = ['algos', 'caseids', 'metric', 'input', 'output',   'inputdb', 'inputcollection' , 'outputdb' ,'outputcollection' ,'result_exe_id']
 
 
   	var cmd_params = '';
@@ -255,16 +257,7 @@ var fun_heat_map_result =  function(req, res) {
 
 
 
-
-
-
-
-
-
-
-
-
-
+ 
   queue.process('heat_map', 2, function(job, done) {
 
   	fun_get_heat_map(job, done);
@@ -321,9 +314,7 @@ var fun_heat_map_result =  function(req, res) {
 
 
   var update_status_by_jobid = function(status, jobid) {
-
   	redis_client.set(jobid, status, redis.print);
-
   }
 
 
@@ -337,26 +328,18 @@ var fun_heat_map_result =  function(req, res) {
 
   	job.on('complete', function(result) {
   		console.log('Job completed ');
-
   		update_status_by_jobid('complete', uni_job_id)
-
 
   	}).on('failed attempt', function(errorMessage, doneAttempts) {
   		console.log('Job failed');
 
   	}).on('start', function(errorMessage, doneAttempts) {
   		console.log('Job started');
-
-
-
   		update_status_by_jobid('start', uni_job_id)
-
-
 
   	}).on('enqueue', function(result) {
 
   		console.log('enqueue12');
-
   		update_status_by_jobid('enqueue', uni_job_id);
 
 
