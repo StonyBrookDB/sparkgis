@@ -32,7 +32,7 @@ var HOST = dbConfig.get('host')
 var PORT = dbConfig.get('port')
 var DBNAME = dbConfig.get('dbname')
 var COLLECTION1 = dbConfig.get('collection1');
-var COLLECTION2 = dbConfig.get('collection2');
+
 
 
 var LOCAL_PORT = localConfig.get('port')
@@ -59,6 +59,10 @@ router.get('/job_status/:id', function(req, res) {
     router.get('/heat_map_result/:id',function(req, res) {
   fun_heat_map_result(req, res);
 }); 
+
+
+// curl --form "image=@results.json" --form "algos=yi-algorithm-v1,yi-algorithm-v11" --form "caseids=TCGA-02-0001-01Z-00-DX1" --form "metric=jaccard" --form "result_exe_id=cheuk_testabc" http://localhost:8127/api/upload_and_generate_heatmap
+
 
     router.post('/upload_and_generate_heatmap',function(req, res) {
   fun_upload_and_generate_heatmap(req, res);
@@ -159,17 +163,36 @@ var fun_heat_map_result =  function(req, res) {
 
 
 
-  	    var params_array = ['algos', 'caseids', 'metric', 'input', 'output',   'inputdb', 'inputcollection' , 'outputdb' ,'outputcollection' ,'result_exe_id']
-  		var cmd_params = '';
-  		var uni_job_id = uuid.v1();
+  	 //    var params_array = ['algos', 'caseids', 'metric', 'input', 'output',   'inputdb', 'inputcollection' , 'outputdb' ,'outputcollection' ,'result_exe_id']
+  		// var cmd_params = '';
+  		// var uni_job_id = uuid.v1();
 
-  		for (var key of params_array) {
-  			var value = fields[key];
-  			var tmp = ' --' + key + ' ' + value;
-  			cmd_params = cmd_params + tmp;
-  		}
+  		// for (var key of params_array) {
+  		// 	var value = fields[key];
+  		// 	var tmp = ' --' + key + ' ' + value;
+  		// 	cmd_params = cmd_params + tmp;
+  		// }
 
-  
+
+
+        var params_array = ['algos','caseids','metric','result_exe_id']
+
+
+  var cmd_params ='';
+
+ var uni_job_id = uuid.v1();
+
+  for(var key of params_array)
+  {
+ 
+      var  value = fields[key];
+      var tmp = ' --'+key+' '+value;
+
+      cmd_params = cmd_params+tmp;
+    }
+
+    cmd_params = cmd_params +" --upload yes"+" --uid "+uni_job_id
+ 
   		console.log("upload_and_get_heatmap_cmd/;   " + cmd_params);
 
   		var ele = files.image
@@ -278,7 +301,7 @@ var fun_heat_map_result =  function(req, res) {
   	console.log("title: " + job_title)
   	console.log("cmd_params: " + cmd_params)
 
-  	var job_file = job_title + ".txt"
+  	var job_file = "log/"+job_title + ".txt"
   	var log_cmd = " > " + job_file
 
 
