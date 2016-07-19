@@ -182,6 +182,8 @@ var fun_heat_map_result =  function(req, res) {
 
  var uni_job_id = uuid.v1();
 
+ console.log(fields);
+
   for(var key of params_array)
   {
  

@@ -139,13 +139,27 @@ public class SparkGISMain
 	      if (commandLine.hasOption('l')){
 		String tmp = getOption('l', commandLine);
 
-		// spIn = IO.MONGODB;
-		//  spOut = IO.MONGODB;
+		
 
-		// if(tmp.equalsIgnoreCase("yes"))
-		// 	collection_name = SparkGISConfig.collection_name_temp;
-		// 	else
-		// 		collection_name =SparkGISConfig.collection_name ;
+
+		if(tmp.equalsIgnoreCase("yes"))
+		{
+			spIn = IO.MONGODB;
+		spOut = IO.MONGODB;
+
+
+
+			// SparkGISConfig.input_mongoDB = "temp_db";
+			// 	SparkGISConfig.input_collection_name = "temp_col";
+			// 		SparkGISConfig.output_mongoDB ="temp_db" ;
+			// 	SparkGISConfig.output_collection_name = "temp_col";
+
+    SparkGISConfig.input_mongoDB = SparkGISConfig.temp_mongoDB;
+				SparkGISConfig.input_collection_name = SparkGISConfig.temp_collection_name;
+					SparkGISConfig.output_mongoDB =  SparkGISConfig.temp_mongoDB;
+				SparkGISConfig.output_collection_name = SparkGISConfig.temp_collection_name;
+		}
+			
 	    }
 	    else{
 

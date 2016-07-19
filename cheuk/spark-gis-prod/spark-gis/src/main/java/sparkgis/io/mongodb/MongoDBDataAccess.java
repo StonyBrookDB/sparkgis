@@ -192,6 +192,8 @@ System.out.println("sadsadasd");
 	long count = -1;
 	DBCursor cursor = null;
 	try{
+		System.out.println("test: inputdbName:	"+inputdbName);
+		System.out.println("test: inputdbCollection:	"+inputdbCollection);
 	    DB db =  mongoClient.getDB(inputdbName);
 	    DBCollection results = db.getCollection(inputdbCollection);
 	    DBObject query = new BasicDBObject("analysis_execution_id", algo).
