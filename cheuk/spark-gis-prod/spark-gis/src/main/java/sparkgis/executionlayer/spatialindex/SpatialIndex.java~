@@ -1,7 +1,0 @@
-package sparkgis.executionlayer.spatialindex;
-/* Java imports */
-import java.io.Serializable;
-
-public class SpatialIndex implements Serializable{
-    
-}
