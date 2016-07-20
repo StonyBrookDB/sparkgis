@@ -1,0 +1,10 @@
+package sparkgis.enums;
+
+public enum Predicates{
+    INTERSECTS,
+    TOUCHES,
+    CROSSES,
+    WITHIN,
+    CONTAINS,
+    OVERLAP
+}

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # compile project using maven
-cd spark-gis/
+
 mvn clean
 mvn package
 cd ../
