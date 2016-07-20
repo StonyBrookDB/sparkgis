@@ -4,9 +4,8 @@
     "dbConfig": {
       "host": "nfs011",
       "port": 27015,
-	"dbname":"u24_segmentation",
-      "collection1": "test_col",
-	"collection2": "test_col"
+"dbname":"temp_db",
+      "collection1": "temp_col"
     },
     "local": {
       "port": 8127,
