@@ -94,10 +94,15 @@ router.get('/job_status/:id', function(req, res) {
 
 	redis_client.get(job_id2, function (err, reply) {
 		if (err) {throw err};
+    // if(reply) {throw err};
 
-		console.log(reply.toString());
+    var status = reply.toString();
 
-		res.send('results: ' + JSON.stringify(reply.toString()));
+		console.log("status: " + status);
+
+    var status_json = {'status': status }
+
+		res.send( JSON.stringify(status_json));
 	});
 
 
@@ -139,8 +144,13 @@ var fun_heat_map_result =  function(req, res) {
 			if (!err) {
 
 				console.log("retrieved");
+
+        var tmp =  JSON.stringify(results);
+        var results_json = {'results':tmp};
+
+       
                       // console.log(result_json)
-                      res.send('results: ' + JSON.stringify(results));
+                      res.send(results_json);
 
                   }
               });
