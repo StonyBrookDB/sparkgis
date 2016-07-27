@@ -19,6 +19,7 @@ import datacube.io.DCMongoDBDataAccess;
 /* SparkGIS core imports */
 import sparkgis.SparkGIS;
 import sparkgis.core.io.mongodb.MongoStream;
+import org.apache.spark.SparkConf;
 
 public class DataCubeStreaming extends DataCube {
 
@@ -57,8 +58,13 @@ public void buildStreaming(LinkedHashMap<String, Object> params){
         logNgetMongoMinMax(params);
 
         // configure input
-        spgis = new SparkGIS(mongoIn, mongoIn);
-        jsc = new JavaStreamingContext(SparkGIS.sc, Durations.seconds(15)); //Durations.minutes(1));
+        // spgis = new SparkGIS(mongoIn, mongoIn);
+        // jsc = new JavaStreamingContext(SparkGIS.sc, Durations.seconds(5)); //Durations.minutes(1));
+
+
+
+SparkConf conf = new SparkConf().setMaster("local[2]").setAppName("NetworkWordCount");
+jsc = new JavaStreamingContext(conf, Durations.seconds(5));
 
         System.out.println("33333");
         JavaReceiverInputDStream<DCObject> stream =
@@ -79,7 +85,7 @@ public void buildStreaming(LinkedHashMap<String, Object> params){
         jsc.start();
 
         System.out.println("555555");
-        jsc.awaitTermination();
+        jsc.awaitTermination( );
 
 //jsc.awaitTerminationOrTimeout(5000);
         System.out.println("666666");
@@ -105,11 +111,13 @@ public void stopStream(){
         // if (mappedValues.partitions.isEmpty()){
         //     mappedValues.dstream().saveAsTextFiles(this.savePath + "/stream", "part");
         // }
-        //System.out.println("Stream Count: " + stream.count());
-        //System.out.println("Accum Value: " + MongoStream.objectsRead.value());
-
-        jsc.stop(true, true);
-        //SparkGIS.sc.stop();
+        // System.out.println("Stream Count: " + stream.count());
+        // System.out.println("Accum Value: " + MongoStream.objectsRead.value());
+System.out.println("stop223");
+ jsc.stop();
+        // jsc.stop(true, true);
+        // SparkGIS.sc.stop();
+        
 }
 
 class SaveStream
@@ -129,7 +137,7 @@ public Void call(JavaPairRDD<Integer, String> rdd){
         if (!rdd.isEmpty()) {
                 System.out.println("save_stream_result_not empty,saving");
                 if (!started) {
-                    System.out.println("saving111");
+                        System.out.println("saving111");
                         streamStart = System.nanoTime();
                         started = true;
                 }
@@ -149,8 +157,11 @@ public Void call(JavaPairRDD<Integer, String> rdd){
                 // JUST FOR PROFILLING
                 if (objectsRead == objectsCount) {
 
-                    System.out.println("equal??\n\n\n");
-                     System.out.println("emptyCount:  "+emptyCount);
+
+                        System.out.println("equal??\n\n\n");
+                        stopStream();
+                       
+                        System.out.println("emptyCount:  "+emptyCount);
                         emptyCount++;
                         DataCube.profile(streamStart, "Total Streaming Time: ");
                         profile(-1, "---------------------------------------");
