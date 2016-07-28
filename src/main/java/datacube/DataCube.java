@@ -74,16 +74,16 @@ public static void profile(long start, String desc){
                         str = desc + "0 s (" + ms + "ms)";
                 }
         }
-        try {
+        // try {
 
-                String outFileName = "logs/datacube/stream-vs-seq/"+DataCube.logFile;
+        //         String outFileName = "logs/datacube/stream-vs-seq/"+DataCube.logFile;
 
-                PrintWriter out =
-                        new PrintWriter(new BufferedWriter(new FileWriter(outFileName, true)));
-                System.out.println(str);
-                out.println(str);
-                out.close();
-        }catch(Exception e) {e.printStackTrace(); }
+        //         PrintWriter out =
+        //                 new PrintWriter(new BufferedWriter(new FileWriter(outFileName, true)));
+        //         System.out.println(str);
+        //         out.println(str);
+        //         out.close();
+        // }catch(Exception e) {e.printStackTrace(); }
 }
 
 private void indexToHumanReadable(int...indices){
