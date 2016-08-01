@@ -1,4 +1,9 @@
 package datacube;
+
+import java.io.*;
+import java.net.*;
+
+
 /* Java imports */
 import java.util.List;
 import java.util.ArrayList;
@@ -33,6 +38,7 @@ private JavaStreamingContext jsc;
 
 public long objectsCount;
 
+public int port_num =34561;
 /**
  *
  */
@@ -61,9 +67,15 @@ public void buildStreaming(LinkedHashMap<String, Object> params){
         // spgis = new SparkGIS(mongoIn, mongoIn);
         // jsc = new JavaStreamingContext(SparkGIS.sc, Durations.seconds(5)); //Durations.minutes(1));
 
-
+        // SparkConf conf = new SparkConf().setAppName("Spark-GIS");
+        // // .setMaster("local[2]")
+        // // set serializer
+        // // conf.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer");
 
 SparkConf conf = new SparkConf().setMaster("local[2]").setAppName("NetworkWordCount");
+
+conf.set("spark.streaming.stopGracefullyOnShutdown","true");
+
 jsc = new JavaStreamingContext(conf, Durations.seconds(5));
 
         System.out.println("33333");
@@ -81,30 +93,82 @@ jsc = new JavaStreamingContext(conf, Durations.seconds(5));
 
         System.out.println("44444");
 
+                // Runtime.getRuntime().addShutdownHook(new Thread() {
+                //  @Override
+                //  public void run() {
+                //      System.out.println("22Shutting down streaming app...");
+                //
+                //      try{
+                //    jsc.stop(true, true);
+                //   }
+                //   catch(Exception e)
+                //   {
+                //        System.out.println("33333333333");
+                //
+                //   }
+                //
+                //
+                //      System.out.println("Shutdown of streaming app complete.");
+                //  }
+                //     });
+
+
 
         jsc.start();
 
         System.out.println("555555");
-        jsc.awaitTermination( );
+        // jsc.awaitTermination( );
+        // while(true)
+        // {
+        //   System.out.println("wait");
+        // }
+
 
 //jsc.awaitTerminationOrTimeout(5000);
-        System.out.println("666666");
+        // System.out.println("666666");
         // timeout 12 seconds
+
+        try{
+ServerSocket ss=new ServerSocket(port_num);
+Socket s=ss.accept();//establishes connection
+DataInputStream dis=new DataInputStream(s.getInputStream());
+
+while(true)
+{
+
+  String  str=(String)dis.readUTF();
+  System.out.println("message= "+str);
+  ss.close();
+  System.out.println("123 ");
+  break;
+  }
+  System.out.println("2456 ");
+jsc.stop(true, true);
+  System.out.println("aaaa ");
+}
+catch(Exception e){
+  System.out.println("BUG1122");
+  System.out.println(e);
+}
+
 
 
 }
 
 public void stopStream(){
+  System.out.println("stopStream");
+  // return;
+   try{
+     jsc.stop(true, true);
+  // Thread.currentThread().interrupt();
+}
+catch(Exception e)
+{
+     System.out.println("abcdefg");
+}
 
-        // Runtime.getRuntime().addShutdownHook(new Thread() {
-        //  @Override
-        //  public void run() {
-        //      System.out.println("Shutting down streaming app...");
-        //      jsc.stop(true, true);
-        //      System.out.println("Shutdown of streaming app complete.");
-        //  }
-        //     });
-        // System.out.println("KILLLLLL");
+        //
+
         // jsc.stop();
         // SparkGIS.sc.stop();
 
@@ -113,11 +177,25 @@ public void stopStream(){
         // }
         // System.out.println("Stream Count: " + stream.count());
         // System.out.println("Accum Value: " + MongoStream.objectsRead.value());
-System.out.println("stop223");
- jsc.stop();
-        // jsc.stop(true, true);
-        // SparkGIS.sc.stop();
-        
+
+ //        try{
+ // Thread.sleep(3000);}
+ // catch(Exception e)
+ // {
+ //   System.out.println(e);
+ // }
+ // // jsc.stop();
+
+//  try{
+// jsc.stop(true, true);
+// }
+// catch(Exception e)
+// {
+//    System.out.println("2222222222222");
+// }
+
+ //        // SparkGIS.sc.stop();
+
 }
 
 class SaveStream
@@ -135,7 +213,7 @@ public Void call(JavaPairRDD<Integer, String> rdd){
 
 
         if (!rdd.isEmpty()) {
-                System.out.println("save_stream_result_not empty,saving");
+                System.out.println("not empty,saving");
                 if (!started) {
                         System.out.println("saving111");
                         streamStart = System.nanoTime();
@@ -159,8 +237,27 @@ public Void call(JavaPairRDD<Integer, String> rdd){
 
 
                         System.out.println("equal??\n\n\n");
-                        stopStream();
-                       
+                        // stopStream();
+
+
+                        try{
+                        Socket s=new Socket("localhost",port_num);
+                        DataOutputStream dout=new DataOutputStream(s.getOutputStream());
+                        dout.writeUTF("shut up streaming");
+                        dout.flush();
+                        // dout.close();
+                        // s.close();
+                        }catch(Exception e){System.out.println(e);}
+
+
+
+
+
+
+
+
+
+
                         System.out.println("emptyCount:  "+emptyCount);
                         emptyCount++;
                         DataCube.profile(streamStart, "Total Streaming Time: ");
@@ -174,10 +271,10 @@ public Void call(JavaPairRDD<Integer, String> rdd){
                         emptyCount++;
         }
 
-        if (started && emptyCount >= 1) {
-                System.out.println("stop!!");
-                stopStream();
-        }
+        // if (started && emptyCount >= 1) {
+        //         System.out.println("stop!!");
+        //         // stopStream();
+        // }
         return null;
 }
 }
