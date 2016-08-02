@@ -38,7 +38,7 @@ private JavaStreamingContext jsc;
 
 public long objectsCount;
 
-public int port_num =34561;
+public int port_num =12358;
 /**
  *
  */
@@ -72,11 +72,11 @@ public void buildStreaming(LinkedHashMap<String, Object> params){
         // // set serializer
         // // conf.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer");
 
-SparkConf conf = new SparkConf().setMaster("local[2]").setAppName("NetworkWordCount");
+        SparkConf conf = new SparkConf().setMaster("local[2]").setAppName("NetworkWordCount");
 
-conf.set("spark.streaming.stopGracefullyOnShutdown","true");
+        conf.set("spark.streaming.stopGracefullyOnShutdown","true");
 
-jsc = new JavaStreamingContext(conf, Durations.seconds(5));
+        jsc = new JavaStreamingContext(conf, Durations.seconds(5));
 
         System.out.println("33333");
         JavaReceiverInputDStream<DCObject> stream =
@@ -93,24 +93,24 @@ jsc = new JavaStreamingContext(conf, Durations.seconds(5));
 
         System.out.println("44444");
 
-                // Runtime.getRuntime().addShutdownHook(new Thread() {
-                //  @Override
-                //  public void run() {
-                //      System.out.println("22Shutting down streaming app...");
-                //
-                //      try{
-                //    jsc.stop(true, true);
-                //   }
-                //   catch(Exception e)
-                //   {
-                //        System.out.println("33333333333");
-                //
-                //   }
-                //
-                //
-                //      System.out.println("Shutdown of streaming app complete.");
-                //  }
-                //     });
+        // Runtime.getRuntime().addShutdownHook(new Thread() {
+        //  @Override
+        //  public void run() {
+        //      System.out.println("22Shutting down streaming app...");
+        //
+        //      try{
+        //    jsc.stop(true, true);
+        //   }
+        //   catch(Exception e)
+        //   {
+        //        System.out.println("33333333333");
+        //
+        //   }
+        //
+        //
+        //      System.out.println("Shutdown of streaming app complete.");
+        //  }
+        //     });
 
 
 
@@ -129,43 +129,43 @@ jsc = new JavaStreamingContext(conf, Durations.seconds(5));
         // timeout 12 seconds
 
         try{
-ServerSocket ss=new ServerSocket(port_num);
-Socket s=ss.accept();//establishes connection
-DataInputStream dis=new DataInputStream(s.getInputStream());
+                ServerSocket ss=new ServerSocket(port_num);
+                Socket s=ss.accept(); //establishes connection
+                DataInputStream dis=new DataInputStream(s.getInputStream());
 
-while(true)
-{
+                while(true)
+                {
 
-  String  str=(String)dis.readUTF();
-  System.out.println("message= "+str);
-  ss.close();
-  System.out.println("123 ");
-  break;
-  }
-  System.out.println("2456 ");
-jsc.stop(true, true);
-  System.out.println("aaaa ");
-}
-catch(Exception e){
-  System.out.println("BUG1122");
-  System.out.println(e);
-}
+                        String str=(String)dis.readUTF();
+                        System.out.println("message= "+str);
+                        ss.close();
+                        System.out.println("123 ");
+                        break;
+                }
+                System.out.println("2456 ");
+                jsc.stop(true, true);
+                System.out.println("aaaa ");
+        }
+        catch(Exception e) {
+                System.out.println("BUG1122");
+                System.out.println(e);
+        }
 
 
 
 }
 
 public void stopStream(){
-  System.out.println("stopStream");
-  // return;
-   try{
-     jsc.stop(true, true);
-  // Thread.currentThread().interrupt();
-}
-catch(Exception e)
-{
-     System.out.println("abcdefg");
-}
+        System.out.println("stopStream");
+        // return;
+        try{
+                jsc.stop(true, true);
+                // Thread.currentThread().interrupt();
+        }
+        catch(Exception e)
+        {
+                System.out.println("abcdefg");
+        }
 
         //
 
@@ -178,13 +178,13 @@ catch(Exception e)
         // System.out.println("Stream Count: " + stream.count());
         // System.out.println("Accum Value: " + MongoStream.objectsRead.value());
 
- //        try{
- // Thread.sleep(3000);}
- // catch(Exception e)
- // {
- //   System.out.println(e);
- // }
- // // jsc.stop();
+        //        try{
+        // Thread.sleep(3000);}
+        // catch(Exception e)
+        // {
+        //   System.out.println(e);
+        // }
+        // // jsc.stop();
 
 //  try{
 // jsc.stop(true, true);
@@ -194,7 +194,7 @@ catch(Exception e)
 //    System.out.println("2222222222222");
 // }
 
- //        // SparkGIS.sc.stop();
+        //        // SparkGIS.sc.stop();
 
 }
 
@@ -241,13 +241,13 @@ public Void call(JavaPairRDD<Integer, String> rdd){
 
 
                         try{
-                        Socket s=new Socket("localhost",port_num);
-                        DataOutputStream dout=new DataOutputStream(s.getOutputStream());
-                        dout.writeUTF("shut up streaming");
-                        dout.flush();
-                        // dout.close();
-                        // s.close();
-                        }catch(Exception e){System.out.println(e);}
+                                Socket s=new Socket("localhost",port_num);
+                                DataOutputStream dout=new DataOutputStream(s.getOutputStream());
+                                dout.writeUTF("shut up streaming");
+                                dout.flush();
+                                // dout.close();
+                                // s.close();
+                        }catch(Exception e) {System.out.println(e); }
 
 
 
