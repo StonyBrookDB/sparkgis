@@ -20,10 +20,12 @@ var dbConfig = config.get('Setting.dbConfig');
 var localConfig = config.get('Setting.local');
 var sparkConfig = config.get('Setting.spark');
 
-var HOST = dbConfig.get('host') var PORT = dbConfig.get('port') var DBNAME =
-    dbConfig.get('dbname')
+var HOST = dbConfig.get('host');
 
-        var LOCAL_PORT = localConfig.get('port')
+var PORT = dbConfig.get('port');
+var DBNAME = dbConfig.get('dbname');
+
+var LOCAL_PORT = localConfig.get('port');
 
 // router.get('/job_status/:id', route_heat_map.job_status);
 // router.get('/heat_map_result/:id',route_heat_map.heat_map_result);

@@ -19,27 +19,29 @@ var dbConfig = config.get('Setting.dbConfig');
 var localConfig = config.get('Setting.local');
 var sparkConfig = config.get('Setting.spark');
 
-var HOST = dbConfig.get('host') var PORT = dbConfig.get('port') var DBNAME =
-    dbConfig.get('dbname') var COLLECTION1 = dbConfig.get('collection1');
+var HOST = dbConfig.get('host');
+var PORT = dbConfig.get('port');
+var DBNAME = dbConfig.get('dbname');
+var COLLECTION1 = dbConfig.get('collection1');
 
 var LOCAL_PORT = localConfig.get('port')
 
-                     var SPARK_CMD = sparkConfig.get('cmd1') var SPARK_BIN =
-    sparkConfig.get('bin') var SPARK_CLASS =
-        sparkConfig.get('class') var SPARK_JAR = sparkConfig.get('jar')
+                     var SPARK_CMD = sparkConfig.get('cmd1');
+var SPARK_BIN = sparkConfig.get('bin');
+var SPARK_CLASS = sparkConfig.get('class');
+var SPARK_JAR = sparkConfig.get('jar');
 
-                                                     var SPARK_CMD_HEATMAP =
-            SPARK_BIN + " --class " + SPARK_CLASS + " " + SPARK_JAR;
+var SPARK_CMD_HEATMAP = SPARK_BIN + " --class " + SPARK_CLASS + " " + SPARK_JAR;
 var url = "mongodb://" + HOST + ":" + PORT + "/" + DBNAME;
 var MongoClient = require('mongodb').MongoClient;
 var assert = require('assert');
 
 // curl -X GET
-// http://localhost:8127/api/job_status/144a7580-4d08-11e6-aaf9-5b317fa79b4e
+// http://localhost:8127/api/job_status/3beb2060-58c7-11e6-b9ef-e9c119b52462
 router.get('/job_status/:id', function(req, res) { fun_job_status(req, res); });
 
 // curl -X GET
-// http://localhost:8127/api/heat_map_result/ae997af0-4d08-11e6-aaf9-5b317fa79b4e
+// http://localhost:8127/api/heat_map_result/3beb2060-58c7-11e6-b9ef-e9c119b52462
 
 router.get('/heat_map_result/:id',
            function(req, res) { fun_heat_map_result(req, res); });
@@ -158,8 +160,9 @@ var fun_upload_and_generate_heatmap = function(req, res) {
 
     console.log("upload_and_get_heatmap_cmd/;   " + cmd_params);
 
-    var ele = files.image
-    console.log(files) var tmp_path = ele[0].path
+    var ele = files.image;
+    console.log(files);
+    var tmp_path = ele[0].path;
 
     var job = queue
                   .create('upload_and_get_heatmap', {
