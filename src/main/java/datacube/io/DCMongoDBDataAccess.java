@@ -143,15 +143,29 @@ public void getMinMax(List<DCDimension> dimensions, int option, Map<String, Obje
                         DB db =  mongoClient.getDB(dbName);
                         DBCollection collection = db.getCollection(col);
 
+
+// http://mongodb.github.io/mongo-java-driver/2.13/getting-started/quick-tour/
+                        // DBObject matchValues = Mongo.prepareQuery(params);  "Area" : 851,
+                        // DBObject matchValues = Mongo.prepareQuery(params).append(  "features.Perimeter",121.55999755859375   ).append(  "features.Area",851   );
+
+                        // DBObject matchValues = Mongo.prepareQuery(params).append(  "features.Perimeter", new BasicDBObject("$gt", 120).append("$lte", 122)   ).append(  "features.Area",851   );
                         DBObject matchValues = Mongo.prepareQuery(params);
+
+
+                        // features" : { "Perimeter" : 121.55999755859375
+
                         //new BasicDBObject("provenance.analysis_execution_id", "yi-algo-v2");
                         //matchValues.put("image.caseid", "TCGA-CS-4941-01Z-00-DX1");
                         DBObject match = new BasicDBObject("$match", matchValues);
+
+//                         query = new BasicDBObject("i", new BasicDBObject("$gt", 20).append("$lte", 30));
+// cursor = coll.find(query);
 
                         if (option == 0) {
                                 DBObject groupValues = new BasicDBObject( "_id", "{}");
 
                                 for (PropertyName pName : features) {
+
                                         if (pName.value.equals("image.caseid"))
                                                 continue;
                                         groupValues.put(("min" + pName.value), new BasicDBObject("$min", ("$features."+pName.value)));

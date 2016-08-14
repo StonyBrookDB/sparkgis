@@ -9,6 +9,7 @@
  * Or instead, Spark's accumulator can be used for the same purpose??
  *
  * Using this, keep track of number of mongodb objects in one stream
+
  * For the next stream, start reading after the number of objects read in previous stream
  */
 //package datacube.io.streaming;
@@ -39,6 +40,10 @@ import sparkgis.SparkGIS;
 import datacube.data.DCObject;
 import sparkgis.core.data.Polygon;
 import sparkgis.core.data.MongoPolygon;
+
+import sparkgis.SparkGISConfig;
+
+import org.bson.Document;
 
 public class MongoStream extends Receiver<DCObject>
 implements Serializable
@@ -172,7 +177,37 @@ public void call(Long start){
 
         try{
                 mongoClient = new MongoClient(host, port);
+                // cursor = Mongo.getDataSplit(params, start, maxSplitSize, mongoClient);
+
+                String dbName = SparkGISConfig.db;
+                String col = SparkGISConfig.collection;
+                DB db =  mongoClient.getDB(dbName);
+                DBCollection coll = db.getCollection(col);
+
+
+
+
+                // params.put ("features.Area",new Integer(851) );
+                // params.put(  "features.Perimeter", new BasicDBObject("$gt", "120").append("$lte", "122")   );
+
+                // BasicDBObject query =Mongo.prepareQuery(params);
                 cursor = Mongo.getDataSplit(params, start, maxSplitSize, mongoClient);
+                // Document condition1 =new Document (      "features.Perimeter", new BasicDBObject("$gt", 120).append("$lte", 122)   );
+                // DBObject condition2 = new BasicDBObject ("features.Area",851 );
+
+                // DBObject query1 = query.append(condition2);
+                // DBObject query1 = query.append(condition1).append(condition2);
+                // DBObject query1 = qudery.append(  "features.Perimeter", new BasicDBObject().append("$gt", 120).append("$lte", 122)   ).append(  "features.Area",851   );
+                // cursor = coll.find(query);
+
+                // DBObject matchValues = Mongo.prepareQuery(params);
+
+
+
+                // query = new BasicDBObject("j", new BasicDBObject("$ne", 3))
+                //         .append("k", new BasicDBObject("$gt", 10));
+                //
+                // cursor = coll.find(query);
 
 
 

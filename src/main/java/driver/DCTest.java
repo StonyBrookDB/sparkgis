@@ -106,6 +106,11 @@ private LinkedHashMap<String, Object> objectsQuery(List<String> caseIDs){
         params.put("db", SparkGISConfig.db);
         params.put("collection", SparkGISConfig.collection);
 
+        params.put("features.Perimeter", "120,122");
+        params.put("features.Area", "600,851.5");
+
+        // "features.Perimeter", new BasicDBObject().append("$gt", 120).append("$lte", 122)   ).append(  "features.Area",851   );
+        // cursor = coll.find(query);
 
         // params.put("provenance.analysis_execution_id", analysis_exe_id);
         // params.put("image.caseid", caseID1);
