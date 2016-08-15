@@ -20,7 +20,9 @@ import datacube.data.PropertyName;
  * Calculate appropriate datacube bucket-id for each object
  * @return 'DataCube Bucket-ID', 'Object-ID'
  */
-public class DCObjectMap implements PairFunction<DCObject, Integer, String>{
+public class DCObjectMap implements PairFunction<DCObject, String, String>{
+
+public int count =0;
 
 private final List<DCDimension> dimensions;
 
@@ -93,9 +95,73 @@ private int getIndex(Double value, DCDimension dim){
         // return (index-1);
 }
 
-public Tuple2<Integer, String> call(DCObject obj){
+// public Tuple2<Integer, String> call(DCObject obj){
+
+//         String ret = obj.getID();
+
+//         int[] indices = new int[dimensions.size()];
+//         int i=0;
+//         for (DCDimension dim : dimensions) {
+//                 Double curr_value = getValue(dim.getName(), obj);
+//                 int index = getIndex(curr_value, dim);
+
+//                 if (index > (dim.getBucketCount()-1) || (index < 0)) {
+//                         throw new RuntimeException("[DataCube] Index out of bound"+
+//                                                    ", index: "+ index +
+//                                                    ", max: "+ (dimensions.get(i).getBucketCount()-1)+
+//                                                    ", value: " + curr_value +
+//                                                    ", name: " + dim.getNameStr()
+//                                                    );
+//                 }
+//                 indices[i++] = index;
+
+//                 if (DataCube.DEBUG) {
+//                         // ret += "\t" + dim.getName().value + ":" + curr_value + "\tMin:"+dim.getMin() + "\tMax:" + dim.getMax() + "\tResolution:" + dim.getResolution() + "\t";
+//                         ret += "\t" + dim.getName().value + ":" + curr_value + "\t";
+//                 }
+//         }
+
+//         if (DataCube.DEBUG) {
+//                 ret += "(";
+//                 for (int ind : indices)
+//                         ret += ind + ",";
+//                 ret += ")";
+//         }
+
+//         // map indices
+//         int lIndex = mapIndex(indices);
+
+//         // System.out.println(ret);
+//         // System.out.println("buiilding index"+lIndex);
+//         return new Tuple2<Integer, String>(lIndex, ret);
+// }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+public Tuple2<String, String> call(DCObject obj){
+
+
+
+
+
 
         String ret = obj.getID();
+        String index_string="";
+
+        // System.out.println("id:    "+ret);
 
         int[] indices = new int[dimensions.size()];
         int i=0;
@@ -116,20 +182,24 @@ public Tuple2<Integer, String> call(DCObject obj){
                 if (DataCube.DEBUG) {
                         // ret += "\t" + dim.getName().value + ":" + curr_value + "\tMin:"+dim.getMin() + "\tMax:" + dim.getMax() + "\tResolution:" + dim.getResolution() + "\t";
                         ret += "\t" + dim.getName().value + ":" + curr_value + "\t";
+                        // index_string += dim.getName().value + ":" + curr_value + ",";
+                        index_string += dim.getName().value + ":" + index + ",";
                 }
         }
 
-        if (DataCube.DEBUG) {
-                ret += "(";
-                for (int ind : indices)
-                        ret += ind + ",";
-                ret += ")";
-        }
+        // if (DataCube.DEBUG) {
+        //         ret += "(";
+        //         for (int ind : indices)
+        //                 ret += ind + ",";
+        //         ret += ")";
+        // }
 
         // map indices
-        int lIndex = mapIndex(indices);
+        // int lIndex = mapIndex(indices);
+
         // System.out.println(ret);
-        System.out.println("buiilding index");
-        return new Tuple2<Integer, String>(lIndex, ret);
+        count++;
+        System.out.println("buiilding index:   "+count);
+        return new Tuple2<String, String>(index_string, ret);
 }
 }

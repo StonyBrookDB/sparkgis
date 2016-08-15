@@ -148,10 +148,18 @@ public void buildCube(LinkedHashMap<String, Object> params){
         // // broadcast dimensions details
         // //dims = SparkGIS.sc.broadcast(dimensions);
 
-        JavaPairRDD<Integer, String> mappedValues =
+        // JavaPairRDD<Integer, String> mappedValues =
+        //         data.mapToPair(new DCObjectMap(dimensions))
+        //         .filter(new Function<Tuple2<Integer, String>, Boolean>(){
+        //                         public Boolean call(Tuple2<Integer, String> t){
+        //                                 return (t==null) ? false : true;
+        //                         }
+        //                 });
+
+         JavaPairRDD<String, String> mappedValues =
                 data.mapToPair(new DCObjectMap(dimensions))
-                .filter(new Function<Tuple2<Integer, String>, Boolean>(){
-                                public Boolean call(Tuple2<Integer, String> t){
+                .filter(new Function<Tuple2<String, String>, Boolean>(){
+                                public Boolean call(Tuple2<String, String> t){
                                         return (t==null) ? false : true;
                                 }
                         });
