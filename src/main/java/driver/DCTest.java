@@ -10,6 +10,7 @@ import sparkgis.SparkGISConfig;
 import datacube.DataCube;
 import datacube.DataCubeStreaming;
 import datacube.data.PropertyName;
+import java.util.*;
 
 public class DCTest {
 // private final String db = "u24_nodejs";
@@ -72,12 +73,100 @@ public void startStreaming(int dimCount,
         for (int i=0; i<dimCount; ++i)
                 dc.addDimension(dimensions.get(i), bucketCount);
 
+
+        // dc.addDimension(  PropertyName.AREA, 200);
+        // dc.addDimension(  PropertyName.PERIMETER, 600);
+        // dc.addDimension(  PropertyName.ELONGATION, 300);
+
+
+
         LinkedHashMap<String, Object> params = objectsQuery(caseIDs);
 
         System.out.println(params);
 
         dc.buildStreaming(params);
 }
+
+
+public void startStreaming_2(
+        List<String> caseIDs ){
+
+        // AREA ("Area"),
+        // ELONGATION ("Elongation"),
+        // ROUNDNESS ("Roundness"),
+        // PHYSICAL_SIZE ("PhysicalSize"),
+        // FLATNESS ("Flatness"),
+        // EQUIVALENT_SPHERICAL_RADUIS ("EquivalentSphericalRadius"),
+        // EQUIVALENT_SPHERICAL_PERIMETER ("EquivalentSphericalPerimeter"),
+        // EQUIVALENT_ELLIPSOID_DIAMETER0 ("EquivalentEllipsoidDiameter0"),
+        // EQUIVALENT_ELLIPSOID_DIAMETER1 ("EquivalentEllipsoidDiameter1"),
+        // PERIMETER ("Perimeter"),
+        // NUM_OF_PIXELS ("NumberOfPixels"),
+        // NUM_OF_PIXELS_ON_BORDER ("NumberOfPixelsOnBorder"),
+        // PRINCIPAL_MOMENTS0 ("PrincipalMoments0"),
+        // PRINCIPAL_MOMENTS1 ("PrincipalMoments1"),
+        // FERET_DIAMETER ("FeretDiameter")
+
+
+
+        HashMap hm =new HashMap();
+        hm.put("Area",PropertyName.AREA);
+        hm.put("Elongation",PropertyName.ELONGATION);
+        hm.put("Roundness",PropertyName.ROUNDNESS);
+        hm.put("Flatness",PropertyName.FLATNESS);
+        hm.put("Perimeter", PropertyName.PERIMETER);
+        hm.put("EquivalentSphericalRadius",PropertyName.EQUIVALENT_SPHERICAL_RADUIS);
+        hm.put("EquivalentSphericalPerimeter",PropertyName.EQUIVALENT_SPHERICAL_PERIMETER);
+        hm.put("EquivalentEllipsoidDiameter0",  PropertyName.EQUIVALENT_ELLIPSOID_DIAMETER0);
+
+
+        DataCubeStreaming dc = new DataCubeStreaming();
+        // for (int i=0; i<dimCount; ++i)
+        //         dc.addDimension(dimensions.get(i), bucketCount);
+
+
+        String dimension_str =  SparkGISConfig.dimension_str;
+
+        // dc.addDimension(  PropertyName.AREA, 200);
+        // dc.addDimension(  PropertyName.PERIMETER, 600);
+        // dc.addDimension(  PropertyName.ELONGATION, 300);
+
+
+
+
+
+
+
+
+
+
+        String[] dimensions = dimension_str.split(",");
+
+        for(int i=0; i<dimensions.length; i++)
+        {
+                String tmp = dimensions[i];
+                String key = tmp.split("_")[0];
+
+                PropertyName tmpPN = (PropertyName)(hm.get(key));
+
+                String value =   tmp.split("_")[1];
+                Integer value_int = Integer.valueOf(value);
+
+                dc.addDimension(tmpPN,value_int);
+        }
+
+
+
+
+        LinkedHashMap<String, Object> params = objectsQuery(caseIDs);
+
+        System.out.println(params);
+
+        dc.buildStreaming(params);
+}
+
+
+
 
 private LinkedHashMap<String, String> mongoHadoopQuery(){
         LinkedHashMap<String, String> params;
@@ -107,7 +196,7 @@ private LinkedHashMap<String, Object> objectsQuery(List<String> caseIDs){
         params.put("collection", SparkGISConfig.collection);
 
         params.put("features.Perimeter", "120,122");
-        params.put("features.Area", "600,851.5");
+        params.put("features.Area", "850.5,851.5");
 
         // "features.Perimeter", new BasicDBObject().append("$gt", 120).append("$lte", 122)   ).append(  "features.Area",851   );
         // cursor = coll.find(query);

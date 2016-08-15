@@ -12,6 +12,7 @@ import com.google.common.collect.Sets;
 
 import sparkgis.SparkGISConfig;
 
+import java.util.*;
 
 
 
@@ -51,6 +52,7 @@ public static void main(String[] args){
         options.addOption("c", "caseids", true, "Comma separated list of caseIDs");
         options.addOption("d", "inputdb", true, "db");
         options.addOption("q", "inputcollection", true, "collection");
+        options.addOption("m", "dimension", true, "dimension");
 
         HelpFormatter formatter = new HelpFormatter();
 
@@ -76,6 +78,13 @@ public static void main(String[] args){
                         System.out.println("collection:  "+SparkGISConfig.collection);
                 }
 
+                if (commandLine.hasOption('m')) {
+                        SparkGISConfig.dimension_str = commandLine.getOptionValue('m');
+                        System.out.println("dimension_str:  "+ SparkGISConfig.dimension_str);
+
+
+                }
+
 
 
 
@@ -97,17 +106,19 @@ public static void main(String[] args){
 
 
 
-
         DCTest test = new DCTest();
         //for (dimCount=2; dimCount<=8; dimCount+=2){
-        for (dimCount=8; dimCount<=8; dimCount+=2) {
-                //test.start(
-                test.startStreaming(
-                        dimCount, // number of dimensions
-                        1000, // number of buckets for each dimension
-                        caseIDs // corresponds to the number of objects
-                        );
-        }
+        // for (dimCount=8; dimCount<=8; dimCount+=2) {
+        //         //test.start(
+        //         test.startStreaming(
+        //                 dimCount, // number of dimensions
+        //                 1000, // number of buckets for each dimension
+        //                 caseIDs // corresponds to the number of objects
+        //                 );
+        // }
+
+
+        test.startStreaming_2(  caseIDs );
 
         //DataCubeShell.shell();
 
