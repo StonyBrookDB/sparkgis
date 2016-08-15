@@ -195,8 +195,27 @@ private LinkedHashMap<String, Object> objectsQuery(List<String> caseIDs){
         params.put("db", SparkGISConfig.db);
         params.put("collection", SparkGISConfig.collection);
 
-        params.put("features.Perimeter", "120,122");
-        params.put("features.Area", "850.5,851.5");
+        // params.put("features.Perimeter", "120,122");
+        // params.put("features.Area", "850.5,851.5");
+
+
+
+
+        String[] query_range = SparkGISConfig.query_range.split("-");
+
+        for(int i=0; i<query_range.length; i++)
+        {
+                String tmp = query_range[i];
+                String key = tmp.split("_")[0];
+
+
+                String value =   tmp.split("_")[1];
+
+
+                params.put("features."+key, value);
+        }
+
+
 
         // "features.Perimeter", new BasicDBObject().append("$gt", 120).append("$lte", 122)   ).append(  "features.Area",851   );
         // cursor = coll.find(query);

@@ -53,6 +53,7 @@ public static void main(String[] args){
         options.addOption("d", "inputdb", true, "db");
         options.addOption("q", "inputcollection", true, "collection");
         options.addOption("m", "dimension", true, "dimension");
+        options.addOption("n", "range", true, "range");
 
         HelpFormatter formatter = new HelpFormatter();
 
@@ -84,6 +85,16 @@ public static void main(String[] args){
 
 
                 }
+
+
+                if (commandLine.hasOption('n')) {
+                        SparkGISConfig.query_range = commandLine.getOptionValue('n');
+                        System.out.println("  SparkGISConfig.query_range:  "+   SparkGISConfig.query_range);
+
+
+                }
+
+
 
 
 

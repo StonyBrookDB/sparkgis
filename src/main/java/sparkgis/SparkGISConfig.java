@@ -22,6 +22,7 @@ public static String mongoHost;
 public static int mongoPort;
 public static String mongoDB;
 public static String dimension_str;
+public static String query_range;
 
 public static int partition_size;
 
