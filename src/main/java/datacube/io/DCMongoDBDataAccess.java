@@ -7,6 +7,7 @@ import java.util.Arrays;
 import java.util.ArrayList;
 import java.io.Serializable;
 import java.util.concurrent.TimeUnit;
+import java.util.*;
 /* Spark imports */
 import org.apache.spark.api.java.JavaRDD;
 /* SparkGIS core includes */
@@ -27,6 +28,8 @@ import com.mongodb.MongoClient;
 import datacube.data.DCObject;
 import datacube.data.DCDimension;
 import datacube.data.PropertyName;
+
+import sparkgis.SparkGISConfig;
 
 public class DCMongoDBDataAccess
 extends MongoDBDataAccess
@@ -134,7 +137,55 @@ public void getMinMax(List<DCDimension> dimensions, int option, Map<String, Obje
         }
         else{
 
-                final List<PropertyName> features = Arrays.asList(PropertyName.values());
+                // final List<PropertyName> features = Arrays.asList(PropertyName.values());
+
+
+                HashMap hm =new HashMap();
+                hm.put("Area",PropertyName.AREA);
+                hm.put("Elongation",PropertyName.ELONGATION);
+                hm.put("Roundness",PropertyName.ROUNDNESS);
+                hm.put("Flatness",PropertyName.FLATNESS);
+                hm.put("Perimeter", PropertyName.PERIMETER);
+                hm.put("EquivalentSphericalRadius",PropertyName.EQUIVALENT_SPHERICAL_RADUIS);
+                hm.put("EquivalentSphericalPerimeter",PropertyName.EQUIVALENT_SPHERICAL_PERIMETER);
+                hm.put("EquivalentEllipsoidDiameter0",  PropertyName.EQUIVALENT_ELLIPSOID_DIAMETER0);
+
+
+
+
+
+
+
+
+
+                List<PropertyName> features = new ArrayList<PropertyName>();
+
+
+                String dimension_str =  SparkGISConfig.dimension_str;
+
+                String[] dimensions1 = dimension_str.split(",");
+
+                for(int i=0; i<dimensions1.length; i++)
+                {
+                        String tmp = dimensions1[i];
+                        String key = tmp.split("_")[0];
+
+                        PropertyName tmpPN = (PropertyName)(hm.get(key));
+
+
+                        features.add(tmpPN );
+                }
+
+
+
+
+
+
+
+
+
+
+
 
                 List<String> sortResults = new ArrayList<String>();
 
@@ -198,7 +249,7 @@ public void getMinMax(List<DCDimension> dimensions, int option, Map<String, Obje
                         //      DBCursor cur = collection.find(matchValues).sort(new BasicDBObject("features."+pName.value, 1)).limit(1);
                         //      if (cur.hasNext())
                         //    sortResults.add(cur.next().toString());
-                        //  }
+                        //  }d
                         //  for (final String res : sortResults)
                         //      System.out.println(res);
                         // }
@@ -258,8 +309,11 @@ private void insertMetaData(
 
                 DB db =  mongoClient.getDB(dbName);
                 DBCollection collection = db.getCollection("datacube");
+                DBCollection collection1 = db.getCollection("meta");
 
                 BasicDBObject dataCubeMetaData = new BasicDBObject();
+                BasicDBObject dataCubeMetaData2 = new BasicDBObject();
+
 
                 BasicDBObject metaData = new BasicDBObject();
                 Iterator iterator = dataParams.entrySet().iterator();
@@ -285,6 +339,54 @@ private void insertMetaData(
                 }
 
                 collection.insert(dataCubeMetaData);
+
+
+                // String dimension_str =  SparkGISConfig.dimension_str;
+                //
+                // String[] dimensions = dimension_str.split(",");
+                //
+                // for(int i=0; i<dimensions.length; i++)
+                // {
+                //         String tmp = dimensions[i];
+                //         String key = tmp.split("_")[0];
+                //
+                //         PropertyName tmpPN = (PropertyName)(hm.get(key));
+                //
+                //         String value =   tmp.split("_")[1];
+                //         Integer value_int = Integer.valueOf(value);
+                //
+                //         dc.addDimension(tmpPN,value_int);
+                // }
+                //
+                //
+                //
+                //
+                // String[] query_range = SparkGISConfig.query_range.split("-");
+                //
+                // for(int i=0; i<query_range.length; i++)
+                // {
+                //         String tmp = query_range[i];
+                //         String key = tmp.split("_")[0];
+                //
+                //
+                //         String value =   tmp.split("_")[1];
+                //
+                //
+                //         params.put("features."+key, value);
+                // }
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         }catch(Exception e) {e.printStackTrace(); }
 }
