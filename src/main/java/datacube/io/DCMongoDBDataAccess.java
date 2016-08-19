@@ -278,7 +278,10 @@ private DBObject metaDataExists(
                         Map.Entry entry = (Map.Entry)iterator.next();
                         //if (entry.getKey().equals("db") || entry.getKey().equals("collection"))
                         //    continue;
-                        String key = ((String)entry.getKey()).replaceAll("\\.", "__");
+                        // String key = ((String)entry.getKey()).replaceAll("\\.", "__");
+                        String key = ((String)entry.getKey());
+                        if(key.contains("\\."))
+                                key = key.split("\\.")[1];
                         Object value = entry.getValue();
                         if (value instanceof String) {
                                 metaData.append(key, (String)value);
@@ -335,8 +338,50 @@ private void insertMetaData(
 
                 dataCubeMetaData.append("meta_data", metaData);
                 for (final DBObject result : minMax.results()) {
+
+
+
+                        // for ( String key : result.keySet() ) {
+                        //         System.out.println( "key: " + key + " value: " + result.get( key ) );
+                        // }
+
+
+
+                        String dimension_str =  SparkGISConfig.dimension_str;
+
+                        String[] dimensions1 = dimension_str.split(",");
+
+                        for(int i=0; i<dimensions1.length; i++)
+                        {
+                                String tmp = dimensions1[i];
+                                String key = tmp.split("_")[0];
+                                String value = tmp.split("_")[1];
+
+                                ((BasicDBObject)result).append("resolution"+key, value);
+
+                        }
+
+
+
+
+
+
+
+
+
+
                         dataCubeMetaData.append("min_max", result);
                 }
+
+
+
+
+
+
+
+
+
+
 
                 collection.insert(dataCubeMetaData);
 

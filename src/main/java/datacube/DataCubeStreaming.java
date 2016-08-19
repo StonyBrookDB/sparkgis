@@ -342,10 +342,10 @@ public Void call(JavaPairRDD<String, String> rdd){
 
                 ArrayList<String> list = new ArrayList<String>();
                 for (Tuple2<String, String> test : rdd.collect())  {
-                        // System.out.println(test._1 );
-                        // System.out.println(test._2);
+                        System.out.println("first:   "+ test._1 );
+                        System.out.println("second:   "+test._2);
 
-                        list.add(test._1);
+                        // list.add(test._1);
                 }
 
                 long count = list.size();
