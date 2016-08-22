@@ -42,12 +42,23 @@ import java.util.Map;
 import java.util.Iterator;
 
 
+import java.util.ArrayList;
+import java.util.*;
+
+
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 
 
 
 public class DataCubeStreaming extends DataCube {
 
 // variables to control streaming datacube output
+
+
+public Map savedMap = new HashMap();
 public boolean started = false;
 public int emptyCount = 0;
 public long objectsRead = 0;
@@ -341,12 +352,76 @@ public Void call(JavaPairRDD<String, String> rdd){
 
 
                 ArrayList<String> list = new ArrayList<String>();
+
+                // try {
+                //         FileWriter fw = new FileWriter("test._1", true);
+                //         BufferedWriter bw = new BufferedWriter(fw);
+                //         PrintWriter out = new PrintWriter(bw);
+                //         // System.out.println("second:   "+test._2);
+                //         out.println("test._2");
+                //         out.close();
+                //         //more code
+                //         // out.println("more text");
+                //         // //more code
+                // } catch (IOException e) {
+                //         //exception handling left as an exercise for the reader
+                // }
+
                 for (Tuple2<String, String> test : rdd.collect())  {
-                        System.out.println("first:   "+ test._1 );
-                        System.out.println("second:   "+test._2);
+                        // System.out.println("first:   "+ test._1 );
+                        // System.out.println("second:   "+test._2);
+
+                        // ArrayList<String> getList =   savedMap.get(test._1)
+                        //                             if(getList == null)
+                        // {
+                        //         getList  =  new ArrayList<String>();
+                        //         savedMap.put(test._1,getList);
+                        // }
+                        // getList.add(test._2);
+
+
+
+
+
+                        try {
+                                FileWriter fw = new FileWriter(test._1, true);
+                                BufferedWriter bw = new BufferedWriter(fw);
+                                PrintWriter out = new PrintWriter(bw);
+                                // System.out.println("second:   "+test._2);
+                                out.println(test._2);
+                                out.close();
+                                //more code
+                                // out.println("more text");
+                                // //more code
+                        } catch (IOException e) {
+                                //exception handling left as an exercise for the reader
+                        }
+
+
+
+
+
+
+
+
+
+
 
                         // list.add(test._1);
                 }
+
+                // Iterator it = savedMap.entrySet().iterator();
+                // while (it.hasNext()) {
+                //         Map.Entry pair = (Map.Entry)it.next();
+                //
+                //         ArrayList<String> arraylist = pair.getValue();
+                //         String key = pair.getKey();
+                //         System.out.println( key+ " = " +arraylist. );
+                //         // it.remove(); // avoids a ConcurrentModificationException
+                // }
+
+
+
 
                 long count = list.size();
                 objectsRead += count;
@@ -367,15 +442,15 @@ public Void call(JavaPairRDD<String, String> rdd){
 
 
 
-                for (String tmp : list )  {
-                        // System.out.println(test._1 );
-                        // System.out.println(test._2);
-
-                        BasicDBObject wdoc = new BasicDBObject("analysis_execution_id", tmp)
-                                             .append("x", "test._1")
-                                             .append("tile_id", "dd");
-                        results.insert(wdoc);
-                }
+                // for (String tmp : list )  {
+                //         // System.out.println(test._1 );
+                //         // System.out.println(test._2);
+                //
+                //         BasicDBObject wdoc = new BasicDBObject("analysis_execution_id", tmp)
+                //                              .append("x", "test._1")
+                //                              .append("tile_id", "dd");
+                //         results.insert(wdoc);
+                // }
 
 
 
@@ -399,8 +474,13 @@ public Void call(JavaPairRDD<String, String> rdd){
 
                 // update datacube either in MongoDB or in HDFS
                 System.out.println("DataCube.savePath4444\n\n\n");
-                System.out.println(DataCube.savePath + "/stream");
-                rdd.saveAsTextFile(DataCube.savePath + "/stream");
+                // System.out.println(DataCube.savePath + "/stream");
+                // rdd.saveAsTextFile(DataCube.savePath + "/stream");
+
+
+
+
+
 
 
 //                 Map<String, String> map =    rdd.collectAsMap();

@@ -181,7 +181,7 @@ public Tuple2<String, String> call(DCObject obj){
 
                 if (DataCube.DEBUG) {
                         // ret += "\t" + dim.getName().value + ":" + curr_value + "\tMin:"+dim.getMin() + "\tMax:" + dim.getMax() + "\tResolution:" + dim.getResolution() + "\t";
-                        ret += "\t" + dim.getName().value + ":" + curr_value + "\t";
+                        // ret += "\t" + dim.getName().value + ":" + curr_value + "\t";
                         // index_string += dim.getName().value + ":" + curr_value + ",";
                         index_string += dim.getName().value + ":" + index + ",";
                 }

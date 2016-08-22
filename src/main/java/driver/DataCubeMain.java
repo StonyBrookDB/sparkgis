@@ -31,8 +31,16 @@ import org.apache.commons.cli.CommandLineParser;
 
 
 
-
-
+import java.lang.reflect.*;
+// import ncsa.hdf.object.*;
+// import ncsa.hdf.hdf5lib.*;
+//
+//
+// import ncsa.hdf.object.Dataset;
+// import ncsa.hdf.object.Datatype;
+// import ncsa.hdf.object.FileFormat;
+// import ncsa.hdf.object.Group;
+// import ncsa.hdf.object.h5.H5File;
 
 
 
@@ -45,6 +53,17 @@ public static int dimCount = 0;
 public static void main(String[] args){
 
 
+
+
+
+
+
+
+
+
+
+
+//////////////////
         List<String> caseIDs=null;
         final CommandLineParser parser = new BasicParser();
         final Options options = new Options();
