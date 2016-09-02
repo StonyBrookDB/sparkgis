@@ -58,7 +58,7 @@ public class DataCubeStreaming extends DataCube {
 // variables to control streaming datacube output
 
 
-public Map savedMap = new HashMap();
+public Map<String, ArrayList<String> > savedMap = new HashMap<String, ArrayList<String> >();
 public boolean started = false;
 public int emptyCount = 0;
 public long objectsRead = 0;
@@ -371,31 +371,32 @@ public Void call(JavaPairRDD<String, String> rdd){
                         // System.out.println("first:   "+ test._1 );
                         // System.out.println("second:   "+test._2);
 
-                        // ArrayList<String> getList =   savedMap.get(test._1)
-                        //                             if(getList == null)
-                        // {
-                        //         getList  =  new ArrayList<String>();
-                        //         savedMap.put(test._1,getList);
-                        // }
-                        // getList.add(test._2);
-
-
-
-
-
-                        try {
-                                FileWriter fw = new FileWriter(test._1, true);
-                                BufferedWriter bw = new BufferedWriter(fw);
-                                PrintWriter out = new PrintWriter(bw);
-                                // System.out.println("second:   "+test._2);
-                                out.println(test._2);
-                                out.close();
-                                //more code
-                                // out.println("more text");
-                                // //more code
-                        } catch (IOException e) {
-                                //exception handling left as an exercise for the reader
+                        ArrayList<String> getList =  (  ArrayList<String> )(savedMap.get(test._1));
+                        if(getList == null)
+                        {
+                                getList  =  new ArrayList<String>();
+                                getList.add(test._2);
+                                savedMap.put(test._1,getList);
                         }
+                        getList.add(test._2);
+
+
+
+
+
+                        // try {
+                        //         FileWriter fw = new FileWriter(test._1, true);
+                        //         BufferedWriter bw = new BufferedWriter(fw);
+                        //         PrintWriter out = new PrintWriter(bw);
+                        //         // System.out.println("second:   "+test._2);
+                        //         out.println(test._2);
+                        //         out.close();
+                        //         //more code
+                        //         // out.println("more text");
+                        //         // //more code
+                        // } catch (IOException e) {
+                        //         //exception handling left as an exercise for the reader
+                        // }
 
 
 
@@ -410,20 +411,10 @@ public Void call(JavaPairRDD<String, String> rdd){
                         // list.add(test._1);
                 }
 
-                // Iterator it = savedMap.entrySet().iterator();
-                // while (it.hasNext()) {
-                //         Map.Entry pair = (Map.Entry)it.next();
-                //
-                //         ArrayList<String> arraylist = pair.getValue();
-                //         String key = pair.getKey();
-                //         System.out.println( key+ " = " +arraylist. );
-                //         // it.remove(); // avoids a ConcurrentModificationException
-                // }
 
 
 
-
-                long count = list.size();
+                long count = rdd.count();
                 objectsRead += count;
                 System.out.println("size:    "+ objectsRead);
 
@@ -471,76 +462,12 @@ public Void call(JavaPairRDD<String, String> rdd){
 
                 System.out.println("saving333");
                 System.out.println("RDD Count: " + objectsRead);
+                System.out.println("RDD Count: " + objectsCount);
 
                 // update datacube either in MongoDB or in HDFS
                 System.out.println("DataCube.savePath4444\n\n\n");
                 // System.out.println(DataCube.savePath + "/stream");
                 // rdd.saveAsTextFile(DataCube.savePath + "/stream");
-
-
-
-
-
-
-
-//                 Map<String, String> map =    rdd.collectAsMap();
-
-// for (Map.Entry<String, String> entry : map.entrySet())
-// {
-//     System.out.println(entry.getKey() + "/xx/" + entry.getValue());
-// }
-
-                // for (rddData : rdd.collect()) {
-                // }
-
-
-
-
-
-                // String host = sparkgis.SparkGISConfig.mongoHost;
-                // int port = sparkgis.SparkGISConfig.mongoPort;
-                //
-                // MongoClient mongoClient = new MongoClient(host, port);
-                // DB db =  mongoClient.getDB("metadata_db");
-                //
-                // System.out.println("helloworld!!!!!!!!!!!");
-                //
-                // // System.out.println(outputdbCollection);
-                //
-                // DBCollection results = db.getCollection("metadata_col");
-                //
-                // BasicDBObject wdoc = new BasicDBObject("analysis_execution_id", 0)
-                //                      .append("x", 1)
-                //                      .append("tile_id", 2);
-
-
-                //     .append("y", ymin/H)
-                //     .append("loc", al)
-                //     .append("w", (xmax-xmin)/W)
-                //     .append("h", (ymax-ymin)/H)
-                //     .append("normalized", new Boolean(true))
-                //     .append("type", "heatmap")
-                //     .append("color", "red")
-                //     .append("features", features)
-                //     .append("image", image)
-                // .append("jobId", jobId);
-
-                // results.insert(wdoc);
-
-
-
-
-
-                //
-
-
-
-
-
-
-
-
-
 
 
 
@@ -554,17 +481,85 @@ public Void call(JavaPairRDD<String, String> rdd){
 
 
                         System.out.println("equal??\n\n\n");
+
+
+
+
+                        try {
+
+                                FileWriter fw = new FileWriter("datacube", true);
+                                BufferedWriter bw = new BufferedWriter(fw);
+                                PrintWriter out = new PrintWriter(bw);
+
+
+
+                                // Area : 1,Perimeter : 2,Elongation : 0,/4644
+
+                                int flag = -1;
+
+
+
+                                for (Map.Entry<String, ArrayList<String> > entry : savedMap.entrySet())
+                                {
+                                        String key = entry.getKey();
+                                        ArrayList<String>  value = entry.getValue();
+                                        // System.out.println( key + "/" + value.size());
+                                        String[] tmp_array =   key.split(",");
+                                        List<String> tmp1=Arrays.asList(tmp_array);
+
+                                        ArrayList<String> arraylist1 = new ArrayList<String>();
+                                        String key_1_cat ="";
+                                        String key_2_cat ="";
+
+                                        for(String key_tmp : tmp1)
+                                        {
+                                                String key_1 = key_tmp.split(":")[0];
+                                                String key_2 = key_tmp.split(":")[1];
+                                                // arraylist1.add(key_2);
+                                                key_1_cat = key_1_cat+key_1+",";
+                                                key_2_cat = key_2_cat+key_2+",";
+                                        }
+
+
+                                        if(flag == -1) {
+
+                                                out.println(key_1_cat);
+                                                flag = 1;
+
+                                        }
+
+                                        out.println(key_2_cat+"_size:"+value.size());
+                                        for(String cell_id : value)
+                                        {
+                                                out.println(cell_id);
+                                        }
+
+                                }
+
+
+                                out.close();
+
+                        } catch (IOException e) {
+                                //exception handling left as an exercise for the reader
+                        }
+
+
+
+
+
+
+
                         // stopStream();
 
 
-                        try{
-                                Socket s=new Socket("localhost",port_num);
-                                DataOutputStream dout=new DataOutputStream(s.getOutputStream());
-                                dout.writeUTF("shut up streaming");
-                                dout.flush();
-                                // dout.close();
-                                // s.close();
-                        }catch(Exception e) {System.out.println(e); }
+                        // try{
+                        //         Socket s=new Socket("localhost",port_num);
+                        //         DataOutputStream dout=new DataOutputStream(s.getOutputStream());
+                        //         dout.writeUTF("shut up streaming");
+                        //         dout.flush();
+                        //         // dout.close();
+                        //         // s.close();
+                        // }catch(Exception e) {System.out.println(e); }
 
 
 
