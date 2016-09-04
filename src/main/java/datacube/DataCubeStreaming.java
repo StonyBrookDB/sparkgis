@@ -485,11 +485,25 @@ public Void call(JavaPairRDD<String, String> rdd){
 
 
 
-                        try {
 
-                                FileWriter fw = new FileWriter("datacube", true);
-                                BufferedWriter bw = new BufferedWriter(fw);
-                                PrintWriter out = new PrintWriter(bw);
+
+
+ String fileName = "datacube_";
+
+  
+
+
+
+
+
+
+
+try {
+
+
+ FileOutputStream outputStream =
+                        new FileOutputStream(fileName);
+                                
 
 
 
@@ -523,25 +537,126 @@ public Void call(JavaPairRDD<String, String> rdd){
 
                                         if(flag == -1) {
 
-                                                out.println(key_1_cat);
+                                              
+                                             byte[] buffer = (key_1_cat+"\n").getBytes();
+                                            outputStream.write(buffer);
+                                               
                                                 flag = 1;
 
                                         }
+                                          byte[] buffer = (key_2_cat+"_size:"+value.size()+"\n").getBytes();
+                                            outputStream.write(buffer);
+                                               
 
-                                        out.println(key_2_cat+"_size:"+value.size());
                                         for(String cell_id : value)
                                         {
-                                                out.println(cell_id);
+                                             byte[] buffer2 = (cell_id+"\n").getBytes();
+                                            outputStream.write(buffer2);
+                                                
                                         }
 
                                 }
 
 
-                                out.close();
+                                outputStream.close();
 
                         } catch (IOException e) {
                                 //exception handling left as an exercise for the reader
                         }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                        // try {
+
+                        //         FileWriter fw = new FileWriter("datacube", true);
+                        //         BufferedWriter bw = new BufferedWriter(fw);
+                        //         PrintWriter out = new PrintWriter(bw);
+
+
+
+                        //         // Area : 1,Perimeter : 2,Elongation : 0,/4644
+
+                        //         int flag = -1;
+
+
+
+                        //         for (Map.Entry<String, ArrayList<String> > entry : savedMap.entrySet())
+                        //         {
+                        //                 String key = entry.getKey();
+                        //                 ArrayList<String>  value = entry.getValue();
+                        //                 // System.out.println( key + "/" + value.size());
+                        //                 String[] tmp_array =   key.split(",");
+                        //                 List<String> tmp1=Arrays.asList(tmp_array);
+
+                        //                 ArrayList<String> arraylist1 = new ArrayList<String>();
+                        //                 String key_1_cat ="";
+                        //                 String key_2_cat ="";
+
+                        //                 for(String key_tmp : tmp1)
+                        //                 {
+                        //                         String key_1 = key_tmp.split(":")[0];
+                        //                         String key_2 = key_tmp.split(":")[1];
+                        //                         // arraylist1.add(key_2);
+                        //                         key_1_cat = key_1_cat+key_1+",";
+                        //                         key_2_cat = key_2_cat+key_2+",";
+                        //                 }
+
+
+                        //                 if(flag == -1) {
+
+                        //                         out.println(key_1_cat);
+                        //                         flag = 1;
+
+                        //                 }
+
+                        //                 out.println(key_2_cat+"_size:"+value.size());
+                        //                 for(String cell_id : value)
+                        //                 {
+                        //                         out.println(cell_id);
+                        //                 }
+
+                        //         }
+
+
+                        //         out.close();
+
+                        // } catch (IOException e) {
+                        //         //exception handling left as an exercise for the reader
+                        // }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

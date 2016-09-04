@@ -221,6 +221,8 @@ public void getMinMax(List<DCDimension> dimensions, int option, Map<String, Obje
                                                 continue;
                                         groupValues.put(("min" + pName.value), new BasicDBObject("$min", ("$features."+pName.value)));
                                         groupValues.put(("max" + pName.value), new BasicDBObject("$max", ("$features."+pName.value)));
+                                        groupValues.put(( pName.value+"_min" ), new BasicDBObject("$min", ("$features."+pName.value)));
+                                        groupValues.put(( pName.value+"_max"), new BasicDBObject("$max", ("$features."+pName.value)));
                                 }
                                 DBObject group = new BasicDBObject("$group", groupValues);
 
@@ -341,9 +343,6 @@ private void insertMetaData(
 
 
 
-                        // for ( String key : result.keySet() ) {
-                        //         System.out.println( "key: " + key + " value: " + result.get( key ) );
-                        // }
 
 
 
@@ -351,18 +350,52 @@ private void insertMetaData(
 
                         String[] dimensions1 = dimension_str.split(",");
 
+                        ArrayList<String>  key_array = new       ArrayList<String>();
+
                         for(int i=0; i<dimensions1.length; i++)
                         {
                                 String tmp = dimensions1[i];
                                 String key = tmp.split("_")[0];
                                 String value = tmp.split("_")[1];
 
-                                ((BasicDBObject)result).append("resolution"+key, value);
+                                key_array.add(key);
+
+                                ((BasicDBObject)result).append(key+"_resolution", value);
 
                         }
 
 
 
+                        BasicDBObject document_all = new BasicDBObject( );
+                        for( String dim_key : key_array )
+                        {
+                                BasicDBObject document = new BasicDBObject();
+                                for ( String key : result.keySet() ) {
+                                        if(key.contains(dim_key))
+                                        {
+                                                Object val =result.get( key );
+                                                document.append(key,val);
+                                        }
+                                }
+                                document_all.append(dim_key,document);
+
+
+                        }
+
+                        //
+                        // DBObject document = new BasicDBObject();
+                        // .append("lastName", "Doe")
+                        // .append("subject", "Computer Science")
+                        // .append("languages", Arrays.asList("Java", "C", "C++"))
+                        // .append("email", "john.doe@school.com")
+                        // .append("address",
+                        //         new BasicDBObject("street", "Main Apple St. 12")
+                        //         .append("city", "New York")
+                        //         .append("country", "USA"));
+
+                        // for ( String key : result.keySet() ) {
+                        //         System.out.println( "keyss: " + key + " value: " + result.get( key ) );
+                        // }
 
 
 
@@ -371,6 +404,8 @@ private void insertMetaData(
 
 
                         dataCubeMetaData.append("min_max", result);
+                        dataCubeMetaData.append("dimension", document_all);
+
                 }
 
 
