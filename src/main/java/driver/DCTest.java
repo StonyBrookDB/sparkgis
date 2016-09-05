@@ -226,10 +226,8 @@ private LinkedHashMap<String, Object> objectsQuery(List<String> caseIDs){
 
         LinkedHashMap<String, List> or = new LinkedHashMap<String, List>();
         or.put("image.caseid", caseIDs);
+
         params.put("or", or);
-
-
-
 
 
         // if (caseIDCount == 1) {
