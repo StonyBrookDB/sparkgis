@@ -1,0 +1,31 @@
+begin
+part_size: 2048
+/home/cochung/hadoop_config_folder/core-site.xml
+/home/cochung/hadoop_config_folder/hdfs-site.xml
+localhost:54310
+localhost
+27017
+Starting Job ...
+JobID:	3beb2060-58c7-11e6-b9ef-e9c119b52462
+caseIDs:
+	TCGA-02-0001-01Z-00-DX1
+Algos:
+	yi-algorithm-v1
+	yi-algorithm-v11
+Predicate:	st_intersects
+Metric Type:	3
+Partition size:	2048
+Input:	mongo
+Output:	mongo
+/home/cochung/hadoop_config_folder/core-site.xml
+/home/cochung/hadoop_config_folder/hdfs-site.xml
+test: inputdbName:	temp_db
+test: inputdbCollection:	temp_col
+test: inputdbName:	temp_db
+test: inputdbCollection:	temp_col
+Processed: 0/0shere
+sadsadasd
+jobId:    3beb2060-58c7-11e6-b9ef-e9c119b52462
+helloworld!!!!!!!!!!!
+temp_col
+completed

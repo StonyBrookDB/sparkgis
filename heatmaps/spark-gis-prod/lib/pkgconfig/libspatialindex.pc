@@ -1,0 +1,12 @@
+prefix=/home/hoang/software
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: libspatialindex 
+Description: Generic C/C++ library for spatial indexing
+Requires: 
+Version: 1.8.3
+Libs: -L${exec_prefix}/lib
+Cflags: -I${includedir}/spatialindex -Wall -Wno-long-long -pedantic  
+
