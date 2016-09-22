@@ -30,17 +30,8 @@ import sparkgis.SparkGISConfig;
 
 public class SparkGISMain
 {
-
-
-
-  
-
-
-
     // just for experimentation purposes
-    
-   
-    
+     
     /**
      * Command line arguments: 
      * -a Comma separated list of algos [yi-algorithm-v1 | yi-algorithm-v11]
@@ -51,12 +42,12 @@ public class SparkGISMain
     
     public static void main(String[] args) 
     {	
-    System.out.println("begin");
-     //String hdfs-name-node-ip =  "10.10.10.11";
-    String hdfs_name_node_ip =  SparkGISConfig.hdfsNameNodeIP;
-     String hdfsPrefix = "hdfs://"+  hdfs_name_node_ip         +"/user/fbaig/";
+	System.out.println("begin");
+	//String hdfs-name-node-ip =  "10.10.10.11";
+	String hdfs_name_node_ip =  SparkGISConfig.hdfsNameNodeIP;
+	String hdfsPrefix = "hdfs://"+  hdfs_name_node_ip         +"/user/fbaig/";
     
-    System.out.println(SparkGISConfig.hdfsCoreSitePath);
+	System.out.println(SparkGISConfig.hdfsCoreSitePath);
 	System.out.println(SparkGISConfig.hdfsHdfsSitePath);
 	System.out.println(SparkGISConfig.hdfsNameNodeIP);
 	
@@ -79,31 +70,18 @@ public class SparkGISMain
 	/******************************************************/
 	final CommandLineParser parser = new BasicParser();
 	final Options options = new Options();
-  options.addOption("l", "upload", true, "upload_files");
+	options.addOption("l", "upload", true, "upload_files");
 	options.addOption("u", "uid", true, "32-bit unique ID");
 	options.addOption("a", "algos", true, "Comma separated list of algorithms [yi-algorithm-v1 | yi-algorithm-v11]");
 	options.addOption("c", "caseids", true, "Comma separated list of caseIDs");
 	options.addOption("i", "input", true, "Input source [hdfs|mongodb]");
 	options.addOption("o", "output", true, "Output destination [hdfs|mongodb|client]");
 
-		options.addOption("q", "inputdb", true, "Input source [hdfs|mongodb]");
+	options.addOption("q", "inputdb", true, "Input source [hdfs|mongodb]");
 	options.addOption("w", "inputcollection", true, "Output destination [hdfs|mongodb|client]");
 
 	options.addOption("z", "outputdb", true, "Input source [hdfs|mongodb]");
 	options.addOption("x", "outputcollection", true, "Output destination [hdfs|mongodb|client]");
-	
-
-
-
-
-
-
-
-
-
-
-
-
 
 	options.addOption("m", "metric", true, "Metric type [jaccard|dice|tile_dice] Default:jaccard");
 	options.addOption("r", "result_exe_id", true, "execution_analysis_id for result to show in caMicroscope");
@@ -111,9 +89,6 @@ public class SparkGISMain
 	
 	try{
 	    final CommandLine commandLine = parser.parse(options, args);	    
-
-
-	  
 
 	    /* Job ID */
 	    if (commandLine.hasOption('u')){
@@ -134,95 +109,76 @@ public class SparkGISMain
 		else hmType = HMType.JACCARD;
 	    }
 
-
-
-	      if (commandLine.hasOption('l')){
+	    if (commandLine.hasOption('l')){
 		String tmp = getOption('l', commandLine);
 
-		
-
-
 		if(tmp.equalsIgnoreCase("yes"))
-		{
+		    {
 			spIn = IO.MONGODB;
-		spOut = IO.MONGODB;
-
-
+			spOut = IO.MONGODB;
 
 			// SparkGISConfig.input_mongoDB = "temp_db";
 			// 	SparkGISConfig.input_collection_name = "temp_col";
 			// 		SparkGISConfig.output_mongoDB ="temp_db" ;
 			// 	SparkGISConfig.output_collection_name = "temp_col";
 
-    SparkGISConfig.input_mongoDB = SparkGISConfig.temp_mongoDB;
-				SparkGISConfig.input_collection_name = SparkGISConfig.temp_collection_name;
-					SparkGISConfig.output_mongoDB =  SparkGISConfig.temp_mongoDB;
-				SparkGISConfig.output_collection_name = SparkGISConfig.temp_collection_name;
-		}
-			
+			SparkGISConfig.input_mongoDB = SparkGISConfig.temp_mongoDB;
+			SparkGISConfig.input_collection_name = SparkGISConfig.temp_collection_name;
+			SparkGISConfig.output_mongoDB =  SparkGISConfig.temp_mongoDB;
+			SparkGISConfig.output_collection_name = SparkGISConfig.temp_collection_name;
+		    }			
 	    }
 	    else{
-
-
-	    /* IO specifics */
-	    if (commandLine.hasOption('i')){
-		String in = commandLine.getOptionValue('i');		    
-		if (in.equalsIgnoreCase("hdfs")) spIn = IO.HDFS;
-		else if (in.equalsIgnoreCase("mongodb")) 
-		{
+		/* IO specifics */
+		if (commandLine.hasOption('i')){
+		    String in = commandLine.getOptionValue('i');		    
+		    if (in.equalsIgnoreCase("hdfs")) spIn = IO.HDFS;
+		    else if (in.equalsIgnoreCase("mongodb")) {
 			if (commandLine.hasOption('q')  &&   commandLine.hasOption('w')      ){
-
-				String inputdb = commandLine.getOptionValue('q');
-				String inputcol = commandLine.getOptionValue('w');
-
-				SparkGISConfig.input_mongoDB = inputdb;
-				SparkGISConfig.input_collection_name = inputcol;
-
-
-				System.out.println("inputdbname: "+SparkGISConfig.input_mongoDB );
+			    
+			    String inputdb = commandLine.getOptionValue('q');
+			    String inputcol = commandLine.getOptionValue('w');
+			    
+			    SparkGISConfig.input_mongoDB = inputdb;
+			    SparkGISConfig.input_collection_name = inputcol;
+			    
+			    
+			    System.out.println("inputdbname: "+SparkGISConfig.input_mongoDB );
 				System.out.println("inputdbcollection:  "+SparkGISConfig.input_collection_name);
 			}
 
-
+			
 			spIn = IO.MONGODB;
+		    }
+		    else throw new ParseException("Invalid input source");
 		}
-
-
-
 		else throw new ParseException("Invalid input source");
-	    }
-	    else throw new ParseException("Invalid input source");
-	    if (commandLine.hasOption('o')){
-		String out = commandLine.getOptionValue('o');
-		if (out.equalsIgnoreCase("hdfs")) spOut = IO.HDFS;
-		else if (out.equalsIgnoreCase("mongodb")){
-
+		if (commandLine.hasOption('o')){
+		    String out = commandLine.getOptionValue('o');
+		    if (out.equalsIgnoreCase("hdfs")) spOut = IO.HDFS;
+		    else if (out.equalsIgnoreCase("mongodb")){
 
 			if (commandLine.hasOption('q')  &&   commandLine.hasOption('w')      ){
 
-				String outputdb = commandLine.getOptionValue('z');
-				String outputcol = commandLine.getOptionValue('x');
+			    String outputdb = commandLine.getOptionValue('z');
+			    String outputcol = commandLine.getOptionValue('x');
 
-				SparkGISConfig.output_mongoDB = outputdb;
-				SparkGISConfig.output_collection_name = outputcol;
+			    SparkGISConfig.output_mongoDB = outputdb;
+			    SparkGISConfig.output_collection_name = outputcol;
 
-
-				System.out.println("outputdbname: "+SparkGISConfig.output_mongoDB );
-				System.out.println("outputdbcollection:  "+SparkGISConfig.output_collection_name);
+			    System.out.println("outputdbname: "+SparkGISConfig.output_mongoDB );
+			    System.out.println("outputdbcollection:  "+SparkGISConfig.output_collection_name);
 			}
-
-
-
-		    spOut = IO.MONGODB;
-		    // MongoDB output requires further values to be specified
+			spOut = IO.MONGODB;
+			// MongoDB output requires further values to be specified
 		    
+		    }
+		    else if (out.equalsIgnoreCase("client")) spOut = IO.CLIENT;
+		    else throw new ParseException("Invalid output destination");
 		}
-		else if (out.equalsIgnoreCase("client")) spOut = IO.CLIENT;
 		else throw new ParseException("Invalid output destination");
-	    }
-	    else throw new ParseException("Invalid output destination");
 
-	}
+	    }
 	    /* Result config */
 
 	    // EXPERIMENT ONLY get caseID list
@@ -231,11 +187,11 @@ public class SparkGISMain
 	    // for (int i=caseIDs.size()-1; i>(100-1); --i)
 	    // 	caseIDs.remove(i);
 	    if (commandLine.hasOption('r')){
-			result_analysis_exe_id = commandLine.getOptionValue('r');
-		    }else throw new ParseException("result_analysis_exe_id not specified");
+		result_analysis_exe_id = commandLine.getOptionValue('r');
+	    }else throw new ParseException("result_analysis_exe_id not specified");
 	    final List<String> caseIDs = Arrays.asList(caseIDcsv.split(","));
 	    final List<String> algos = Arrays.asList(algosCsv.split(","));
-  	int partitionSize = SparkGISConfig.partition_size;
+	    int partitionSize = SparkGISConfig.partition_size;
 
 
 	    // print options
@@ -275,7 +231,7 @@ public class SparkGISMain
 	// HDFS configuration
  
  
-   System.out.println(SparkGISConfig.hdfsCoreSitePath);
+	System.out.println(SparkGISConfig.hdfsCoreSitePath);
 	System.out.println(SparkGISConfig.hdfsHdfsSitePath);
  
 	//final String coreSitePath = "/home/hoang/nfsconfig/core-site.xml";
@@ -285,8 +241,8 @@ public class SparkGISMain
 	final String hdfsSitePath = SparkGISConfig.hdfsHdfsSitePath;
  
  
-  String hdfs_name_node_ip =  SparkGISConfig.hdfsNameNodeIP;
-     String hdfsPrefix = "hdfs://"+  hdfs_name_node_ip         +"/user/fbaig/";
+	String hdfs_name_node_ip =  SparkGISConfig.hdfsNameNodeIP;
+	String hdfsPrefix = "hdfs://"+  hdfs_name_node_ip         +"/user/fbaig/";
  
  
 	final String dataDir = hdfsPrefix + "new-data/";
@@ -299,13 +255,13 @@ public class SparkGISMain
 							 );
 	//final MongoDBDataAccess mongoInOut = new MongoDBDataAccess();
  
-   // String host = SparkGISConfig.mongoHost;
-   //    int port = SparkGISConfig.mongoPort;
-   //    String dbName = SparkGISConfig.mongoDB;
+	// String host = SparkGISConfig.mongoHost;
+	//    int port = SparkGISConfig.mongoPort;
+	//    String dbName = SparkGISConfig.mongoDB;
  	
  
- // final MongoDBDataAccess mongoInOut = new MongoDBDataAccess(host,port,dbName,collection_name);
-      final MongoDBDataAccess mongoInOut = new MongoDBDataAccess();
+	// final MongoDBDataAccess mongoInOut = new MongoDBDataAccess(host,port,dbName,collection_name);
+	final MongoDBDataAccess mongoInOut = new MongoDBDataAccess();
 
  
  

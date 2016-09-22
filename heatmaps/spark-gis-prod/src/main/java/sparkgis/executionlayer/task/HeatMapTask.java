@@ -59,6 +59,8 @@ public class HeatMapTask extends Task implements Callable<String>{
     @Override
     public String call(){
 	List<JavaRDD<TileStats>> results = new ArrayList<JavaRDD<TileStats>>();
+
+	sparkgis.stats.Profile.log.put("HeatMapTask-"+super.data, System.nanoTime());
 	
 	DataConfig[] configs = new DataConfig[algoCount];
 	List<Future<DataConfig>> futures = new ArrayList<Future<DataConfig>>();
@@ -72,6 +74,7 @@ public class HeatMapTask extends Task implements Callable<String>{
 	// close thread pool
 	exeService.shutdown();
 
+	sparkgis.stats.Profile.log.put("[BEGIN] Spatial Processing-"+super.data, System.nanoTime());
 	//final List<AlgoPair> algoPairs = generatePairs(algos);
 	final List<Integer> pairs = generatePairs();
 	for (int i=0; i<pairs.size(); i+=2){
@@ -83,6 +86,7 @@ public class HeatMapTask extends Task implements Callable<String>{
 	    }
 	    else System.out.println("Unexpected data configurations for caseID:"+super.data);
 	}
+	sparkgis.stats.Profile.log.put("[END] Spatial Processing & \n[BEGIN] Writing results-"+super.data, System.nanoTime());
 	// heatmap stats generated for all algorithm pairs
 	// parameters to upload results to mongoDB
 	String caseID = configs[0].caseID;
@@ -94,13 +98,12 @@ public class HeatMapTask extends Task implements Callable<String>{
 	title = title.substring(0, title.length()-1);
 	String ret = "";
  
- System.out.println("shere");
+	System.out.println("shere - baig");
 	for (JavaRDD<TileStats> result:results){
 	    ret = outDest.writeTileStats(result, caseID, orig_analysis_exe_id, title, result_analysis_exe_id,jobId);
-		 System.out.println("completed");
-
-
+	    System.out.println("completed");
 	}
+	sparkgis.stats.Profile.log.put("Done-"+super.data, System.nanoTime());
 	return ret;
     }
 
@@ -117,17 +120,20 @@ public class HeatMapTask extends Task implements Callable<String>{
 	
 	@Override
 	public DataConfig call(){
-	    long start = System.nanoTime();
+	    //long start = System.nanoTime();
+	    sparkgis.stats.Profile.log.put("[BEGIN] IO-"+caseID+"-"+algo, System.nanoTime());
 	    // get data from input source and keep in memory
 	    JavaRDD<Polygon> polygonsRDD = inputSrc.getPolygonsRDD(caseID, algo).cache();
 	    long objCount = polygonsRDD.count();	
-	    
+	    sparkgis.stats.Profile.log.put("[END] IO-"+caseID+"-"+algo, System.nanoTime());
 	    //Profile.log("[Obj]" + super.data + "-" + algo, objCount);
-	    start = System.nanoTime();
+	    //start = System.nanoTime();
 	    if (objCount != 0){
+		sparkgis.stats.Profile.log.put("[BEGIN] PrepareData-"+caseID+"-"+algo, System.nanoTime());
 		// Invoke spark job: Prepare Data
 		SparkPrepareData job = new SparkPrepareData(caseID);
 		DataConfig ret = job.execute(polygonsRDD);
+		sparkgis.stats.Profile.log.put("[END] PrepareData-"+caseID+"-"+algo, System.nanoTime());
 		return ret;
 	    }
 	    return null;
@@ -138,7 +144,7 @@ public class HeatMapTask extends Task implements Callable<String>{
      * Stage-2: Generate heatmap from data configurations
      */
     private JavaRDD<TileStats> generateHeatMap(DataConfig config1, DataConfig config2){
-	long start = System.nanoTime();
+	//long start = System.nanoTime();
 	SparkSpatialJoinHM heatmap1 = new SparkSpatialJoinHM(config1, config2, predicate, type, partitionSize);
 	//JavaRDD<TileStats> result = heatmap1.execute();
 	return heatmap1.execute();

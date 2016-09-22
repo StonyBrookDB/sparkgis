@@ -126,6 +126,7 @@ public class SparkSpatialJoinHM implements Serializable{
 	//Profile.log2("[SpatialJoin] data2: " + data2.partitions().size());
     	// Join both datasets in same RDD
     	JavaRDD<String> combinedData = data1.union(data2);
+
 	Profile.log2("[SpatialJoin] combinedData (union): " + combinedData.partitions().size());
 	
 	// build index file
