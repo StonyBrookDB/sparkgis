@@ -33,10 +33,8 @@ inputcollection='--inputcollection results'
 outputcollection='' #'--outputcollection temp_col'
 
 resultExeID='--result_exe_id fbaig'
-#echo $USAGE
 
 # run spark job
+echo "Executing command $SPARK_HOME/bin/spark-submit --class $className $jar $algos $caseIDs $heatmapType $input $output $inputdb $inputcollection $outputdb $outputcollection $resultExeID"
 
-echo "Executing command $SPARK_PATH/bin/spark-submit --class $className $jar $algos $caseIDs $heatmapType $input $output $inputdb $inputcollection $outputdb $outputcollection $resultExeID"
-
-$SPARK_PATH/bin/spark-submit --class $className $jar $algos $caseIDs $heatmapType $input $output $inputdb $inputcollection $outputdb $outputcollection $resultExeID
+$SPARK_HOME/bin/spark-submit --class $className $jar $algos $caseIDs $heatmapType $input $output $inputdb $inputcollection $outputdb $outputcollection $resultExeID
