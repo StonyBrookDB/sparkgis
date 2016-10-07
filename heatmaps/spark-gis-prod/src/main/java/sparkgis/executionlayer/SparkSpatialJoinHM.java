@@ -56,7 +56,6 @@ public class SparkSpatialJoinHM implements Serializable{
 	maxY = (config1.getMaxY() > config2.getMaxY())?config1.getMaxY():config2.getMaxY();
 	combinedConfig.setSpaceDimensions(minX, minY, maxX, maxY);
 	combinedConfig.setSpaceObjects(config1.getSpaceObjects() + config2.getSpaceObjects());
-	// Hard-coded partition size
 	combinedConfig.setPartitionBucketSize(partitionSize);
 
 	// DEBUG

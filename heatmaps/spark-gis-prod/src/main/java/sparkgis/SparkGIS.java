@@ -43,8 +43,6 @@ public class SparkGIS
 	
 	// create a thread pool for async jobs
     	ExecutorService exeService = Executors.newFixedThreadPool(threadCount);
-
-	sparkgis.stats.Profile.log.put("Start", System.nanoTime());
 	
 	// for a given algorithm pair create parallel heatmap generation tasks
 	List<HeatMapTask> tasks = new ArrayList<HeatMapTask>();
@@ -64,8 +62,6 @@ public class SparkGIS
 	
 	//close thread pool
 	exeService.shutdown();
-
-	sparkgis.stats.Profile.yank_log();
     }
     
     public static < E > String createTSString(E... args){

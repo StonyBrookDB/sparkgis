@@ -30,8 +30,6 @@ import sparkgis.SparkGISConfig;
 
 public class SparkGISMain
 {
-    // just for experimentation purposes
-     
     /**
      * Command line arguments: 
      * -a Comma separated list of algos [yi-algorithm-v1 | yi-algorithm-v11]
@@ -41,24 +39,13 @@ public class SparkGISMain
      */
     
     public static void main(String[] args) 
-    {	
-	System.out.println("begin");
-	//String hdfs-name-node-ip =  "10.10.10.11";
-	String hdfs_name_node_ip =  SparkGISConfig.hdfsNameNodeIP;
-	String hdfsPrefix = "hdfs://"+  hdfs_name_node_ip         +"/user/fbaig/";
-    
+    {	    
 	System.out.println(SparkGISConfig.hdfsCoreSitePath);
 	System.out.println(SparkGISConfig.hdfsHdfsSitePath);
 	System.out.println(SparkGISConfig.hdfsNameNodeIP);
 	
 	System.out.println(SparkGISConfig.mongoHost);
 	System.out.println(SparkGISConfig.mongoPort);
-	// System.out.println(SparkGISConfig.mongoDB);
-	// System.out.println(SparkGISConfig.collection_name);
-	// System.out.println(SparkGISConfig.collection_name_temp);
-
-	// String collection_name=SparkGISConfig.collection_name;
-
 	
 	String jobID = null;
 	Predicate predicate = Predicate.INTERSECTS;
@@ -117,11 +104,6 @@ public class SparkGISMain
 			spIn = IO.MONGODB;
 			spOut = IO.MONGODB;
 
-			// SparkGISConfig.input_mongoDB = "temp_db";
-			// 	SparkGISConfig.input_collection_name = "temp_col";
-			// 		SparkGISConfig.output_mongoDB ="temp_db" ;
-			// 	SparkGISConfig.output_collection_name = "temp_col";
-
 			SparkGISConfig.input_mongoDB = SparkGISConfig.temp_mongoDB;
 			SparkGISConfig.input_collection_name = SparkGISConfig.temp_collection_name;
 			SparkGISConfig.output_mongoDB =  SparkGISConfig.temp_mongoDB;
@@ -142,12 +124,9 @@ public class SparkGISMain
 			    SparkGISConfig.input_mongoDB = inputdb;
 			    SparkGISConfig.input_collection_name = inputcol;
 			    
-			    
 			    System.out.println("inputdbname: "+SparkGISConfig.input_mongoDB );
-				System.out.println("inputdbcollection:  "+SparkGISConfig.input_collection_name);
-			}
-
-			
+			    System.out.println("inputdbcollection:  "+SparkGISConfig.input_collection_name);
+			}			
 			spIn = IO.MONGODB;
 		    }
 		    else throw new ParseException("Invalid input source");
@@ -209,13 +188,7 @@ public class SparkGISMain
 	    System.out.println("Input:\t" + ((spIn==IO.HDFS)?"hdfs":"mongo"));
 	    System.out.println("Output:\t" + ((spOut==IO.MONGODB)?"mongo":"hdfs"));
 
-	    callHeatMap(jobID, spIn, caseIDs, algos, predicate, hmType, partitionSize, spOut, result_analysis_exe_id);
-	    // for (int i=128; i<=512; i+=128){
-	    // 	jobID = UUID.randomUUID().toString();
-	    //Profile.heatmaps(jobID, caseIDs, algos, predicate, hmType, i);
-	    //Profile.heatmaps(jobID, spIn, caseIDs, algos, predicate, hmType, 512, spOut, result_analysis_exe_id);
-	    //}
-	    
+	    callHeatMap(jobID, spIn, caseIDs, algos, predicate, hmType, partitionSize, spOut, result_analysis_exe_id);	    
 	}
 	catch(ParseException e){
 	    e.printStackTrace();
@@ -228,43 +201,27 @@ public class SparkGISMain
     public static void callHeatMap(String jID, IO in, List<String> caseIDs, List<String> algos, Predicate predicate, HMType hmType, int partitionSize, IO out, String result_analysis_exe_id){
 	    
 	boolean returnResults = false;
-	// HDFS configuration
+	/* HDFS custom configuration */
+ 	// final String coreSitePath = SparkGISConfig.hdfsCoreSitePath;
+	// final String hdfsSitePath = SparkGISConfig.hdfsHdfsSitePath;
  
- 
-	System.out.println(SparkGISConfig.hdfsCoreSitePath);
-	System.out.println(SparkGISConfig.hdfsHdfsSitePath);
- 
-	//final String coreSitePath = "/home/hoang/nfsconfig/core-site.xml";
-	//final String hdfsSitePath = "/home/hoang/nfsconfig/hdfs-site.xml";
- 
- 	final String coreSitePath = SparkGISConfig.hdfsCoreSitePath;
-	final String hdfsSitePath = SparkGISConfig.hdfsHdfsSitePath;
- 
- 
-	String hdfs_name_node_ip =  SparkGISConfig.hdfsNameNodeIP;
-	String hdfsPrefix = "hdfs://"+  hdfs_name_node_ip         +"/user/fbaig/";
- 
- 
-	final String dataDir = hdfsPrefix + "new-data/";
-	final String outDir = hdfsPrefix + "results/"+jID+"/";
-	final ISparkGISIO hdfsInOut = new HDFSDataAccess(
-							 coreSitePath, 
-							 hdfsSitePath, 
-							 dataDir, 
-							 outDir
-							 );
-	//final MongoDBDataAccess mongoInOut = new MongoDBDataAccess();
- 
-	// String host = SparkGISConfig.mongoHost;
-	//    int port = SparkGISConfig.mongoPort;
-	//    String dbName = SparkGISConfig.mongoDB;
- 	
- 
-	// final MongoDBDataAccess mongoInOut = new MongoDBDataAccess(host,port,dbName,collection_name);
-	final MongoDBDataAccess mongoInOut = new MongoDBDataAccess();
+	// String hdfs_name_node_ip =  SparkGISConfig.hdfsNameNodeIP;
+	// String hdfsPrefix = "hdfs://"+  hdfs_name_node_ip         +"/user/fbaig/";
+	// final String dataDir = hdfsPrefix + "new-data/";
+	// final String outDir = hdfsPrefix + "results/"+jID+"/";
 
- 
- 
+	// final HDFSDataAccess hdfsInOut = new HDFSDataAccess(
+	// 						 coreSitePath, 
+	// 						 hdfsSitePath, 
+	// 						 dataDir, 
+	// 						 outDir
+	// 						 );
+
+	/* use default configurations specified in resources/sparkgis.properties */
+	final HDFSDataAccess hdfsInOut = new HDFSDataAccess();
+	hdfsInOut.appendResultsDir(jID);
+	final MongoDBDataAccess mongoInOut = new MongoDBDataAccess();
+	
 	ISparkGISIO spIn = null;
 	ISparkGISIO spOut = null;
 	// input source
@@ -296,7 +253,7 @@ public class SparkGISMain
 	    return;
 	}
 	
-	// Initialize SparkGIS with input source and output destination
+	/* Initialize SparkGIS with input source and output destination */
 	final SparkGIS spgis = new SparkGIS(spIn, spOut);
 	spgis.heatMaps(jID,
 		       algos, 
@@ -306,28 +263,12 @@ public class SparkGISMain
 		       partitionSize,
 		       result_analysis_exe_id
 		       );
-	// shutdown this spark context
+	/* shutdown this spark context */
 	SparkGIS.sc.stop();
 	
 	if (returnResults)
-	    System.out.println("Results are stored at: " + outDir);
+	    System.out.println("Results are stored at: " + hdfsInOut.getResultsDir());
     }
-   
-    // private static void checkFiles(List<String> caseIDs){
-    // 	HDFSDataAccess hdfs = new HDFSDataAccess();
-    // 	for(String caseID : caseIDs){
-    // 	    if (!hdfs.fileExists(algo1+"/" + caseID))
-    // 		System.out.println(algo1+"-"+caseID+" Doesnot exit !!!");
-    // 	    if (!hdfs.fileExists(algo2+"/" + caseID))
-    // 		System.out.println(algo2+"-"+caseID+" Doesnot exit !!!");
-    // 	}
-    // 	System.out.println("Done!!!");
-    // }
-    
-    // private static void mongoToHDFS(List<String> caseIDs){
-    // 	MongoToHDFS m2h = new MongoToHDFS();
-    // 	m2h.execute(algo1, algo2, caseIDs);
-    // }
    
     /**
      * Get caseID list to process
