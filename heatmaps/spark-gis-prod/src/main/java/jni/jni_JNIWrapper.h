@@ -21,7 +21,7 @@ JNIEXPORT jobjectArray JNICALL Java_jni_JNIWrapper_partitionMapperJoin
  * Signature: ([Ljava/lang/String;Ljava/lang/String;II)[Ljava/lang/String;
  */
 JNIEXPORT jobjectArray JNICALL Java_jni_JNIWrapper_resque
-  (JNIEnv *, jclass, jobjectArray, jstring, jint, jint);
+  (JNIEnv *, jobject, jobjectArray, jstring, jint, jint);
 
 /*
  * Class:     jni_JNIWrapper
@@ -29,7 +29,7 @@ JNIEXPORT jobjectArray JNICALL Java_jni_JNIWrapper_resque
  * Signature: ([Ljava/lang/String;Ljava/lang/String;II)D
  */
 JNIEXPORT jdouble JNICALL Java_jni_JNIWrapper_resqueTileDice
-  (JNIEnv *, jclass, jobjectArray, jstring, jint, jint);
+  (JNIEnv *, jobject, jobjectArray, jstring, jint, jint);
 
 #ifdef __cplusplus
 }
