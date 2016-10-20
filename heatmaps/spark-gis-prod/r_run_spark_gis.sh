@@ -21,8 +21,8 @@ jar=target/uber-spark-gis-1.0.jar
 # command line arguments
 uid='--uid 123456'
 algos=' --algos "yi-algorithm-v1,yi-algorithm-v11"'
-#caseIDs=' --caseids "TCGA-02-0001-01Z-00-DX1,TCGA-02-0001-01Z-00-DX2,TCGA-02-0001-01Z-00-DX3,TCGA-02-0003-01Z-00-DX1,TCGA-02-0003-01Z-00-DX2,TCGA-02-0004-01Z-00-DX1,TCGA-02-0006-01Z-00-DX1,TCGA-02-0006-01Z-00-DX2,TCGA-02-0007-01Z-00-DX1"'
-caseIDs=' --caseids "TCGA-02-0001-01Z-00-DX1"'
+caseIDs=' --caseids "TCGA-02-0001-01Z-00-DX1,TCGA-02-0001-01Z-00-DX2,TCGA-02-0001-01Z-00-DX3,TCGA-02-0003-01Z-00-DX1,TCGA-02-0003-01Z-00-DX2,TCGA-02-0004-01Z-00-DX1,TCGA-02-0006-01Z-00-DX1,TCGA-02-0006-01Z-00-DX2,TCGA-02-0007-01Z-00-DX1"'
+#caseIDs=' --caseids "TCGA-02-0001-01Z-00-DX1"'
 heatmapType=' --metric jaccard'
 input=' --input hdfs'
 output=' --output client'
