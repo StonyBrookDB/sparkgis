@@ -35,9 +35,9 @@ public class SparkPrepareData implements Serializable
     
     public SparkPrepareData(String imageName)
     {
-	// initialize configuration
+	/* initialize configuration */
 	dataConfig = new DataConfig(imageName);
-	// initialize SparkSpatialIndex. Index built in 'loadStep1()'
+	/* initialize SparkSpatialIndex. Index built in 'loadStep1()' */
 	ssidx = new SparkSpatialIndex();
     }
     
@@ -47,19 +47,11 @@ public class SparkPrepareData implements Serializable
      * Step-2: Using index, map original data to physical partition tiles
      */
     public DataConfig execute(JavaRDD<Polygon> polygons){
-	
-	//long start = System.nanoTime();
-
 	dataConfig.originalData = polygons;
-	// pass data to step-1 for further processing
-	//System.out.println("Stage-2: Starting 'Load Data Step-1' .......... ");
+	/* pass data to step-1 for further processing */
 	loadStep1(polygons);
-	//System.out.println("Stage-2: 'Load Data Step-1' Finished! ");
 	// // move on to step-2
-	// System.out.println("Stage-3: Starting 'Load Data Step-2' .......... ");
 	// loadStep2(sampledTSV);
-	// System.out.println("Stage-3: 'Load Data Step-2' Finished! ");
-
 	//dataConfig.dataPrepTime = System.nanoTime() - start;
 
 	return dataConfig;
@@ -80,65 +72,22 @@ public class SparkPrepareData implements Serializable
 	/*
 	 * Input:  Tab Seperated Data from Job1
 	 * Output: Tab Separated Minimum Bounding Boxes Data
-	 * Map: Extract MBBs from objects
-	 * Reduce: None
 	 */
-	//System.out.print("\tStage-2.1: Starting 'MBB Extraction' .......... ");
 	JavaRDD<Tile> mbbs = polygonsData.map(new MBBExtractor())
 	    .filter(new Function <Tile, Boolean>(){
 		    public Boolean call(Tile t) {
 			return !((t.minX+t.minY+t.maxX+t.maxY) == 0);
 		    }
-		});//.cache(); //  keep in memory for further processing
-	//System.out.println("Done!");
-	Profile.log2("[PrepareData] MBBS: " + mbbs.partitions().size());
+		});
 	/**************** End Stage-2.1 ********************/
 	
 	/****** Stage-2.2: Space dimensions retreival ******/
-	//System.out.println("\tStage-2.2: Starting 'Space Dimension Retrieval' .......... ");
-	extractSpaceDimensions(mbbs);
-	//System.out.println("Done!");
-	
+	extractSpaceDimensions(mbbs);	
 	/**************** End Stage-2.2 ********************/
     }
-
-    // /**
-    //  * Map orginal data to paritions using index from step-1
-    //  */
-    // public void loadStep2(JavaRDD<String> rawData){
-    // 	/***** Stage-3.2: Data to physical partitions *****/
-    // 	System.out.print("\tStage-3.2: Starting 'Map data to physical partitions' .......... ");
-    // 	dataConfig.mappedPartitions = rawData.flatMapToPair(new PartitionMapper(dataConfig.getGeomid()));
-    //     System.out.println("Done!");
-    // 	/**************** End Stage-3.2 ********************/	
-    // }
-    
     
     /************************** Helper Methods **************************/
         
-    // /**
-    //  * Denormalize partitions
-    //  */
-    // private List<Tile> denormalize(List<Tile> partitions){
-    // 	double spaceXSpan = dataConfig.getSpanX();
-    // 	double spaceYSpan = dataConfig.getSpanY();
-    // 	double dataMinX = dataConfig.getMinX();
-    // 	double dataMinY = dataConfig.getMinY();
-    // 	double dataMaxX = dataConfig.getMaxX();
-    // 	double dataMaxY = dataConfig.getMaxY();
-	
-    // 	List<Tile> denormPartition = new ArrayList<Tile>();
-    // 	for (Tile pTile : partitions){
-    // 	    pTile.minX = pTile.minX * spaceXSpan + dataMinX;
-    // 	    pTile.minY = pTile.minY * spaceYSpan + dataMinY;
-    // 	    pTile.maxX = pTile.maxX * spaceXSpan + dataMinX;
-    // 	    pTile.maxY = pTile.maxY * spaceYSpan + dataMinY;
-	    
-    // 	    denormPartition.add(pTile);
-    // 	}
-    // 	return denormPartition;
-    // }
-    
     /**
      * Input: Tab Seperated Strings: minx, miny, maxx, maxy
      * Output: Set appropriate min/max space dimension values
@@ -183,7 +132,43 @@ public class SparkPrepareData implements Serializable
 	}
     }
 
-     // /**
+    // /**
+    //  * Map orginal data to paritions using index from step-1
+    //  */
+    // public void loadStep2(JavaRDD<String> rawData){
+    // 	/***** Stage-3.2: Data to physical partitions *****/
+    // 	System.out.print("\tStage-3.2: Starting 'Map data to physical partitions' .......... ");
+    // 	dataConfig.mappedPartitions = rawData.flatMapToPair(new PartitionMapper(dataConfig.getGeomid()));
+    //     System.out.println("Done!");
+    // 	/**************** End Stage-3.2 ********************/	
+    // }
+    
+    
+    // /**
+    //  * Denormalize partitions
+    //  */
+    // private List<Tile> denormalize(List<Tile> partitions){
+    // 	double spaceXSpan = dataConfig.getSpanX();
+    // 	double spaceYSpan = dataConfig.getSpanY();
+    // 	double dataMinX = dataConfig.getMinX();
+    // 	double dataMinY = dataConfig.getMinY();
+    // 	double dataMaxX = dataConfig.getMaxX();
+    // 	double dataMaxY = dataConfig.getMaxY();
+	
+    // 	List<Tile> denormPartition = new ArrayList<Tile>();
+    // 	for (Tile pTile : partitions){
+    // 	    pTile.minX = pTile.minX * spaceXSpan + dataMinX;
+    // 	    pTile.minY = pTile.minY * spaceYSpan + dataMinY;
+    // 	    pTile.maxX = pTile.maxX * spaceXSpan + dataMinX;
+    // 	    pTile.maxY = pTile.maxY * spaceYSpan + dataMinY;
+	    
+    // 	    denormPartition.add(pTile);
+    // 	}
+    // 	return denormPartition;
+    // }
+    
+    
+    // /**
     //  * Job5: Map all objects to physical partitions using index
     //  * Input: tsv raw data (spatial object)
     //  * Output: Zero or more Tuple<key, value> where 

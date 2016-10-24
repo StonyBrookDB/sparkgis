@@ -24,7 +24,7 @@ public class Partitioner
 	long id = 0;
 	List<Tile> partitions = new ArrayList<Tile>();
 	
-	// Determine number of splits along x and y axis
+	/* Determine number of splits along x and y axis */
 	if (spaceYSpan > spaceXSpan){
 	    ySplit = Math.max(Math.ceil(Math.sqrt((double)numObjects / partitionSize * (spaceYSpan/spaceXSpan))), 1.0);
 	    xSplit = Math.max(Math.ceil(((double)numObjects / partitionSize) / ySplit), 1.0);
@@ -36,9 +36,6 @@ public class Partitioner
 	
 	xTile = (1.0 / xSplit);
 	yTile = (1.0 / ySplit);
-
-	//SparkGIS.Debug("xSplit:", xSplit);
-	//SparkGIS.Debug("ySplit:", ySplit);
 	
 	for (int x=0; x<xSplit; ++x){
 	    for (int y=0; y<ySplit; ++y){

@@ -29,38 +29,36 @@ public class SparkGIS
     public SparkGIS(ISparkGISIO inputSrc, ISparkGISIO out){
 	this.inputSrc = inputSrc;
 	this.outDest = out;
-	// Initialize JavaSparkContext
+	/* Initialize JavaSparkContext */
 	SparkConf conf = new SparkConf().setAppName("Spark-GIS");
-	// set serializer
+	/* set serializer */
 	conf.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer");
 	conf.set("textinputformat.record.delimiter", "\n");
 	conf.set("spark.kryo.registrator", KryoClassRegistrator.class.getName());
     	sc = new JavaSparkContext(conf);
-	SparkGIS.Debug("Default parallelism: " + sc.defaultParallelism());
     }
     
     public void heatMaps(String jobId,List<String> algos, List<String> caseIDs, Predicate pred, HMType hmType, int pSize, String result_analysis_exe_id){
 	
-	// create a thread pool for async jobs
+	/* create a thread pool for async jobs */
     	ExecutorService exeService = Executors.newFixedThreadPool(threadCount);
 	
-	// for a given algorithm pair create parallel heatmap generation tasks
+	/* for a given algorithm pair create parallel heatmap generation tasks */
 	List<HeatMapTask> tasks = new ArrayList<HeatMapTask>();
 	for (String caseID : caseIDs){
 	    HeatMapTask t = new HeatMapTask(jobId,inputSrc, caseID, algos, pred, hmType, outDest, result_analysis_exe_id);
-	    // set optional parameters
+	    /* set optional parameters */
 	    t.setPartitionSize(pSize);
 	    tasks.add(t);
 	}
-	// wait for all jobs to complete
+	/* wait for all jobs to complete */
 	try {
 	    List<Future<String>> results = exeService.invokeAll(tasks);
 	    for (Future res : results)
 		res.get();
-	    //System.out.println(res.get());
 	}catch(Exception e){e.printStackTrace();}
 	
-	//close thread pool
+	/* close thread pool */
 	exeService.shutdown();
     }
     
@@ -72,16 +70,6 @@ public class SparkGIS
     	    else
     		tss = tss + TAB + arg;
     	}
-    	//tss = tss + "\n";
     	return tss;
-    }
-
-    public static < E > void Debug(E... vals){
-	// System.out.println("");
-	// System.out.print("[DEBUG] ");
-	// for (E val:vals){
-	//     System.out.print(val + " ");
-	// }
-	// System.out.println("");
     }
 }

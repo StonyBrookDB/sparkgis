@@ -32,7 +32,7 @@ public class SparkSpatialJoinHM implements Serializable{
     
     private final Predicate predicate;
     private final HMType hmType;
-    // combined data configuration
+    /* combined data configuration */
     private final DataConfig combinedConfig;
     private final DataConfig config1;
     private final DataConfig config2;
@@ -42,25 +42,30 @@ public class SparkSpatialJoinHM implements Serializable{
     private final double maxX;
     private final double maxY;
 
+    /* 
+     * Combined configuration values removed from DataConfig 
+     * No need to inflate DataConfig object 
+     * since it has to be transferred over to workers
+     */
+    private final int partitionSize;
+    private List<Tile> partitionIDX;
+    
     public SparkSpatialJoinHM(DataConfig config1, DataConfig config2, Predicate predicate, HMType hmType, int partitionSize){
 	this.predicate = predicate;
 	this.hmType = hmType; 
-	//ssidx = new SparkSpatialIndex();
 	this.config1 = config1;
 	this.config2 = config2;
 	combinedConfig = new DataConfig(config1.caseID);
-	// set combined data configuration
+	/* set combined data configuration */
 	minX = (config1.getMinX() < config2.getMinX())?config1.getMinX():config2.getMinX();
 	minY = (config1.getMinY() < config2.getMinY())?config1.getMinY():config2.getMinY();
 	maxX = (config1.getMaxX() > config2.getMaxX())?config1.getMaxX():config2.getMaxX();
 	maxY = (config1.getMaxY() > config2.getMaxY())?config1.getMaxY():config2.getMaxY();
 	combinedConfig.setSpaceDimensions(minX, minY, maxX, maxY);
 	combinedConfig.setSpaceObjects(config1.getSpaceObjects() + config2.getSpaceObjects());
-	combinedConfig.setPartitionBucketSize(partitionSize);
 
-	// DEBUG
-	//sparkgis.debug.DebugToDisk.writeMBBStats(config1, "/home/fbaig/debug/sparkgis/" + config1.caseID + "1.mbbstats");
-	//sparkgis.debug.DebugToDisk.writeMBBStats(config2, "/home/fbaig/debug/sparkgis/" + config1.caseID + "2.mbbstats");
+	//combinedConfig.setPartitionBucketSize(partitionSize);
+	this.partitionSize = partitionSize;
     }
     
     /**
@@ -72,8 +77,6 @@ public class SparkSpatialJoinHM implements Serializable{
     public JavaRDD<TileStats> execute(){
 
 	JavaPairRDD<Integer, Iterable<String>> groupedMapData = getDataGroupedByTile();
-
-    	SparkGIS.Debug("Starting [native] Resque ...");
 	
 	/* Native C++: Resque */
 	if (hmType == HMType.TILEDICE){
@@ -91,7 +94,7 @@ public class SparkSpatialJoinHM implements Serializable{
 						 }
 					     });
 	    return Coefficient.mapResultsToTile(
-						combinedConfig.getPartitionIDX(), 
+						this.partitionIDX, 
 						tileDiceResults,
 						hmType
 						);
@@ -105,13 +108,11 @@ public class SparkSpatialJoinHM implements Serializable{
 				     );	
     	JavaRDD<Iterable<String>> vals = results.values();
 
-	//sparkgis.debug.DebugToDisk.writeRDD(vals, sparkgis.SparkGISMain.hdfsPrefix + "spJoin-results/" + combinedConfig.caseID + "/");
-
-    	// Call Jaccard function to calculate jaccard coefficients per tile
+    	/* Call Jaccard function to calculate jaccard coefficients per tile */
     	return Coefficient.execute(
     				   results.values(),
     				   /*spJoinResult,*/ 
-    				   combinedConfig.getPartitionIDX(),
+    				   this.partitionIDX,
     				   hmType
     				   );
 	}	
@@ -121,12 +122,8 @@ public class SparkSpatialJoinHM implements Serializable{
 	JavaRDD<String> data1 = config1.originalData.map(new Reformat(1));
     	JavaRDD<String> data2 = config2.originalData.map(new Reformat(2));
 
-	//Profile.log2("[SpatialJoin] data1: " + data1.partitions().size());
-	//Profile.log2("[SpatialJoin] data2: " + data2.partitions().size());
-    	// Join both datasets in same RDD
+    	/* Join both datasets in same RDD */
     	JavaRDD<String> combinedData = data1.union(data2);
-
-	Profile.log2("[SpatialJoin] combinedData (union): " + combinedData.partitions().size());
 	
 	// build index file
     	/******* Stage-2: Fixed-Grid Partitioning ******/	
@@ -139,35 +136,28 @@ public class SparkSpatialJoinHM implements Serializable{
     	// 						       combinedConfig.getPartitionBucketSize()
     	// 						       )
     	// 			       );
-	List<Tile> pIDX = Partitioner.fixedGrid(
-						combinedConfig.getSpanX(), 
-						combinedConfig.getSpanY(), 
-						combinedConfig.getPartitionBucketSize(),
-						combinedConfig.getSpaceObjects()
-						);
+	partitionIDX = Partitioner.fixedGrid(
+					     combinedConfig.getSpanX(), 
+					     combinedConfig.getSpanY(), 
+					     this.partitionSize,
+					     combinedConfig.getSpaceObjects()
+					     );
 	denormalizePartitionIDX(
-				pIDX,
+				partitionIDX,
 				combinedConfig.getMinX(),
 				combinedConfig.getMinY(),
 				combinedConfig.getSpanX(), 
 				combinedConfig.getSpanY()
 				);
-	combinedConfig.setPartitionIDX(pIDX);
+	//combinedConfig.setPartitionIDX(pIDX);
 	
 	// IMPORTANT: DENORMALIZE COMBINED PARTITION FILE (MISSING)
-	
-	//sparkgis.debug.DebugToDisk.writeMBBStats(combinedConfig, "/home/fbaig/debug/sparkgis/" + config1.caseID + "combined.mbbstats");
-
-    	//combinedConfig.print();
-		
+			
     	final SparkSpatialIndex ssidx = new SparkSpatialIndex();
-    	ssidx.build(combinedConfig.getPartitionIDX());
+    	ssidx.build(partitionIDX);
     	JavaPairRDD<Integer, String> joinMapData = 
     	    combinedData.flatMapToPair(new PartitionMapperJoin(ssidx, config1.getGeomid()));
 
-	//Profile.log2("[SpatialJoin] PartionMapperJoin: " + joinMapData.partitions().size());
-	//Profile.log2("Total Objects: " + joinMapData.count());
-    	SparkGIS.Debug("Starting GroupByKey ...");
     	JavaPairRDD<Integer, Iterable<String>> groupedMapData = joinMapData.groupByKey();
 	return groupedMapData;
     }

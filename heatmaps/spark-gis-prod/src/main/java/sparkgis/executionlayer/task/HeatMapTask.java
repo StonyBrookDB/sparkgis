@@ -26,9 +26,9 @@ public class HeatMapTask extends Task implements Callable<String>{
     private final String result_analysis_exe_id;
 
     private String   jobId;
-    private int partitionSize = 512; // Default
+    private int partitionSize = 512;
     
-    // To generate data configurations in parallel
+    /* To generate data configurations in parallel */
     private int algoCount = 2;
     private final ExecutorService exeService = Executors.newFixedThreadPool(algoCount);
     
@@ -64,21 +64,22 @@ public class HeatMapTask extends Task implements Callable<String>{
 	    for (int i=0; i<algoCount; ++i)
 		configs[i] = futures.get(i).get();
 	}catch(Exception e){e.printStackTrace();}
-	// close thread pool
+	/* close thread pool */
 	exeService.shutdown();
 
-	//final List<AlgoPair> algoPairs = generatePairs(algos);
 	final List<Integer> pairs = generatePairs();
 	for (int i=0; i<pairs.size(); i+=2){
 	    /* Step-2: Generate heatmap from configurations */
 	    if ((configs[i] != null) && (configs[i+1] != null)){
-		// generate heatmap based from algo1 and algo2 data configurations
+		/* generate heatmap based from algo1 and algo2 data configurations */
 		results.add(generateHeatMap(configs[i], configs[i+1]));
 	    }
 	    else System.out.println("Unexpected data configurations for caseID:"+super.data);
 	}
-	// heatmap stats generated for all algorithm pairs
-	// parameters to upload results to mongoDB
+	/* 
+	 * heatmap stats generated for all algorithm pairs
+	 * parameters to upload results to mongoDB 
+	 */
 	String caseID = configs[0].caseID;
 	String orig_analysis_exe_id = algos.get(0);
 	String title = "Spark-" + type.strValue + "-";
@@ -108,13 +109,11 @@ public class HeatMapTask extends Task implements Callable<String>{
 	
 	@Override
 	public DataConfig call(){
-	    //long start = System.nanoTime();
-	    // get data from input source and keep in memory
+	    /* get data from input source and keep in memory */
 	    JavaRDD<Polygon> polygonsRDD = inputSrc.getPolygonsRDD(caseID, algo).cache();
 	    long objCount = polygonsRDD.count();
-	    //start = System.nanoTime();
 	    if (objCount != 0){
-		// Invoke spark job: Prepare Data
+		/* Invoke spark job: Prepare Data */
 		SparkPrepareData job = new SparkPrepareData(caseID);
 		DataConfig ret = job.execute(polygonsRDD);
 		return ret;
@@ -127,12 +126,8 @@ public class HeatMapTask extends Task implements Callable<String>{
      * Stage-2: Generate heatmap from data configurations
      */
     private JavaRDD<TileStats> generateHeatMap(DataConfig config1, DataConfig config2){
-	//long start = System.nanoTime();
 	SparkSpatialJoinHM heatmap1 = new SparkSpatialJoinHM(config1, config2, predicate, type, partitionSize);
 	return heatmap1.execute();
-	
-	//JavaRDD<TileStats> result = heatmap1.execute();
-	//result.first(); // JUST FOR EXPERIMENTAL RESULTS. COMMENT IF OUTPUTTING RESULTS
     }
 
     private List<Integer> generatePairs(){

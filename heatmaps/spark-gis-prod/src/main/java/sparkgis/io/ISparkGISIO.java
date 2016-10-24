@@ -8,11 +8,9 @@ import org.apache.spark.api.java.JavaRDD;
 import sparkgis.data.Polygon;
 import sparkgis.data.TileStats;
 
-public interface ISparkGISIO //implements Serializable
+public interface ISparkGISIO
 {
     public JavaRDD<Polygon> getPolygonsRDD(String caseID, String algo);
-    
-    //public void writeTileStats(List<TileStats> result, String caseID);
     /**
      * args[0]: caseID - hdfs/mongoDB
      * args[1]: analysis_execution_id - mongoDB only

@@ -98,7 +98,6 @@ public class HDFSDataAccess implements ISparkGISIO, Serializable
      * Called from MongoToHDFS
      */
     public void writePolygons(List<Polygon> pList, String filePath){
-	//String dataDir = hdfsPrefix + "fbaig/new-data/";
 	try{
     	    Configuration config = new Configuration();
     	    config.addResource(new Path(coreSitePath));

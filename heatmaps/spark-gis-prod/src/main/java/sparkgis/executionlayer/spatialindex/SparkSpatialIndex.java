@@ -45,18 +45,19 @@ public class SparkSpatialIndex implements Serializable{
 		    + tile.maxX + SPACE + tile.maxY + COMMA
 		    + tile.maxX + SPACE + tile.minY + COMMA
 		    + tile.minX + SPACE + tile.minY + shapeEnd;		
-		// create tile geometry
+		/* create tile geometry */
 		try{
 		    Geometry geom = reader.read(geomString);
-		    // IndexedGeometry.java object with key and geometry
-		    // key can be used later when doing query and getting intersecting polygon from index: Job5
+		    /* 
+		     * IndexedGeometry.java object with key and geometry
+		     * key can be used later when doing query and getting intersecting polygon from index: Job5
+		     */
 		    IndexedGeometry iGeom = new IndexedGeometry(tile.tileID, geom);
-		    // add to index
+		    /* add to index */
 		    spidx.insert(geom.getEnvelopeInternal(), iGeom);
 		}catch (ParseException e) {e.printStackTrace();}
 	    }
 	}
-	//SparkGIS.Debug("Index Size:", spidx.size());
     }
     /**
      * Build index from list of strings
@@ -72,7 +73,7 @@ public class SparkSpatialIndex implements Serializable{
 		String[] fields = data.split(String.valueOf(SparkGIS.TAB));
 		Geometry geom = reader.read(fields[geomid]);
 		IndexedGeometry iGeom = new IndexedGeometry(++id, geom);
-		// add to index
+		/* add to index */
 		spidx.insert(geom.getEnvelopeInternal(), iGeom);
 	    }catch(ParseException e){e.printStackTrace();}
 	}
@@ -85,11 +86,11 @@ public class SparkSpatialIndex implements Serializable{
     public List<Long> getIntersectingIndexTiles(String polygonString){
 	List<Long> tileIDs = new ArrayList<Long>();
 	try{
-	    // create geometry for this polygon
+	    /* create geometry for this polygon */
 	    WKTReader reader = new WKTReader();
 	    Geometry geometry = reader.read(polygonString);
 	    Envelope env = geometry.getEnvelopeInternal();
-	    // get all intersecting polygons from index for this geometry
+	    /* get all intersecting polygons from index for this geometry */
 	    if (env != null){
 		List<?> list = spidx.query(env);
 		
@@ -99,7 +100,6 @@ public class SparkSpatialIndex implements Serializable{
 		}
 	    }
 	}catch (ParseException e) {
-	    SparkGIS.Debug("Parse Exception ");
 	    e.printStackTrace();
 	}
 	return tileIDs;

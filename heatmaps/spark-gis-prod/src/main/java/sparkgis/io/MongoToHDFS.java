@@ -10,8 +10,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ExecutorService;
 // /* Local imports */
 import sparkgis.data.Polygon;
-// import sparkgis.data.Polygon;
-// import sparkgis.SparkGIS;
 import sparkgis.io.mongodb.ReadMongoSplit;
 import sparkgis.io.hdfs.HDFSDataAccess;
 

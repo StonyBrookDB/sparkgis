@@ -159,12 +159,6 @@ public class SparkGISMain
 
 	    }
 	    /* Result config */
-
-	    // EXPERIMENT ONLY get caseID list
-	    // final List<String> caseIDs = getCaseIDs("download/caseids.out");
-	    // // remove from list
-	    // for (int i=caseIDs.size()-1; i>(100-1); --i)
-	    // 	caseIDs.remove(i);
 	    if (commandLine.hasOption('r')){
 		result_analysis_exe_id = commandLine.getOptionValue('r');
 	    }else throw new ParseException("result_analysis_exe_id not specified");
@@ -173,7 +167,7 @@ public class SparkGISMain
 	    int partitionSize = SparkGISConfig.partition_size;
 
 
-	    // print options
+	    /* print options */
 	    System.out.println("Starting Job ...");
 	    System.out.println("JobID:\t" + jobID);
 	    System.out.println("caseIDs:");
@@ -197,7 +191,7 @@ public class SparkGISMain
 	catch(Exception e){e.printStackTrace();}
 	/******************************************************/
     } 
-    // function to instentiate spark and generate heatmaps
+    /* function to instentiate spark and generate heatmaps */
     public static void callHeatMap(String jID, IO in, List<String> caseIDs, List<String> algos, Predicate predicate, HMType hmType, int partitionSize, IO out, String result_analysis_exe_id){
 	    
 	boolean returnResults = false;
@@ -289,6 +283,6 @@ public class SparkGISMain
 	if (commandLine.hasOption(option)) {
 	    return commandLine.getOptionValue(option);
 	}
-	return "";//StringUtils.EMPTY;
+	return "";
     }
 }
