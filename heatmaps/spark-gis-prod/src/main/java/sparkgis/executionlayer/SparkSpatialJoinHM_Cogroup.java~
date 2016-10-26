@@ -80,6 +80,12 @@ public class SparkSpatialJoinHM implements Serializable{
 	 * POSSIBLE IMPROVEMENT: Use corgroup instead of groupByKey() 
 	 */
 	JavaPairRDD<Integer, Iterable<String>> groupedMapData = getDataGroupedByTile();
+
+	/* 
+	 * Cogroup version
+	 */
+
+	
 	
 	/* Native C++: Resque */
 	if (hmType == HMType.TILEDICE){
@@ -119,6 +125,42 @@ public class SparkSpatialJoinHM implements Serializable{
     				   hmType
     				   );
 	}	
+    }
+
+    /*
+     * Cogroup version
+     */
+    public void getDataByTile(){
+	JavaRDD<String> data1 = config1.originalData.map(new Reformat(1));
+    	JavaRDD<String> data2 = config2.originalData.map(new Reformat(2));
+
+	partitionIDX = Partitioner.fixedGrid(
+					     combinedConfig.getSpanX(), 
+					     combinedConfig.getSpanY(), 
+					     this.partitionSize,
+					     combinedConfig.getSpaceObjects()
+					     );
+	denormalizePartitionIDX(
+				partitionIDX,
+				combinedConfig.getMinX(),
+				combinedConfig.getMinY(),
+				combinedConfig.getSpanX(), 
+				combinedConfig.getSpanY()
+				);
+	/* 
+	 * POSSIBLE IMPROVEMENT: Broadcast ssidx 
+	 * ssidx is not very big, will this help???
+	 */
+    	final SparkSpatialIndex ssidx = new SparkSpatialIndex();
+    	ssidx.build(partitionIDX);
+    	JavaPairRDD<Integer, String> joinMapData1 = 
+    	    data1.flatMapToPair(new PartitionMapperJoin(ssidx, config1.getGeomid()));
+
+	JavaPairRDD<Integer, String> joinMapData2 = 
+    	    data2.flatMapToPair(new PartitionMapperJoin(ssidx, config1.getGeomid()));
+
+	JavaPairRDD<Integer, Tuple2<Iterable<String>, Iterable<String>>> groupedData =
+	    joinMapData1.cogroup(joinMapData2);
     }
     
     public JavaPairRDD<Integer, Iterable<String>> getDataGroupedByTile(){

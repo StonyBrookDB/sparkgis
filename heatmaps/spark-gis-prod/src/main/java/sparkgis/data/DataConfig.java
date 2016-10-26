@@ -1,6 +1,5 @@
 package sparkgis.data;
 /* Java imports */
-import java.util.List;
 import java.io.Serializable;
 /* Spark imports */
 import org.apache.spark.api.java.JavaRDD;
