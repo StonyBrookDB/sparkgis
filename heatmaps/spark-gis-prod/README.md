@@ -1,5 +1,6 @@
 # SparkGIS
-(General SparkGIS intro goes here) 
+(General SparkGIS intro goes here)
+
 Latest merge from RawDataProcessing branch. Latest updates are as follows
 * No `KryoSerializer` used anymore
 * Code for final heatmap stage (per tile stats calculation) uses Broadcast Variable joining (needs working ...)
