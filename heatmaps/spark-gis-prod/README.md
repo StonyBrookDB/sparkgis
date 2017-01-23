@@ -1,2 +1,7 @@
-# SparkGIS - (RawDataProcessing)
-This branch removes spatial data java objects and revert back to simple raw data processing. This is mainly to verify the experimentation results which show that a considerable time is being spent in data compression/decompression, serialization/deserialization while shuffling spatial data around nodes to groupBy their tile IDs. The intuition here is that removing java objects can benefit two folds (1) Java objects have meta data of their own which can result in unnecessary data bloating and thus more time spent while shuffling (2) reading in each spatial data object from input source and converting it to a java object is inefficiant both performance wise as well as in terms of space.
+# SparkGIS
+(General SparkGIS intro goes here)
+Latest merge from RawDataProcessing branch. Latest updates are as follows
+       * No `KryoSerializer` used anymore
+       * Code for final heatmap stage (per tile stats calculation) uses Broadcast Variable joining (needs working ...)
+       * `HeatMapTask` now uses `SpatialJoinHM_Cogroup` instead of `SpatialJoinHM`
+       	 --* Uses `cogroup` instead of `groupByKey` (cleaner code, mostly experimental but no considerable performance difference since a shuffle is still necessary to group per tile data)
