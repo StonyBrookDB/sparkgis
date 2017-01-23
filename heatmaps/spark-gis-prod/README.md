@@ -1,4 +1,4 @@
-# SparkGIS
+# SparkGIS - Optimized for Pathology Image Analysis 
 (General SparkGIS intro goes here)
 
 Latest merge from RawDataProcessing branch. Latest updates are as follows
