@@ -7,6 +7,7 @@ import java.io.Serializable;
 /* Spark imports */
 import scala.Tuple2;
 import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.broadcast.Broadcast;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.api.java.function.Function2;
@@ -108,6 +109,7 @@ public class Coefficient implements Serializable{
 						      ){
 	
 	JavaRDD<Tile> partfileRDD = SparkGIS.sc.parallelize(partfile);
+	
     	// Format: 
     	JavaPairRDD<Integer, Tile> pRDDPairs = 
     	    partfileRDD.mapToPair(new PairFunction<Tile, Integer, Tile>(){
@@ -137,4 +139,58 @@ public class Coefficient implements Serializable{
 		}
 	    }, false, 1);
     }
+
+
+    // /**
+    //  * Calculate per tile stats using Broadcast Variable for Joining
+    //  * @param partfile      Tile information, can be extracted from DataConfig
+    //  * @param resultByTile  Results values ordered by tile-id to be mapped to approriate tile from 
+    //  *                      partfile. JavaPairRDD<TileID, ResultValue>
+    //  *                      
+    //  * @return Per tile stats i.e. Tile information from partfile with results 
+    //  */
+    // public static JavaRDD<TileStats> mapResultsToTileBV(
+    // 						      List<Tile> partfile, 
+    // 						      JavaPairRDD<Integer, Double> resultByTile,
+    // 						      final HMType hmType
+    // 						      ){
+
+    // 	final Broadcast<List<Tile>> partfileBV = SparkGIS.sc.broadcast(partfile);
+	
+    // 	// Format: 
+    // 	// JavaPairRDD<Integer, Tile> pRDDPairs = 
+    // 	//     partfileRDD.mapToPair(new PairFunction<Tile, Integer, Tile>(){
+    // 	// 	    public Tuple2<Integer, Tile> call (Tile tile){
+    // 	// 		return new Tuple2<Integer, Tile>((int)tile.tileID, tile);
+    // 	// 	    }
+    // 	// 	});
+
+    // 	resultByTile.mapToPair(new PairFunction<Tile, Integer, Tile>(){
+    // 		public Tuple2<Integer, Tile> call (Tile tile){
+    // 		    return new Tuple2<Integer, Tile>((int)tile.tileID, tile);
+    // 		}
+    // 	    });
+	
+    // 	// Format: TileID, partfile-tile, average-jaccard-coeffieint
+    // 	JavaPairRDD<Integer, Tuple2<Tile, Double>> joined = pRDDPairs.join(resultByTile);
+	
+    // 	JavaRDD<TileStats> tileStats = 
+    // 	    joined.mapValues(new Function<Tuple2<Tile, Double>, TileStats>(){
+    // 		    public TileStats call (Tuple2<Tile, Double> a){
+    // 			TileStats t = new TileStats();
+    // 			t.tile = a._1();
+    // 			t.statistics = a._2();
+    // 			t.type = hmType.toString();
+    // 			return t;
+    // 		    }
+    // 		}).values();
+		
+    // 	return tileStats.sortBy(new Function<TileStats, Double>(){
+    // 		private static final long serialVersionUID = 1L;
+		
+    // 		public Double call (TileStats ts){
+    // 		    return ts.statistics;
+    // 		}
+    // 	    }, false, 1);
+    // }
 }

@@ -32,9 +32,9 @@ public class SparkGIS
 	/* Initialize JavaSparkContext */
 	SparkConf conf = new SparkConf().setAppName("Spark-GIS");
 	/* set serializer */
-	conf.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer");
-	conf.set("textinputformat.record.delimiter", "\n");
-	conf.set("spark.kryo.registrator", KryoClassRegistrator.class.getName());
+	// conf.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer");
+	// conf.set("textinputformat.record.delimiter", "\n");
+	// conf.set("spark.kryo.registrator", KryoClassRegistrator.class.getName());
     	sc = new JavaSparkContext(conf);
     }
     

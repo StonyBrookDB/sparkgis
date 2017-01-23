@@ -17,7 +17,7 @@ import sparkgis.data.DataConfig;
 import sparkgis.enums.Predicate;
 import sparkgis.executionlayer.AlgoPair;
 import sparkgis.executionlayer.SparkPrepareData;
-import sparkgis.executionlayer.SparkSpatialJoinHM;
+import sparkgis.executionlayer.SparkSpatialJoinHM_Cogroup;
 
 public class HeatMapTask extends Task implements Callable<String>{
     private final List<String> algos;
@@ -126,7 +126,7 @@ public class HeatMapTask extends Task implements Callable<String>{
      * Stage-2: Generate heatmap from data configurations
      */
     private JavaRDD<TileStats> generateHeatMap(DataConfig config1, DataConfig config2){
-	SparkSpatialJoinHM heatmap1 = new SparkSpatialJoinHM(config1, config2, predicate, type, partitionSize);
+	SparkSpatialJoinHM_Cogroup heatmap1 = new SparkSpatialJoinHM_Cogroup(config1, config2, predicate, type, partitionSize);
 	return heatmap1.execute();
     }
 
