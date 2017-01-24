@@ -13,7 +13,11 @@ import sparkgis.SparkGIS;
 public class DataConfig implements Serializable
 {
     public final String caseID;
-    private final int geomid = 2;
+    /* 
+     * geometry index in TAB separated string 
+     * by default 1 (polygonID, polygonGeom)
+     */
+    private int geomid = 2;
 
     public JavaRDD<Polygon> originalData;
 
@@ -26,9 +30,10 @@ public class DataConfig implements Serializable
     
     public DataConfig(String caseID){
 	this.caseID = caseID;
-    }    
+    }
     
     public int getGeomid() {return this.geomid;}
+    public void setGeomid(int geomid) {this.geomid = geomid;}
     
     /********************* Space Stuff *******************/
     /**

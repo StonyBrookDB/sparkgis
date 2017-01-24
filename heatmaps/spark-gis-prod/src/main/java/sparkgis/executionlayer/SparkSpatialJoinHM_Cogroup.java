@@ -110,6 +110,10 @@ public class SparkSpatialJoinHM_Cogroup implements Serializable{
 
 	JavaPairRDD<Integer, Tuple2<Iterable<String>,Iterable<String>>>
 	    groupedMapData = getDataByTile();
+
+
+	//groupedMapData
+	//return SparkGIS.sc.emptyRDD();
 	
 	/* Native C++: Resque */
 	if (hmType == HMType.TILEDICE){
@@ -156,14 +160,17 @@ public class SparkSpatialJoinHM_Cogroup implements Serializable{
      * Cogroup version
      */
     public JavaPairRDD<Integer, Tuple2<Iterable<String>, Iterable<String>>> getDataByTile(){
-	JavaRDD<String> data1 = config1.originalData.map(new Reformat(1));
-    	JavaRDD<String> data2 = config2.originalData.map(new Reformat(2));
+
+	/* 
+	 * Reformat stage only appends a set number to data from algo1 and algo2 
+	 * It has been merged with Partition mapper join stage
+	 */
 	
     	JavaPairRDD<Integer, String> joinMapData1 = 
-    	    data1.flatMapToPair(new PartitionMapperJoin(config1.getGeomid()));
+    	    config1.originalData.flatMapToPair(new PartitionMapperJoin(1));
 
 	JavaPairRDD<Integer, String> joinMapData2 = 
-    	    data2.flatMapToPair(new PartitionMapperJoin(config1.getGeomid()));
+    	    config2.originalData.flatMapToPair(new PartitionMapperJoin(2));
 
 	JavaPairRDD<Integer, Tuple2<Iterable<String>, Iterable<String>>> groupedData =
 	    joinMapData1.cogroup(joinMapData2);
@@ -235,40 +242,32 @@ public class SparkSpatialJoinHM_Cogroup implements Serializable{
     }
     
     /**
+     * Maps each polygon to a tile from spatial index after appending a set number to the data.
+     * NOTE: There is a difference between joinIDX and setNumber
+     * In case of any issue, please refer to Journal Entry: Jan 24, 2017
+     * @param setNumber Dataset this polygon belongs to
      * @return tileID,joinIDX,setNumber,id,polygon
      */
-    class PartitionMapperJoin implements PairFlatMapFunction<String, Integer, String>{
-    	private final SparkSpatialIndex ssidx;
-    	private final int geomID;
-    	public PartitionMapperJoin(int geomID){
-	    /* get spatial index from braodcast variable */
-	    this.ssidx = ssidxBV.value();
-    	    this.geomID = geomID;
-    	}
-    	public Iterable<Tuple2<Integer, String>> call (final String line){
-    	    String[] fields = line.split(String.valueOf(SparkGIS.TAB));
+    class PartitionMapperJoin implements PairFlatMapFunction<Polygon, Integer, String>{
+	private final int setNumber;
 
-    	    int joinIDX = (fields[0].equals("1"))? 2 : 1;
-    	    List<Tuple2<Integer, String>> ret = new ArrayList<Tuple2<Integer, String>>();
+	public PartitionMapperJoin(int setNumber){
+	    this.setNumber = setNumber;
+    	}
+    	public Iterable<Tuple2<Integer, String>> call (final Polygon p){
+
+	    /* get spatial index from braodcast variable */
+	    final SparkSpatialIndex ssidx = ssidxBV.value();
+	    final int joinIDX = (setNumber==1)? 2 : 1;
 	    
-    	    List<Long> tileIDs = ssidx.getIntersectingIndexTiles(fields[geomID]);
+    	    List<Tuple2<Integer, String>> ret = new ArrayList<Tuple2<Integer, String>>();
+	    List<Long> tileIDs = ssidx.getIntersectingIndexTiles(p.getPolygon());
     	    for (long id : tileIDs){
-    		String retLine = id + "\t" + joinIDX + "\t" + line;
+		String retLine = id + "\t" + joinIDX + "\t" + this.setNumber + "\t" + p.toString();
     		Tuple2<Integer, String> t = new Tuple2<Integer, String>((int)id, retLine);
     		ret.add(t);
     	    }
     	    return ret;
-    	}
-    }
-
-    /**
-     * @return setNumber,id,polygon
-     */
-    class Reformat implements Function<Polygon, String>{
-    	private final int setNumber;
-    	public Reformat(int setNumber){this.setNumber = setNumber;}
-    	public String call(final Polygon p){
-	    return "" + this.setNumber + SparkGIS.TAB + p.toString();
     	}
     }
 
