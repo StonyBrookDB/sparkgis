@@ -23,6 +23,7 @@ import sparkgis.data.DataConfig;
 import sparkgis.enums.Predicate;
 import sparkgis.enums.HMType;
 import sparkgis.stats.Profile;
+import sparkgis.executionlayer.partitioning.Partitioner;
 import sparkgis.executionlayer.spatialindex.SparkSpatialIndex;
 
 /**

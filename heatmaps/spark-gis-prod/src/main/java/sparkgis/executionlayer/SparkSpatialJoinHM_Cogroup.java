@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.io.Serializable;
 /* Spark imports */
 import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.broadcast.Broadcast;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.api.java.function.FlatMapFunction;
@@ -24,6 +25,7 @@ import sparkgis.data.DataConfig;
 import sparkgis.enums.Predicate;
 import sparkgis.enums.HMType;
 import sparkgis.stats.Profile;
+import sparkgis.executionlayer.partitioning.Partitioner;
 import sparkgis.executionlayer.spatialindex.SparkSpatialIndex;
 
 /**
@@ -49,7 +51,7 @@ public class SparkSpatialJoinHM_Cogroup implements Serializable{
      * since it has to be transferred over to workers
      */
     private final int partitionSize;
-    private List<Tile> partitionIDX;
+    private Broadcast<SparkSpatialIndex> ssidxBV = null;
     
     public SparkSpatialJoinHM_Cogroup(
 				      DataConfig config1,
@@ -82,10 +84,33 @@ public class SparkSpatialJoinHM_Cogroup implements Serializable{
      * 3: joinMapData (after JNI): <combinedtile-id> <join-idx> <setNumber> <loadtile-id> <polygon-id> <polygon>
      */
     public JavaRDD<TileStats> execute(){
+	
+	List<Tile> partitionIDX =
+	    Partitioner.fixedGrid(
+				  combinedConfig.getSpanX(), 
+				  combinedConfig.getSpanY(), 
+				  this.partitionSize,
+				  combinedConfig.getSpaceObjects()
+				  );
+	denormalizePartitionIDX(
+				partitionIDX,
+				combinedConfig.getMinX(),
+				combinedConfig.getMinY(),
+				combinedConfig.getSpanX(), 
+				combinedConfig.getSpanY()
+				);
+
+	/* 
+	 * Broadcast ssidx 
+	 * ssidx is not very big, will this help???
+	 */
+    	final SparkSpatialIndex ssidx = new SparkSpatialIndex();
+    	ssidx.build(partitionIDX);
+	ssidxBV = SparkGIS.sc.broadcast(ssidx);
 
 	JavaPairRDD<Integer, Tuple2<Iterable<String>,Iterable<String>>>
 	    groupedMapData = getDataByTile();
-
+	
 	/* Native C++: Resque */
 	if (hmType == HMType.TILEDICE){
 	    throw new java.lang.RuntimeException("Not implemented in Cogroup version yet");
@@ -121,7 +146,7 @@ public class SparkSpatialJoinHM_Cogroup implements Serializable{
     	return Coefficient.execute(
     				   results.values(),
     				   /*spJoinResult,*/ 
-    				   this.partitionIDX,
+    				   partitionIDX,
     				   hmType
     				   );
 	}	
@@ -133,31 +158,12 @@ public class SparkSpatialJoinHM_Cogroup implements Serializable{
     public JavaPairRDD<Integer, Tuple2<Iterable<String>, Iterable<String>>> getDataByTile(){
 	JavaRDD<String> data1 = config1.originalData.map(new Reformat(1));
     	JavaRDD<String> data2 = config2.originalData.map(new Reformat(2));
-
-	partitionIDX = Partitioner.fixedGrid(
-					     combinedConfig.getSpanX(), 
-					     combinedConfig.getSpanY(), 
-					     this.partitionSize,
-					     combinedConfig.getSpaceObjects()
-					     );
-	denormalizePartitionIDX(
-				partitionIDX,
-				combinedConfig.getMinX(),
-				combinedConfig.getMinY(),
-				combinedConfig.getSpanX(), 
-				combinedConfig.getSpanY()
-				);
-	/* 
-	 * POSSIBLE IMPROVEMENT: Broadcast ssidx 
-	 * ssidx is not very big, will this help???
-	 */
-    	final SparkSpatialIndex ssidx = new SparkSpatialIndex();
-    	ssidx.build(partitionIDX);
+	
     	JavaPairRDD<Integer, String> joinMapData1 = 
-    	    data1.flatMapToPair(new PartitionMapperJoin(ssidx, config1.getGeomid()));
+    	    data1.flatMapToPair(new PartitionMapperJoin(config1.getGeomid()));
 
 	JavaPairRDD<Integer, String> joinMapData2 = 
-    	    data2.flatMapToPair(new PartitionMapperJoin(ssidx, config1.getGeomid()));
+    	    data2.flatMapToPair(new PartitionMapperJoin(config1.getGeomid()));
 
 	JavaPairRDD<Integer, Tuple2<Iterable<String>, Iterable<String>>> groupedData =
 	    joinMapData1.cogroup(joinMapData2);
@@ -234,8 +240,9 @@ public class SparkSpatialJoinHM_Cogroup implements Serializable{
     class PartitionMapperJoin implements PairFlatMapFunction<String, Integer, String>{
     	private final SparkSpatialIndex ssidx;
     	private final int geomID;
-    	public PartitionMapperJoin(SparkSpatialIndex ssidx, int geomID){
-    	    this.ssidx = ssidx;
+    	public PartitionMapperJoin(int geomID){
+	    /* get spatial index from braodcast variable */
+	    this.ssidx = ssidxBV.value();
     	    this.geomID = geomID;
     	}
     	public Iterable<Tuple2<Integer, String>> call (final String line){

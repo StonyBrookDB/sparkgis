@@ -2,7 +2,7 @@
 USAGE="sh run_spark_gis.sh '--uid [32-bit id]' '--algos '[csv-algos-list]'' '--caseids '[csv-caseID-list]'' '--metric [jaccard|dice|tile_dice]' '--input [hdfs|mongodb]' '--output [hdfs|mongodb|client]' '--result_exe_id exe-id'"
 
 # python code to get caseids from list
-CASEIDCOUNT=100
+CASEIDCOUNT=1
 caseids=`python - $CASEIDCOUNT <<END
 if __name__ == '__main__':
     import sys

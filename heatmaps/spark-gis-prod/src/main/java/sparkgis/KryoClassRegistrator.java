@@ -7,10 +7,10 @@ import sparkgis.data.DataConfig;
 import sparkgis.io.mongodb.ReadMongoSplit;
 //import sparkgis.io.hdfs.HDFSDataAccess;
 //import sparkgis.io.mongodb.MongoDBDataAccess;
-import sparkgis.executionlayer.Partitioner;
 import sparkgis.executionlayer.Coefficient;
 import sparkgis.executionlayer.SparkPrepareData;
 import sparkgis.executionlayer.SparkSpatialJoinHM;
+import sparkgis.executionlayer.partitioning.Partitioner;
 import sparkgis.executionlayer.spatialindex.IndexedGeometry;
 import sparkgis.executionlayer.spatialindex.SparkSpatialIndex;
 /* Kryo Serializer */
