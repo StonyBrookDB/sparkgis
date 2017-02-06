@@ -30,15 +30,16 @@ import sparkgis.executionlayer.spatialindex.SparkSpatialIndex;
 public class SparkPrepareData implements Serializable
 {
     // Indexing 
-    private final SparkSpatialIndex ssidx;    
+    //private final SparkSpatialIndex ssidx;    
     private final DataConfig dataConfig;
     
     public SparkPrepareData(String imageName)
     {
+	//this.imageName = imageName;
 	/* initialize configuration */
 	dataConfig = new DataConfig(imageName);
 	/* initialize SparkSpatialIndex. Index built in 'loadStep1()' */
-	ssidx = new SparkSpatialIndex();
+	//ssidx = new SparkSpatialIndex();
     }
     
     /**

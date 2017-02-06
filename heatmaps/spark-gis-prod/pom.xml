@@ -23,12 +23,12 @@
       <artifactId>jts</artifactId>
       <version>1.13</version>
     </dependency>
-    <!-- HDFS -->
-    <dependency> 
-      <groupId>org.apache.hadoop</groupId>
-      <artifactId>hadoop-hdfs</artifactId>
-      <version>2.6.0</version>
-    </dependency>
+    <!-- HDFS (already available in Spark) -->
+    <!-- <dependency>  -->
+    <!--   <groupId>org.apache.hadoop</groupId> -->
+    <!--   <artifactId>hadoop-hdfs</artifactId> -->
+    <!--   <version>2.6.0</version> -->
+    <!-- </dependency> -->
     <!-- MongoDB -->
     <dependency>
       <groupId>org.mongodb</groupId>
@@ -44,7 +44,7 @@
       <!-- </dependency> -->
   </dependencies>
   
-  <!-- Fat Jar -->
+  
   <build>
     <plugins>
       <plugin>
@@ -55,23 +55,48 @@
 	  <compilerArgument>-Xlint:unchecked</compilerArgument>
 	</configuration>
       </plugin>
+
+      <!-- Copy dependencies to a folder -->
+
+      <!-- <plugin> -->
+      <!-- 	<groupId>org.apache.maven.plugins</groupId> -->
+      <!-- 	<artifactId>maven-dependency-plugin</artifactId> -->
+      <!-- 	<executions> -->
+      <!-- 	  <execution> -->
+      <!-- 	    <id>copy-dependencies</id> -->
+      <!-- 	    <phase>prepare-package</phase> -->
+      <!-- 	    <goals> -->
+      <!-- 	      <goal>copy-dependencies</goal> -->
+      <!-- 	    </goals> -->
+      <!-- 	    <configuration> -->
+      <!-- 	      <outputDirectory>${project.build.directory}/lib</outputDirectory> -->
+      <!-- 	      <overWriteReleases>false</overWriteReleases> -->
+      <!-- 	      <overWriteSnapshots>false</overWriteSnapshots> -->
+      <!-- 	      <overWriteIfNewer>true</overWriteIfNewer> -->
+      <!-- 	    </configuration> -->
+      <!-- 	  </execution> -->
+      <!-- 	</executions> -->
+      <!-- </plugin> -->
+      
+      <!-- Fat Jar -->
       <plugin>
-	<groupId>org.apache.maven.plugins</groupId>
-	<artifactId>maven-shade-plugin</artifactId>
-	<version>2.4.1</version>
-	<executions>
-	  <execution>
-	    <phase>package</phase>
-	    <goals>
-	      <goal>shade</goal>
-	    </goals>
-	  </execution>
-	</executions>
-	<configuration>
-	  <finalName>uber-${project.artifactId}-${project.version}</finalName>
-	  <compilerArgument>-Xlint:unchecked</compilerArgument>
-	</configuration>
+      	<groupId>org.apache.maven.plugins</groupId>
+      	<artifactId>maven-shade-plugin</artifactId>
+      	<version>2.4.1</version>
+      	<executions>
+      	  <execution>
+      	    <phase>package</phase>
+      	    <goals>
+      	      <goal>shade</goal>
+      	    </goals>
+      	  </execution>
+      	</executions>
+      	<configuration>
+      	  <finalName>uber-${project.artifactId}-${project.version}</finalName>
+      	  <compilerArgument>-Xlint:unchecked</compilerArgument>
+      	</configuration>
       </plugin>
+      
     </plugins>
   </build>
 </project>
