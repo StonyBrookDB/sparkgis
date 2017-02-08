@@ -1,8 +1,9 @@
 package sparkgis.io.mongodb;
 /* Java imports */
-import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Iterator;
+import java.util.ArrayList;
+import java.io.Serializable;
 /* Spark imports */
 import org.apache.spark.broadcast.Broadcast;
 import org.apache.spark.api.java.function.FlatMapFunction;
@@ -44,7 +45,7 @@ public class ReadMongoSplit implements Serializable, FlatMapFunction<Long, Polyg
     /**
      * Called by Spark flatMap
      */
-    public Iterable<Polygon> call(Long splitStart){
+    public Iterator<Polygon> call(Long splitStart){
 	return getDataSplit(caseID, algo, splitStart, maxSplitSize);
 	//return new ArrayList<Polygon>();
     }
@@ -52,7 +53,7 @@ public class ReadMongoSplit implements Serializable, FlatMapFunction<Long, Polyg
     /**
      * For MongoToHDFS. Just for convenience
      */
-    public List<Polygon> getData(long splitStart){
+    public Iterator<Polygon> getData(long splitStart){
 	return getDataSplit(caseID, algo, splitStart, maxSplitSize);
     }
     
@@ -60,7 +61,7 @@ public class ReadMongoSplit implements Serializable, FlatMapFunction<Long, Polyg
      * Called from ReadMongoSplit
      * FIX: no need to pass algo, caseID, maxSplit since already set in constructor
      */
-    private List<Polygon> getDataSplit(String caseID, String algo, long start, int maxSplitSize){
+    private Iterator<Polygon> getDataSplit(String caseID, String algo, long start, int maxSplitSize){
 	MongoClient mongoClient = null;//bMongoClient.value();
 	DBCursor cursor = null;
 	List<Polygon> ret = new ArrayList<Polygon>(); 
@@ -86,7 +87,7 @@ public class ReadMongoSplit implements Serializable, FlatMapFunction<Long, Polyg
 	    if (mongoClient != null)
 	     	mongoClient.close();
 	}
-	return ret;
+	return ret.iterator();
     }
 
     /**

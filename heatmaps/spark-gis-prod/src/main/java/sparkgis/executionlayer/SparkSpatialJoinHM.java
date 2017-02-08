@@ -51,7 +51,11 @@ public class SparkSpatialJoinHM implements Serializable{
     private final int partitionSize;
     private List<Tile> partitionIDX;
     
-    public SparkSpatialJoinHM(DataConfig config1, DataConfig config2, Predicate predicate, HMType hmType, int partitionSize){
+    public SparkSpatialJoinHM(DataConfig config1,
+			      DataConfig config2,
+			      Predicate predicate,
+			      HMType hmType,
+			      int partitionSize){
 	this.predicate = predicate;
 	this.hmType = hmType; 
 	this.config1 = config1;
@@ -73,7 +77,8 @@ public class SparkSpatialJoinHM implements Serializable{
      * Data formats:
      * 1: config.mappedPartitions: <loadtile-id> <polygon-id> <polygon>
      * 2: data (after reformat): <setNumber> <loadtile-id> <polygon-id> <polygon>
-     * 3: joinMapData (after JNI): <combinedtile-id> <join-idx> <setNumber> <loadtile-id> <polygon-id> <polygon>
+     * 3: joinMapData (after JNI): 
+     *       <combinedtile-id> <join-idx> <setNumber> <loadtile-id> <polygon-id> <polygon>
      */
     public JavaRDD<TileStats> execute(){
 
@@ -241,7 +246,7 @@ public class SparkSpatialJoinHM implements Serializable{
     	    this.ssidx = ssidx;
     	    this.geomID = geomID;
     	}
-    	public Iterable<Tuple2<Integer, String>> call (final String line){
+    	public Iterator<Tuple2<Integer, String>> call (final String line){
     	    String[] fields = line.split(String.valueOf(SparkGIS.TAB));
 
     	    int joinIDX = (fields[0].equals("1"))? 2 : 1;
@@ -253,7 +258,7 @@ public class SparkSpatialJoinHM implements Serializable{
     		Tuple2<Integer, String> t = new Tuple2<Integer, String>((int)id, retLine);
     		ret.add(t);
     	    }
-    	    return ret;
+    	    return ret.iterator();
     	}
     }
 

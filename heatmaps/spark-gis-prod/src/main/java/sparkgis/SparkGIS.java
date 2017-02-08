@@ -37,8 +37,41 @@ public class SparkGIS
 	// conf.set("spark.kryo.registrator", KryoClassRegistrator.class.getName());
     	sc = new JavaSparkContext(conf);
     }
+
+    /**
+     * Create one time index for given data before spatial operation
+     * (1) Prepare data
+     * (2) 
+     */
+    public void indexedPartition(){
+	
+    }
     
-    public void heatMaps(String jobId,List<String> algos, List<String> caseIDs, Predicate pred, HMType hmType, int pSize, String result_analysis_exe_id){
+    /**
+     * Apply Spatial Join on given datasets
+     */
+    public void spatialJoin(){
+	
+    }
+
+    /**
+     * Special direct function for heatmap generation for BMI data
+     * @param jobID
+     * @param algos List of algorithms to compare
+     * @param caseIDs List of caseIDs to generate heatmap for in parallel
+     * @param pred Predicate to use for spatial join
+     * @param hmType Similarity coefficient to use for heatmap
+     * @param pSize Partition size
+     * @param result_analysis_exe_id Result id to show in caMicroscope 
+     *                               (required only if writing result to MongoDB)  
+     */
+    public void heatMaps(String jobId,
+			 List<String> algos,
+			 List<String> caseIDs,
+			 Predicate pred,
+			 HMType hmType,
+			 int pSize,
+			 String result_analysis_exe_id){
 	
 	/* create a thread pool for async jobs */
     	ExecutorService exeService = Executors.newFixedThreadPool(threadCount);
@@ -46,7 +79,15 @@ public class SparkGIS
 	/* for a given algorithm pair create parallel heatmap generation tasks */
 	List<HeatMapTask> tasks = new ArrayList<HeatMapTask>();
 	for (String caseID : caseIDs){
-	    HeatMapTask t = new HeatMapTask(jobId,inputSrc, caseID, algos, pred, hmType, outDest, result_analysis_exe_id);
+	    HeatMapTask t =
+		new HeatMapTask(jobId,
+				inputSrc,
+				caseID,
+				algos,
+				pred,
+				hmType,
+				outDest,
+				result_analysis_exe_id);
 	    /* set optional parameters */
 	    t.setPartitionSize(pSize);
 	    tasks.add(t);

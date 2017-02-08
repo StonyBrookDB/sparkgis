@@ -81,7 +81,8 @@ public class SparkSpatialJoinHM_Cogroup implements Serializable{
      * Data formats:
      * 1: config.mappedPartitions: <loadtile-id> <polygon-id> <polygon>
      * 2: data (after reformat): <setNumber> <loadtile-id> <polygon-id> <polygon>
-     * 3: joinMapData (after JNI): <combinedtile-id> <join-idx> <setNumber> <loadtile-id> <polygon-id> <polygon>
+     * 3: joinMapData (after JNI): 
+     *        <combinedtile-id> <join-idx> <setNumber> <loadtile-id> <polygon-id> <polygon>
      */
     public JavaRDD<TileStats> execute(){
 	
@@ -181,8 +182,10 @@ public class SparkSpatialJoinHM_Cogroup implements Serializable{
     /**
      * Called for all data corresponding to a given key after groupByKey()
      */
-    class Resque implements Function<Tuple2<Iterable<String>,Iterable<String>>, Iterable<String>>{
-    	private final String predicate;
+    class Resque
+	implements Function<Tuple2<Iterable<String>,Iterable<String>>, Iterable<String>>{
+
+	private final String predicate;
     	private final int geomid1;
     	private final int geomid2;
     	public Resque(String predicate, int geomid1, int geomid2){
@@ -254,7 +257,7 @@ public class SparkSpatialJoinHM_Cogroup implements Serializable{
 	public PartitionMapperJoin(int setNumber){
 	    this.setNumber = setNumber;
     	}
-    	public Iterable<Tuple2<Integer, String>> call (final Polygon p){
+    	public Iterator<Tuple2<Integer, String>> call (final Polygon p){
 
 	    /* get spatial index from braodcast variable */
 	    final SparkSpatialIndex ssidx = ssidxBV.value();
@@ -267,7 +270,7 @@ public class SparkSpatialJoinHM_Cogroup implements Serializable{
     		Tuple2<Integer, String> t = new Tuple2<Integer, String>((int)id, retLine);
     		ret.add(t);
     	    }
-    	    return ret;
+    	    return ret.iterator();
     	}
     }
 

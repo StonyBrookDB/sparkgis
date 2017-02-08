@@ -1,6 +1,7 @@
 package sparkgis.executionlayer;
 /* Java imports */
 import java.util.List;
+import java.util.Iterator;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.io.Serializable;
@@ -34,7 +35,7 @@ public class Coefficient implements Serializable{
     	// map data to Tuple <tileID,Jaccard Coefficient>
     	JavaPairRDD<Integer, Double> pairs = 
     	    data.flatMapToPair(new PairFlatMapFunction<Iterable<String>, Integer, Double>(){
-    		    public Iterable<Tuple2<Integer, Double>> call (Iterable<String> is){
+    		    public Iterator<Tuple2<Integer, Double>> call (Iterable<String> is){
 			List<Tuple2<Integer, Double>> ret = new ArrayList<Tuple2<Integer, Double>>();
 			
 			for (String s : is){
@@ -47,7 +48,7 @@ public class Coefficient implements Serializable{
 							    );
 				ret.add(t);
 			}
-			return ret;
+			return ret.iterator();
 		    }
     	    });
 

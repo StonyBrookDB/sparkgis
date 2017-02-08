@@ -30,9 +30,17 @@ public class HeatMapTask extends Task implements Callable<String>{
     
     /* To generate data configurations in parallel */
     private int algoCount = 2;
-    private final ExecutorService exeService = Executors.newFixedThreadPool(algoCount);
+    private final ExecutorService exeService =
+	Executors.newFixedThreadPool(algoCount);
     
-    public HeatMapTask(String jobId,ISparkGISIO inputSrc, String caseID, List<String> algos, Predicate predicate, HMType hmType, ISparkGISIO outDest, String result_analysis_exe_id){
+    public HeatMapTask(String jobId,
+		       ISparkGISIO inputSrc,
+		       String caseID,
+		       List<String> algos,
+		       Predicate predicate,
+		       HMType hmType,
+		       ISparkGISIO outDest,
+		       String result_analysis_exe_id){
 	super(inputSrc, outDest, caseID);
  
 	this.jobId = jobId;
@@ -74,7 +82,8 @@ public class HeatMapTask extends Task implements Callable<String>{
 		/* generate heatmap based from algo1 and algo2 data configurations */
 		results.add(generateHeatMap(configs[i], configs[i+1]));
 	    }
-	    else System.out.println("Unexpected data configurations for caseID:"+super.data);
+	    else
+		System.out.println("Unexpected data configurations for caseID:"+super.data);
 	}
 	/* 
 	 * heatmap stats generated for all algorithm pairs
@@ -90,7 +99,12 @@ public class HeatMapTask extends Task implements Callable<String>{
 	String ret = "";
  
 	for (JavaRDD<TileStats> result:results){
-	    ret = outDest.writeTileStats(result, caseID, orig_analysis_exe_id, title, result_analysis_exe_id,jobId);
+	    ret = outDest.writeTileStats(result,
+					 caseID,
+					 orig_analysis_exe_id,
+					 title,
+					 result_analysis_exe_id,
+					 jobId);
 	    System.out.println("completed");
 	}
 	return ret;
@@ -126,9 +140,11 @@ public class HeatMapTask extends Task implements Callable<String>{
      * Stage-2: Generate heatmap from data configurations
      */
     private JavaRDD<TileStats> generateHeatMap(DataConfig config1, DataConfig config2){
-	SparkSpatialJoinHM_Cogroup heatmap1 = new SparkSpatialJoinHM_Cogroup(config1, config2, predicate, type, partitionSize);
+	SparkSpatialJoinHM_Cogroup heatmap1 =
+	    new SparkSpatialJoinHM_Cogroup(config1, config2, predicate, type, partitionSize);
 	return heatmap1.execute();
     }
+
 
     private List<Integer> generatePairs(){
 	ArrayList<Integer> ret = new ArrayList<Integer>();
