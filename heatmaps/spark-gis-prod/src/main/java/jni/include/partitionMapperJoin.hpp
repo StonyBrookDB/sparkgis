@@ -7,8 +7,12 @@ class PartitionMapperJoin{
   
 private:
   ISpatialIndex *spidx;
-  GeometryFactory *gf = NULL;
-  WKTReader *wkt_reader = NULL;
+  // GeometryFactory *gf = NULL;
+  // WKTReader *wkt_reader = NULL;
+
+  GeometryFactory *gf;
+  WKTReader *wkt_reader;
+  
   map<id_type,string> id_tiles ;
   map<int,Geometry*> geom_tiles;
   int geom_id;

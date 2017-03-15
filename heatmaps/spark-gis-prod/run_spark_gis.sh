@@ -17,7 +17,7 @@ resultExeID=`echo $7 | tr -d "'"`
 
 # hardcoded values for debugging purposes
 className=sparkgis.SparkGISMain
-jar=/home/fbaig/spark-gis/spark-gis-final-backup/spark-gis/cheuk/spark-gis-prod/spark-gis/target/uber-spark-gis-1.0.jar
+jar=/home/fbaig/spark-gis/spark-gis-final-backup/spark-gis/cheuk/spark-gis-prod/spark-gis/target/uber-sparkgis-1.0.jar
 # command line arguments
 # uid='--uid 123456'
 # algos=' --algos "yi-algorithm-v1,yi-algorithm-v11"'

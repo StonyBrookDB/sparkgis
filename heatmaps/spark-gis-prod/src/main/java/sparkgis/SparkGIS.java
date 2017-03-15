@@ -50,7 +50,10 @@ public class SparkGIS
     /**
      * Apply Spatial Join on given datasets
      */
-    public void spatialJoin(){
+    public void spatialJoin(String jobId,
+			    String dataset_path1,
+			    String dataset_path2,
+			    Predicate pred){
 	
     }
 

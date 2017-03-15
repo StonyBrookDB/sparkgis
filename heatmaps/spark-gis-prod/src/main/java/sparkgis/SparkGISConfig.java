@@ -8,7 +8,6 @@ import java.util.Properties;
 public class SparkGISConfig
 {
     // Jar path
-    public static Boolean ifUpload;
     public static String jarPath;
     // HDFS configurations    
     public static String hdfsCoreSitePath;
@@ -19,44 +18,22 @@ public class SparkGISConfig
     // MongoDB configurations
     public static String mongoHost;
     public static int mongoPort;
-    // public static String mongoDB;
-    // public static String collection_name;
-    // public static String collection_name_temp;
-
-
     public static String input_mongoDB;
     public static String input_collection_name;
-
     public static String output_mongoDB;
     public static String output_collection_name;
-
     public static String temp_mongoDB;
     public static String temp_collection_name;
-   
 
-    
     public static int partition_size  ;
     
-    /**
-     * Considering maven directory structure
-     * src
-     * src/main/java/ ...
-     * resources
-     * resources/sparkgis.properties
-     * target
-     * terget/spark-gis-1.0-shaded.jar
-     */
     static{
+	InputStream inputStream = null;
 	try {
-	    jarPath = SparkGISConfig.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath();
-	    File jarFile = new File(jarPath);
-	    String jarDir = jarFile.getParentFile().getPath();
+	    //jarPath = SparkGISConfig.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath();
 	    Properties prop = new Properties();
-	    FileInputStream inputStream = new FileInputStream(jarDir + "/../resources/sparkgis.properties");   
-	    if (inputStream == null){
-		System.out.println("Properties file Not found!!!");
-		System.exit(1);
-	    }
+	    inputStream = 
+	    	SparkGISConfig.class.getClassLoader().getResourceAsStream("sparkgis.properties");
 	    prop.load(inputStream);
 	    
 	    // HDFS configurations
@@ -68,17 +45,23 @@ public class SparkGISConfig
 	    // MongoDB configurations
 	    mongoHost = prop.getProperty("mongo-host");
 	    mongoPort = Integer.parseInt(prop.getProperty("mongo-port"));
-	    // mongoDB = prop.getProperty("mongo-db");
-	    //    collection_name = prop.getProperty("mongo-collection");
-	    //    collection_name_temp = prop.getProperty("mongo-collection_temp");
 
 	    temp_mongoDB = prop.getProperty("mongo-tempdb");
 	    temp_collection_name = prop.getProperty("mongo-tempcollection");
 
 
-      partition_size = Integer.parseInt(prop.getProperty("partition-size"));
-      System.out.println("part_size: "+partition_size);
+	    partition_size = Integer.parseInt(prop.getProperty("partition-size"));
+	    System.out.println("part_size: "+partition_size);
 	    inputStream.close();
-	} catch (Exception e) {e.printStackTrace();} 
+	} catch (Exception e) {
+	    e.printStackTrace();
+	    System.exit(-1);
+	} finally{
+	    try{
+		inputStream.close();
+	    }catch(Exception e){
+		System.out.println("No stream to close");
+	    }
+	}
     }
 }

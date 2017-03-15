@@ -4,7 +4,8 @@ OPTFLAGS	= -O2 -Wno-write-strings -Wno-deprecated-declarations
 #INCBASE		= -I. -I extlib/include
 #LIBBASE		= -lspatialindex -lgeos -L extlib/lib
 JNIINC		= -I${JAVA_HOME}/include -I${JAVA_HOME}/include/linux
-INCBASE		= -I. -I/usr/local/lib -I ${SATO_INC_PATH}
+#INCBASE		= -I. -I/usr/local/lib -I ${SATO_INC_PATH}
+INCBASE		= -I. -I ${SATO_INC_PATH}
 LIBBASE		= -lspatialindex -lgeos -L/usr/local/lib -L ${SATO_LIB_PATH}
 
 ifneq (,$(findstring Linux,$(shell uname -a)))
