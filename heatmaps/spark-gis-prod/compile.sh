@@ -7,8 +7,7 @@
 # mv libgis.so ../../../../lib/
 # cd -
 # compile project using maven
-mvn clean
-mvn package
+mvn clean package
 cd ../
 
 # cd spark-gis-io/

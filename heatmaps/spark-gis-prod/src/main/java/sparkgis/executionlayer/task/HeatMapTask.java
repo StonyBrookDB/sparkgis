@@ -66,7 +66,9 @@ public class HeatMapTask extends Task implements Callable<String>{
 	DataConfig[] configs = new DataConfig[algoCount];
 	List<Future<DataConfig>> futures = new ArrayList<Future<DataConfig>>();
 	for (int i=0; i<algoCount; ++i){
-	    futures.add(exeService.submit(new AsyncPrepareData(super.data, algos.get(i), super.inputSrc)));
+	    //futures.add(exeService.submit(new AsyncPrepareData(super.data, algos.get(i), super.inputSrc)));
+	    futures.add(exeService.submit(new AsyncPrepareData(super.data,
+							       algos.get(i))));
 	}
 	try{
 	    for (int i=0; i<algoCount; ++i)
@@ -110,31 +112,31 @@ public class HeatMapTask extends Task implements Callable<String>{
 	return ret;
     }
 
-    // /**
-    //  * Stage-1: Inner class to get data from Input source and generate data configuration
-    //  */
-    // public class AsyncPrepareData implements Callable<DataConfig>{
-    //     private final String caseID;
-    // 	private final String algo;	
-    // 	public AsyncPrepareData(String caseID, String algo){
-    // 	    this.caseID = caseID;
-    // 	    this.algo = algo;    	    
-    // 	}
+    /**
+     * Stage-1: Inner class to get data from Input source and generate data configuration
+     */
+    public class AsyncPrepareData implements Callable<DataConfig>{
+        private final String caseID;
+    	private final String algo;	
+    	public AsyncPrepareData(String caseID, String algo){
+    	    this.caseID = caseID;
+    	    this.algo = algo;    	    
+    	}
 	
-    // 	@Override
-    // 	public DataConfig call(){
-    // 	    /* get data from input source and keep in memory */
-    // 	    JavaRDD<Polygon> polygonsRDD = inputSrc.getPolygonsRDD(caseID, algo).cache();
-    // 	    long objCount = polygonsRDD.count();
-    // 	    if (objCount != 0){
-    // 		/* Invoke spark job: Prepare Data */
-    // 		SparkPrepareData job = new SparkPrepareData(caseID);
-    // 		DataConfig ret = job.execute(polygonsRDD);
-    // 		return ret;
-    // 	    }
-    // 	    return null;
-    // 	}
-    // }
+    	@Override
+    	public DataConfig call(){
+    	    /* get data from input source and keep in memory */
+    	    JavaRDD<Polygon> polygonsRDD = inputSrc.getPolygonsRDD(caseID, algo).cache();
+    	    long objCount = polygonsRDD.count();
+    	    if (objCount != 0){
+    		/* Invoke spark job: Prepare Data */
+    		SparkPrepareData job = new SparkPrepareData(caseID);
+    		DataConfig ret = job.execute(polygonsRDD);
+    		return ret;
+    	    }
+    	    return null;
+    	}
+    }
     
     /**
      * Stage-2: Generate heatmap from data configurations
