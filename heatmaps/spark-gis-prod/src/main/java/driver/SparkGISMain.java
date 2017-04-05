@@ -1,4 +1,4 @@
-package sparkgis;
+package driver;
 /* Java imports */
 import java.io.*;
 import java.util.List;
@@ -15,7 +15,12 @@ import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.GnuParser;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.HelpFormatter;
+/* Spark imports */
+import org.apache.spark.SparkConf;
 /* Local imports */
+import sparkgis.coordinator.SparkGISContext;
+import sparkgis.SparkGIS;
+import sparkgis.coordinator.Functions;
 import sparkgis.enums.IO;
 import sparkgis.enums.Predicate;
 import sparkgis.enums.HMType;
@@ -194,74 +199,83 @@ public class SparkGISMain
     /* function to instentiate spark and generate heatmaps */
     public static void callHeatMap(String jID, IO in, List<String> caseIDs, List<String> algos, Predicate predicate, HMType hmType, int partitionSize, IO out, String result_analysis_exe_id){
 	    
-	boolean returnResults = false;
-	/* HDFS custom configuration */
- 	// final String coreSitePath = SparkGISConfig.hdfsCoreSitePath;
-	// final String hdfsSitePath = SparkGISConfig.hdfsHdfsSitePath;
+    	// boolean returnResults = false;
+    	// /* HDFS custom configuration */
+    	// // final String coreSitePath = SparkGISConfig.hdfsCoreSitePath;
+    	// // final String hdfsSitePath = SparkGISConfig.hdfsHdfsSitePath;
  
-	// String hdfs_name_node_ip =  SparkGISConfig.hdfsNameNodeIP;
-	// String hdfsPrefix = "hdfs://"+  hdfs_name_node_ip         +"/user/fbaig/";
-	// final String dataDir = hdfsPrefix + "new-data/";
-	// final String outDir = hdfsPrefix + "results/"+jID+"/";
+    	// // String hdfs_name_node_ip =  SparkGISConfig.hdfsNameNodeIP;
+    	// // String hdfsPrefix = "hdfs://"+  hdfs_name_node_ip         +"/user/fbaig/";
+    	// // final String dataDir = hdfsPrefix + "new-data/";
+    	// // final String outDir = hdfsPrefix + "results/"+jID+"/";
 
-	// final HDFSDataAccess hdfsInOut = new HDFSDataAccess(
-	// 						 coreSitePath, 
-	// 						 hdfsSitePath, 
-	// 						 dataDir, 
-	// 						 outDir
-	// 						 );
+    	// // final HDFSDataAccess hdfsInOut = new HDFSDataAccess(
+    	// // 						 coreSitePath, 
+    	// // 						 hdfsSitePath, 
+    	// // 						 dataDir, 
+    	// // 						 outDir
+    	// // 						 );
 
-	/* use default configurations specified in resources/sparkgis.properties */
-	final HDFSDataAccess hdfsInOut = new HDFSDataAccess();
-	hdfsInOut.appendResultsDir(jID);
-	final MongoDBDataAccess mongoInOut = new MongoDBDataAccess();
+    	// /* use default configurations specified in resources/sparkgis.properties */
+    	// final HDFSDataAccess hdfsInOut = new HDFSDataAccess();
+    	// // hdfsInOut.appendResultsDir(jID);
+    	// final MongoDBDataAccess mongoInOut = new MongoDBDataAccess();
 	
-	ISparkGISIO spIn = null;
-	ISparkGISIO spOut = null;
-	// input source
-	switch (in){
-	case MONGODB:
-	    spIn = mongoInOut;
-	    break;
-	case HDFS:
-	    spIn = hdfsInOut;
-	    break;
-	default:
-	    System.out.println("Invalid IO");
-	    return;
-	}
-	// Output destination
-	switch (out){
-	case MONGODB:
-	    spOut = mongoInOut;
-	    break;
-	case HDFS:
-	    spOut = hdfsInOut;
-	    break;
-	case CLIENT:
-	    spOut = hdfsInOut;
-	    returnResults = true;
-	    break;
-	default:
-	    System.out.println("Invalid IO");
-	    return;
-	}
+    	// ISparkGISIO spIn = null;
+    	// ISparkGISIO spOut = null;
+    	// // input source
+    	// switch (in){
+    	// case MONGODB:
+    	//     spIn = mongoInOut;
+    	//     break;
+    	// case HDFS:
+    	//     spIn = hdfsInOut;
+    	//     break;
+    	// default:
+    	//     System.out.println("Invalid IO");
+    	//     return;
+    	// }
+    	// // Output destination
+    	// switch (out){
+    	// case MONGODB:
+    	//     spOut = mongoInOut;
+    	//     break;
+    	// case HDFS:
+    	//     spOut = hdfsInOut;
+    	//     break;
+    	// case CLIENT:
+    	//     spOut = hdfsInOut;
+    	//     returnResults = true;
+    	//     break;
+    	// default:
+    	//     System.out.println("Invalid IO");
+    	//     return;
+    	// }
+    	// /* Initialize SparkConf */
+    	// SparkConf conf = new SparkConf().setAppName("Spark-GIS");
+    	// /* set serializer */
+    	// conf.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer");
+    	// conf.set("textinputformat.record.delimiter", "\n");
+    	// conf.set("spark.kryo.registrator", sparkgis.KryoClassRegistrator.class.getName());
 	
-	/* Initialize SparkGIS with input source and output destination */
-	final SparkGIS spgis = new SparkGIS(spIn, spOut);
-	spgis.heatMaps(jID,
-		       algos, 
-		       caseIDs, 
-		       predicate,
-		       hmType,
-		       partitionSize,
-		       result_analysis_exe_id
-		       );
-	/* shutdown this spark context */
-	SparkGIS.sc.stop();
+    	// /* Initialize SparkGISContext with input source and output destination */
+    	// final SparkGISContext spgc = new SparkGISContext(conf, spIn, spOut);
+    	// spgc.setBatchFactor(8);
+    	// spgc.jobID = jID;
 	
-	if (returnResults)
-	    System.out.println("Results are stored at: " + hdfsInOut.getResultsDir());
+    	// Functions.heatMaps(spgc,
+    	// 		   algos, 
+    	// 		   caseIDs, 
+    	// 		   predicate,
+    	// 		   hmType,
+    	// 		   partitionSize,
+    	// 		   result_analysis_exe_id
+    	// 		   );
+    	// /* shutdown this spark context */
+    	// spgc.stop();
+	
+    	// if (returnResults)
+    	//     System.out.println("Results are stored at: " + hdfsInOut.getResultsDir());
     }
    
     /**

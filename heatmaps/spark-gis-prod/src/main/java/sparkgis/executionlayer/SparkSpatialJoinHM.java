@@ -17,7 +17,7 @@ import scala.Tuple2;
 import jni.JNIWrapper;
 import sparkgis.data.Tile;
 import sparkgis.SparkGIS;
-import sparkgis.data.Polygon;
+import sparkgis.data.SpatialObject;
 import sparkgis.data.TileStats;
 import sparkgis.data.DataConfig;
 import sparkgis.enums.Predicate;
@@ -75,10 +75,10 @@ public class SparkSpatialJoinHM implements Serializable{
     
     /**
      * Data formats:
-     * 1: config.mappedPartitions: <loadtile-id> <polygon-id> <polygon>
-     * 2: data (after reformat): <setNumber> <loadtile-id> <polygon-id> <polygon>
+     * 1: config.mappedPartitions: <loadtile-id> <spatialData-id> <spatialData>
+     * 2: data (after reformat): <setNumber> <loadtile-id> <spatialData-id> <spatialData>
      * 3: joinMapData (after JNI): 
-     *       <combinedtile-id> <join-idx> <setNumber> <loadtile-id> <polygon-id> <polygon>
+     *      <combinedtile-id> <join-idx> <setNumber> <loadtile-id> <spatialData-id> <spatialData>
      */
     public JavaRDD<TileStats> execute(){
 
@@ -237,7 +237,7 @@ public class SparkSpatialJoinHM implements Serializable{
     }
     
     /**
-     * @return tileID,joinIDX,setNumber,id,polygon
+     * @return tileID,joinIDX,setNumber,id,spatialData
      */
     class PartitionMapperJoin implements PairFlatMapFunction<String, Integer, String>{
     	private final SparkSpatialIndex ssidx;
@@ -263,13 +263,13 @@ public class SparkSpatialJoinHM implements Serializable{
     }
 
     /**
-     * @return setNumber,id,polygon
+     * @return setNumber,id,spatialData
      */
-    class Reformat implements Function<Polygon, String>{
+    class Reformat implements Function<SpatialObject, String>{
     	private final int setNumber;
     	public Reformat(int setNumber){this.setNumber = setNumber;}
-    	public String call(final Polygon p){
-	    return "" + this.setNumber + SparkGIS.TAB + p.toString();
+    	public String call(final SpatialObject s){
+	    return "" + this.setNumber + SparkGIS.TAB + s.toString();
     	}
     }
 

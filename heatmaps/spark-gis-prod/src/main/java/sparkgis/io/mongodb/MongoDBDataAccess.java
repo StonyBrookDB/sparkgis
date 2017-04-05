@@ -77,6 +77,10 @@ public class MongoDBDataAccess implements ISparkGISIO
     	this.dbName = dbName;
     	this.collection = collection;
     }
+
+    public JavaRDD<Polygon> getPolygonsRDD(String dataPath){
+	throw new java.lang.UnsupportedOperationException("MongoDB Not supported yet");
+    }
     
     public JavaRDD<Polygon> getPolygonsRDD(String caseID, String algo){
 	long objectsCount = 0;

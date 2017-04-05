@@ -19,8 +19,9 @@ public class DataConfig implements Serializable
      */
     private int geomid = 2;
 
-    public JavaRDD<Polygon> originalData;
-
+    // public JavaRDD<Polygon> originalData;
+    public JavaRDD<SpatialObject> originalData;
+    
     /* Space stuff */
     private double dataMinX;
     private double dataMinY;

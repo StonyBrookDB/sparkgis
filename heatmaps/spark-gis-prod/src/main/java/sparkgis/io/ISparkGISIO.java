@@ -11,6 +11,7 @@ import sparkgis.data.TileStats;
 public interface ISparkGISIO
 {
     public JavaRDD<Polygon> getPolygonsRDD(String caseID, String algo);
+    public JavaRDD<Polygon> getPolygonsRDD(String dataPath);
     /**
      * args[0]: caseID - hdfs/mongoDB
      * args[1]: analysis_execution_id - mongoDB only

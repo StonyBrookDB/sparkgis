@@ -17,11 +17,13 @@ import org.apache.spark.api.java.function.Function;
 /* HDFS imports */
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.LocalFileSystem;
 import org.apache.hadoop.fs.RemoteIterator;
 import org.apache.hadoop.util.Progressable;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.LocatedFileStatus;
 import org.apache.hadoop.fs.FSDataOutputStream;
+import org.apache.hadoop.hdfs.DistributedFileSystem;
 /* Local imports */
 import sparkgis.SparkGIS;
 import sparkgis.data.Tile;
@@ -43,25 +45,25 @@ public class HDFSDataAccess implements ISparkGISIO, Serializable
     private String resultsDir = hdfsPrefix + SparkGISConfig.hdfsHMResults;
 
     public HDFSDataAccess(){}
-    /**
-     * @param coreSitePath Hadoop configuration path for core-site.xml
-     * @param hdfsSitePath Hadoop configuration path for hdfs-site.xml
-     * @param dataDir Prefix hdfs path for data directory (Might note be needed)
-     * @param outDir Prefix hdfs path to write results to
-     */
-    public HDFSDataAccess(String coreSitePath, String hdfsSitePath, String dataDir, String outDir){
-	this.coreSitePath = coreSitePath;
-	this.hdfsSitePath = hdfsSitePath;
-	this.dataDir = dataDir;
-	this.resultsDir = outDir;
-    }
+    // /**
+    //  * @param coreSitePath Hadoop configuration path for core-site.xml
+    //  * @param hdfsSitePath Hadoop configuration path for hdfs-site.xml
+    //  * @param dataDir Prefix hdfs path for data directory (Might note be needed)
+    //  * @param outDir Prefix hdfs path to write results to
+    //  */
+    // public HDFSDataAccess(String coreSitePath, String hdfsSitePath, String dataDir, String outDir){
+    // 	this.coreSitePath = coreSitePath;
+    // 	this.hdfsSitePath = hdfsSitePath;
+    // 	this.dataDir = dataDir;
+    // 	this.resultsDir = outDir;
+    // }
 
-    /**
-     * Append jobID to results directory
-     * @param jobId
-     */
-    public void appendResultsDir(String jobId){this.resultsDir = this.resultsDir + jobId + "/";}
-    public String getResultsDir(){return this.resultsDir;}
+    // /**
+    //  * Append jobID to results directory
+    //  * @param jobId
+    //  */
+    // public void appendResultsDir(String jobId){this.resultsDir = this.resultsDir + jobId + "/";}
+    // public String getResultsDir(){return this.resultsDir;}
     
     /**
      * Reads input data and return as it is
@@ -71,21 +73,30 @@ public class HDFSDataAccess implements ISparkGISIO, Serializable
      */
     private JavaRDD<String> getDataAsText(String datapath){
 	JavaRDD<String> rawTextData = 
-	    SparkGIS.sc.textFile(dataDir + "/" + datapath, SparkGIS.sc.defaultParallelism()).filter(new Function<String, Boolean>(){
+	    SparkGIS.sc.textFile(datapath, SparkGIS.sc.defaultParallelism()).filter(new Function<String, Boolean>(){
 		    public Boolean call(String s) {
 			return (!s.isEmpty() && (s.split("\t").length >= 2));
 		    }
 		});
 	return rawTextData;
     }
-    
-    public JavaRDD<Polygon> getPolygonsRDD(String caseID, String algo){
-	return getDataAsText(algo+"/"+caseID).map(new Function<String, Polygon>(){
+
+    public JavaRDD<Polygon> getPolygonsRDD(String dataPath){
+	return getDataAsText(dataPath).map(new Function<String, Polygon>(){
 		public Polygon call(String s){
 		    String[] fields = s.split("\t");
 		    return new HDFSPolygon(fields[0], fields[1]);
 		}
 	    });
+    }
+    
+    public JavaRDD<Polygon> getPolygonsRDD(String caseID, String algo){
+    	return getDataAsText(algo+"/"+caseID).map(new Function<String, Polygon>(){
+    		public Polygon call(String s){
+    		    String[] fields = s.split("\t");
+    		    return new HDFSPolygon(fields[0], fields[1]);
+    		}
+    	    });
     }
 
     public String writeTileStats(JavaRDD<TileStats> data, String... args){
@@ -94,38 +105,45 @@ public class HDFSDataAccess implements ISparkGISIO, Serializable
 	return (resultsDir + "/" + caseID);
     }
     
-    /**
-     * Called from MongoToHDFS
-     */
-    public void writePolygons(List<Polygon> pList, String filePath){
-	try{
-    	    Configuration config = new Configuration();
-    	    config.addResource(new Path(coreSitePath));
-    	    config.addResource(new Path(hdfsSitePath));
-    	    FileSystem fs = FileSystem.get(config);
-    	    URI pathURI = URI.create(dataDir + "/" + filePath);
-    	    Path path = new Path(pathURI);
-    	    FSDataOutputStream fos = fs.create(path);
-    	    BufferedWriter pWriter = new BufferedWriter( new OutputStreamWriter( fos, "UTF-8" ) );
-	    for (Polygon p : pList)
-		pWriter.write(p.toString() + "\n");
-	    pWriter.close();
-	    fs.close();
-	}catch(Exception e){e.printStackTrace();}
-    }
+    // /**
+    //  * Called from MongoToHDFS
+    //  */
+    // public void writePolygons(List<Polygon> pList, String filePath){
+    // 	try{
+    // 	    Configuration config = new Configuration();
+    // 	    config.set("fs.hdfs.impl", DistributedFileSystem.class.getName());
+    // 	    config.set("fs.file.impl", LocalFileSystem.class.getName());
+    // 	    // config.addResource(new Path(coreSitePath));
+    // 	    // config.addResource(new Path(hdfsSitePath));
+
+    // 	    FileSystem fs = FileSystem.get(config);
+    // 	    URI pathURI = URI.create(dataDir + "/" + filePath);
+    // 	    Path path = new Path(pathURI);
+    // 	    FSDataOutputStream fos = fs.create(path);
+    // 	    BufferedWriter pWriter =
+    // 		new BufferedWriter( new OutputStreamWriter( fos, "UTF-8" ) );
+    // 	    for (Polygon p : pList)
+    // 		pWriter.write(p.toString() + "\n");
+    // 	    pWriter.close();
+    // 	    fs.close();
+    // 	}catch(Exception e){e.printStackTrace();}
+    // }
     
-    public boolean fileExists(String filePath){
-    	boolean exists = false;
-    	try{
-    	    Configuration config = new Configuration();
-    	    config.addResource(new Path(coreSitePath));
-    	    config.addResource(new Path(hdfsSitePath));
-    	    FileSystem fs = FileSystem.get(config);
-    	    URI pathURI = URI.create(dataDir + "/" + filePath);
-    	    Path path = new Path(pathURI);
-    	    exists = fs.exists(path);
-    	    fs.close();
-    	} catch(Exception e) {e.printStackTrace();}
-    	return exists;
-    }  
+    // public boolean fileExists(String filePath){
+    // 	boolean exists = false;
+    // 	try{
+    // 	    Configuration config = new Configuration();
+    // 	    config.set("fs.hdfs.impl", DistributedFileSystem.class.getName());
+    // 	    config.set("fs.file.impl", LocalFileSystem.class.getName());
+    // 	    // config.addResource(new Path(coreSitePath));
+    // 	    // config.addResource(new Path(hdfsSitePath));
+    // 	    FileSystem fs = FileSystem.get(config);
+    // 	    URI pathURI = URI.create(dataDir + "/" + filePath);
+    // 	    Path path = new Path(pathURI);
+    // 	    exists = fs.exists(path);
+    // 	    fs.close();
+    // 	} catch(Exception e) {e.printStackTrace();}
+    // 	return exists;
+    // }
+    
 }

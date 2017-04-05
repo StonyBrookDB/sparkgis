@@ -33,11 +33,11 @@ public class SparkPrepareData implements Serializable
     //private final SparkSpatialIndex ssidx;    
     private final DataConfig dataConfig;
     
-    public SparkPrepareData(String imageName)
+    public SparkPrepareData(String dataName)
     {
 	//this.imageName = imageName;
 	/* initialize configuration */
-	dataConfig = new DataConfig(imageName);
+	dataConfig = new DataConfig(dataName);
 	/* initialize SparkSpatialIndex. Index built in 'loadStep1()' */
 	//ssidx = new SparkSpatialIndex();
     }
@@ -48,7 +48,7 @@ public class SparkPrepareData implements Serializable
      * Step-2: Using index, map original data to physical partition tiles
      */
     public DataConfig execute(JavaRDD<Polygon> polygons){
-	dataConfig.originalData = polygons;
+	// dataConfig.originalData = polygons;
 	/* pass data to step-1 for further processing */
 	loadStep1(polygons);
 	// // move on to step-2

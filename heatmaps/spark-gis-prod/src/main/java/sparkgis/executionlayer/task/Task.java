@@ -1,18 +1,26 @@
 package sparkgis.executionlayer.task;
 
-/* Java imports */
-import java.util.List;
 /* Local imports*/
-import sparkgis.io.ISparkGISIO;
+import sparkgis.coordinator.SparkGISContext;
+import sparkgis.executionlayer.SparkPrepareData;
 
 public class Task{
-    protected final ISparkGISIO inputSrc;
-    protected final ISparkGISIO outDest;
     protected final String data;
+    protected final SparkGISContext sgc;
     
-    public Task(ISparkGISIO inputSrc, ISparkGISIO outDest, String data){
-	this.inputSrc = inputSrc;
-	this.outDest = outDest;
+    public Task(SparkGISContext sgc, String data){
+	this.sgc = sgc;
 	this.data = data;
+    }
+
+    protected List<Integer> generatePairs(int count){
+    	ArrayList<Integer> ret = new ArrayList<Integer>();
+    	for (int i=0; i<count; ++i){
+    	    for (int j=(i+1); j<count; ++j){
+    		ret.add(i);
+    		ret.add(j);
+    	    }
+    	}
+    	return ret;
     }
 }
