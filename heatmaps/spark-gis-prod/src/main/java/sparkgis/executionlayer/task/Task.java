@@ -1,5 +1,7 @@
 package sparkgis.executionlayer.task;
-
+/* Java imports */
+import java.util.List;
+import java.util.ArrayList;
 /* Local imports*/
 import sparkgis.coordinator.SparkGISContext;
 import sparkgis.executionlayer.SparkPrepareData;

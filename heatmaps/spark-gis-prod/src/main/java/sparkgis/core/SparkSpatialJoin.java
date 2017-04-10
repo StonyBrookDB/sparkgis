@@ -1,4 +1,4 @@
-package sparkgis.executionlayer;
+package sparkgis.core;
 /* Java imports */
 import java.util.List;
 import java.util.Arrays;
@@ -33,11 +33,11 @@ public class SparkSpatialJoin implements Serializable{
 
     private final SparkGISContext sgc;
     
-    private final Predicate predicate;
+    protected final Predicate predicate;
     /* combined data configuration */
     private final DataConfig combinedConfig;
-    private final DataConfig config1;
-    private final DataConfig config2;
+    protected final DataConfig config1;
+    protected final DataConfig config2;
 
     private final double minX;
     private final double minY;
@@ -50,6 +50,8 @@ public class SparkSpatialJoin implements Serializable{
      * since it has to be transferred over to workers
      */
     private Broadcast<SparkSpatialIndex> ssidxBV = null;
+
+    protected List<Tile> partitionIDX;
     
     public SparkSpatialJoin(
 			    SparkGISContext sgc,
@@ -72,15 +74,16 @@ public class SparkSpatialJoin implements Serializable{
     }
     
     /**
-     * Data formats:
-     * 1: config.mappedPartitions: <loadtile-id> <spatialObject-id> <spatialObject>
-     * 2: data (after reformat): <setNumber> <loadtile-id> <spatialObject-id> <spatialObject>
-     * 3: joinMapData (after JNI): 
-     *  <combinedtile-id> <join-idx> <setNumber> <loadtile-id> <spatialObject-id> <spatialObject>
+     * Performs spatial join operation on data configurations specified in constructor
+     * @return JavaRDD<String>. Each string contains information about resulting pair of
+     * polygons with some basic stats such as area union, intersecting area etc. The format
+     * is as follows
+     * <p> 
+     * polygon-id \t polygon-coordinates \t polygon-id \t polygon-coordinates \t tile-id \t Jaccard \t dice
      */
-    public JavaRDD<String> execute(){
+    public JavaRDD execute(){
 	
-	List<Tile> partitionIDX =
+	partitionIDX =
 	    Partitioner.fixedGrid(
 				  combinedConfig.getSpanX(), 
 				  combinedConfig.getSpanY(), 
@@ -112,14 +115,14 @@ public class SparkSpatialJoin implements Serializable{
 						    predicate.value, 
 						    config1.getGeomid(),
 						    config2.getGeomid())
-					 );	
-    	return results.values();
+					 );
+	return results.values();
     }
 
     /*
      * Cogroup version
      */
-    public JavaPairRDD<Integer, Tuple2<Iterable<String>, Iterable<String>>> getDataByTile(){
+    protected JavaPairRDD<Integer, Tuple2<Iterable<String>, Iterable<String>>> getDataByTile(){
 
 	/* 
 	 * Reformat stage only appends a set number to data from algo1 and algo2 

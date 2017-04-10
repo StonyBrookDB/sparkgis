@@ -2,7 +2,7 @@ package sparkgis.coordinator;
 
 public class SparkGISJobConf{
 
-    public static final String DUMMY_INDEX = "10tgaj17ga986";
+    public static final String DUMMY_ID = "10tgaj17ga986";
     
     private String jobID;
     private int batchFactor = 1;

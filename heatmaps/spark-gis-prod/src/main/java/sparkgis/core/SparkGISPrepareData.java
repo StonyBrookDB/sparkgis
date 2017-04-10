@@ -1,4 +1,4 @@
-package sparkgis.executionlayer;
+package sparkgis.core;
 
 /* Java imports */
 import java.lang.Math;

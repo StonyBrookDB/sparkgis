@@ -1,7 +1,6 @@
 package sparkgis.data;
 
 import java.io.Serializable;
-import sparkgis.coordinator.SparkGISJobConf;
 
 public class SpatialObject implements Serializable
 {
@@ -9,7 +8,7 @@ public class SpatialObject implements Serializable
     protected final String spatialDataString;
     
     public SpatialObject(String spatialDataString){
-	this.id = SparkGISJobConf.DUMMY_INDEX;
+	this.id = sparkgis.coordinator.SparkGISJobConf.DUMMY_ID;
 	this.spatialDataString = spatialDataString;
 	
     }

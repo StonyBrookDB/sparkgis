@@ -2,23 +2,16 @@ package sparkgis.executionlayer.task;
 /* Java imports */
 import java.util.List;
 import java.util.ArrayList;
-import java.util.concurrent.Future;
 import java.util.concurrent.Callable;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ExecutorService;
 /* Spark imports */
 import org.apache.spark.api.java.JavaRDD;
 /* Local imports */
 import sparkgis.enums.HMType;
-import sparkgis.data.Polygon;
 import sparkgis.data.TileStats;
-import sparkgis.io.ISparkGISIO;
 import sparkgis.data.DataConfig;
 import sparkgis.enums.Predicate;
 import sparkgis.SparkGISConfig;
 import sparkgis.coordinator.SparkGISContext;
-import sparkgis.executionlayer.AlgoPair;
-import sparkgis.executionlayer.SparkPrepareData;
 import sparkgis.executionlayer.SparkSpatialJoinHM_Cogroup;
 
 public class HeatMapTask extends Task implements Callable<String>{
@@ -72,7 +65,7 @@ public class HeatMapTask extends Task implements Callable<String>{
 
 	List<DataConfig> configs = sgc.prepareData(this.generateDataPaths());
 
-	final List<Integer> pairs = generatePairs();
+	final List<Integer> pairs = generatePairs(algoCount);
 	for (int i=0; i<pairs.size(); i+=2){
 	    /* Step-2: Generate heatmap from configurations */
 	    if ((configs.get(i) != null) && (configs.get(i+1) != null)){
@@ -100,17 +93,11 @@ public class HeatMapTask extends Task implements Callable<String>{
 	// remove last ':' from tile
 	title = title.substring(0, title.length()-1);
 	String ret = "";
- 
-	// for (JavaRDD<TileStats> result:results){
-	//     ret = outDest.writeTileStats(result,
-	// 				 caseID,
-	// 				 orig_analysis_exe_id,
-	// 				 title,
-	// 				 result_analysis_exe_id,
-	// 				 jobId);
-	//     System.out.println("completed");
-	// }
-	return ret;
+
+	for (JavaRDD<TileStats> result:results){
+	    result.saveAsTextFile(resultsDir + super.data);
+	}
+	return resultsDir;
     }
 
     /**
@@ -132,7 +119,11 @@ public class HeatMapTask extends Task implements Callable<String>{
      */
     private JavaRDD<TileStats> generateHeatMap(DataConfig config1, DataConfig config2){
 	SparkSpatialJoinHM_Cogroup heatmap1 =
-	    new SparkSpatialJoinHM_Cogroup(config1, config2, predicate, type, partitionSize);
+	    new SparkSpatialJoinHM_Cogroup(config1,
+					   config2,
+					   predicate,
+					   type,
+					   sgc.getJobConf().getPartitionSize());
 	return heatmap1.execute();
     }
 }

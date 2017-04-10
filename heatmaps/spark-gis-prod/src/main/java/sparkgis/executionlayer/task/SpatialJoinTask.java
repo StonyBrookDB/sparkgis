@@ -5,17 +5,25 @@ import java.util.ArrayList;
 import java.util.concurrent.Callable;
 /* Spark imports */
 import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.JavaPairRDD;
 /* Local imports */
 import sparkgis.data.DataConfig;
 import sparkgis.enums.Predicate;
+import sparkgis.core.SparkSpatialJoin;
 import sparkgis.coordinator.SparkGISContext;
-import sparkgis.executionlayer.SparkSpatialJoin;
 
 public class SpatialJoinTask extends Task implements Callable<JavaRDD<String>>{
 
     private final List<String> datasetPaths;
     private final Predicate predicate;
 
+    public SpatialJoinTask(SparkGISContext sgc,
+			   Predicate predicate){
+	super(sgc, "");
+	this.datasetPaths = null;
+	this.predicate = predicate;
+    }
+    
     public SpatialJoinTask(SparkGISContext sgc,
 			   List<String> datasetPaths,
 			   Predicate predicate){
@@ -32,18 +40,20 @@ public class SpatialJoinTask extends Task implements Callable<JavaRDD<String>>{
      */
     @Override
     public JavaRDD<String> call(){
-
-	SparkSpatialJoin spj = null;
 	List<DataConfig> configs = sgc.prepareData(this.datasetPaths);
 
+	return call(configs);
+    }
+
+    public JavaRDD<String> call(List<DataConfig> configs){
+	SparkSpatialJoin spj = null;
 	/* generate pairs of all datasets */
-	final List<Integer> pairs = generatePairs(this.datasetPaths.size());
+	final List<Integer> pairs = super.generatePairs(configs.size());
 	List<JavaRDD<String>> results = new ArrayList<JavaRDD<String>>(pairs.size());
 	
 	for (int i=0; i<pairs.size(); i+=2){
 	    /* perform spatial join from configuration pairs */
 	    if ((configs.get(i) != null) && (configs.get(i+1) != null)){
-		/* generate heatmap based from data configurations */
 		spj = new SparkSpatialJoin(sgc, configs.get(i), configs.get(i+1), predicate);
 		results.add(spj.execute());
 	    }

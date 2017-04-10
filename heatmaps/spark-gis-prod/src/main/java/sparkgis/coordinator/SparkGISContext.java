@@ -14,7 +14,7 @@ import org.apache.spark.api.java.function.Function;
 /* Local imports */
 import sparkgis.data.DataConfig;
 import sparkgis.data.SpatialObject;
-import sparkgis.executionlayer.SparkGISPrepareData;
+import sparkgis.core.SparkGISPrepareData;
 
 public class SparkGISContext extends JavaSparkContext{
 

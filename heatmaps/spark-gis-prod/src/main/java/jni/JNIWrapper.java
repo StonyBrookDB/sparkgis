@@ -44,7 +44,7 @@ public class JNIWrapper {
 			       String[] data, 
 			       String predicate, 
 			       int geomID1, 
-			       int geomMID2
+			       int geomID2
 			       );
     /**
      * Called for heatmap calculation involving tile-dice
@@ -56,7 +56,7 @@ public class JNIWrapper {
 					String[] data, 
 					String predicate, 
 					int geomID1, 
-					int geomMID2
+					int geomID2
 					);
 
     // Method-2

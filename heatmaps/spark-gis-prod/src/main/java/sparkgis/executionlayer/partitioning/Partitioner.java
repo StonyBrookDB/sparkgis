@@ -14,7 +14,7 @@ public class Partitioner
      * @param spaceXSpan (maxX - minX)
      * @param spaceYSpan (maxY - minY)
      * @param partitionSize Bucket size for this partitioning
-     * @parm numObjects Total objects count
+     * @param numObjects Total objects count
      * @return List<String> List of normalized MBR of regions of partitions 
      */
     public static List<Tile> fixedGrid(double spaceXSpan, double spaceYSpan, int partitionSize, long numObjects){

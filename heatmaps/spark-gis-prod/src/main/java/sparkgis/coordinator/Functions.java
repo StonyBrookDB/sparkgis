@@ -36,52 +36,5 @@ public class Functions{
 	
     }
     
-    /**
-     * Special direct function for heatmap generation for BMI data
-     * @param jobID
-     * @param algos List of algorithms to compare
-     * @param caseIDs List of caseIDs to generate heatmap for in parallel
-     * @param pred Predicate to use for spatial join
-     * @param hmType Similarity coefficient to use for heatmap
-     * @param pSize Partition size
-     * @param result_analysis_exe_id Result id to show in caMicroscope 
-     *                               (required only if writing result to MongoDB)  
-     */
-    public static void heatMaps(SparkGISContext spgc,
-				List<String> algos,
-				List<String> caseIDs,
-				Predicate pred,
-				HMType hmType,
-				int pSize,
-				String result_analysis_exe_id){
-	
-    	// /* create a thread pool for async jobs */
-    	// ExecutorService exeService = Executors.newFixedThreadPool(spgc.getBatchFactor());
-	
-    	// /* for a given algorithm pair create parallel heatmap generation tasks */
-    	// List<HeatMapTask> tasks = new ArrayList<HeatMapTask>();
-    	// for (String caseID : caseIDs){
-    	//     HeatMapTask t =
-    	// 	new HeatMapTask(spgc.jobID,
-    	// 			spgc.inputSrc,
-    	// 			caseID,
-    	// 			algos,
-    	// 			pred,
-    	// 			hmType,
-    	// 			spgc.outDest,
-    	// 			result_analysis_exe_id);
-    	//     /* set optional parameters */
-    	//     t.setPartitionSize(pSize);
-    	//     tasks.add(t);
-    	// }
-    	// /* wait for all jobs to complete */
-    	// try {
-    	//     List<Future<String>> results = exeService.invokeAll(tasks);
-    	//     for (Future res : results)
-    	// 	res.get();
-    	// }catch(Exception e){e.printStackTrace();}
-	
-    	// /* close thread pool */
-    	// exeService.shutdown();
-    }
+    
 }
