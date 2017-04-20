@@ -9,19 +9,11 @@ extern "C" {
 #endif
 /*
  * Class:     jni_JNIWrapper
- * Method:    partitionMapperJoin
- * Signature: (Ljava/lang/String;I[Ljava/lang/String;)[Ljava/lang/String;
- */
-JNIEXPORT jobjectArray JNICALL Java_jni_JNIWrapper_partitionMapperJoin
-  (JNIEnv *, jclass, jstring, jint, jobjectArray);
-
-/*
- * Class:     jni_JNIWrapper
  * Method:    resque
  * Signature: ([Ljava/lang/String;Ljava/lang/String;II)[Ljava/lang/String;
  */
 JNIEXPORT jobjectArray JNICALL Java_jni_JNIWrapper_resque
-  (JNIEnv *, jobject, jobjectArray, jstring, jint, jint);
+  (JNIEnv *, jclass, jobjectArray, jstring, jint, jint);
 
 /*
  * Class:     jni_JNIWrapper

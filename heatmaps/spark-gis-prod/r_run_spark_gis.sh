@@ -22,8 +22,10 @@ className=sparkgis.SparkGISMain
 jar=target/uber-sparkgis-1.0.jar
 # command line arguments
 uid='--uid 123456'
-algos=' --algos "yi-algorithm-v1,yi-algorithm-v11"'
-caseIDs=' --caseids '$caseids
+# algos=' --algos "yi-algorithm-v1,yi-algorithm-v11"'
+# caseIDs=' --caseids '$caseids
+algos=' --algos "algo1,algo2"'
+caseIDs=' --caseids "TCGA-06-1802-01Z-00-DX1"'
 heatmapType=' --metric jaccard'
 input=' --input hdfs'
 output=' --output client'

@@ -187,7 +187,7 @@ public class SparkGISMain
 	    System.out.println("Input:\t" + ((spIn==IO.HDFS)?"hdfs":"mongo"));
 	    System.out.println("Output:\t" + ((spOut==IO.MONGODB)?"mongo":"hdfs"));
 
-	    callHeatMap(jobID, spIn, caseIDs, algos, predicate, hmType, partitionSize, spOut, result_analysis_exe_id);	    
+	    callHeatMap(jobID, spIn, caseIDs, algos, predicate, hmType, partitionSize, spOut, result_analysis_exe_id);
 	}
 	catch(ParseException e){
 	    e.printStackTrace();

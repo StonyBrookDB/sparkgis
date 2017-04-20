@@ -9,6 +9,7 @@
 #include <cstring>
 
 // libspatialindex
+//#include <spatialindex/tools/Tools.h>
 #include <spatialindex/SpatialIndex.h>
 
 // geos 
@@ -17,8 +18,9 @@
 #include <geos/geom/Geometry.h>
 #include <geos/geom/Point.h>
 #include <geos/io/WKTReader.h>
+
 // from resquecommon
-//#include <geos/io/WKTWriter.h>
+#include <geos/io/WKTWriter.h>
 
 #include "tokenizer.h"
 
@@ -27,7 +29,7 @@
 #define LeafCapacity 50
 #define COMPRESS true
 
-
+using namespace Tools;
 using namespace SpatialIndex;
 
 using namespace geos;
@@ -70,8 +72,8 @@ class GEOSDataStream : public IDataStream
 public:
   GEOSDataStream(map<int,Geometry*> * inputColl ) : m_pNext(0), len(0),m_id(0)
   {
-    if (inputColl->empty())
-      throw Tools::IllegalArgumentException("Input size is ZERO.");
+if (inputColl->empty())
+  throw IllegalArgumentException("Input size is ZERO.");
     shapes = inputColl;
     len = inputColl->size();
     iter = shapes->begin();

@@ -143,8 +143,8 @@ const string SEP = "\t"; // ctrl+a
 /* 	} */
 
 /* 	RTree::Data* m_pNext; */
-/* 	map<int,Geometry*> * shapes;  */
-/* 	map<int,Geometry*>::iterator iter;  */
+/* 	map<int,Geometry*> * shapes; */
+/* 	map<int,Geometry*>::iterator iter; */
 
 /* 	int len; */
 /* 	id_type m_id; */

@@ -5,11 +5,12 @@ import java.util.ArrayList;
 public class JNIWrapper {    
     
     // Join Map
-    public static native String[] partitionMapperJoin(
-						      String line, 
-						      int geomID,
-						      String[] partfile
-						      );
+    // public static native String[] partitionMapperJoin(
+    // 						      String line, 
+    // 						      int geomID,
+    // 						      String[] partfile
+    // 						      );
+    
     /**
      * Called for native spatial join calculation
      * Contains additional statistics like jaccard and dice indices for intersecting 
@@ -39,7 +40,7 @@ public class JNIWrapper {
      * @return Spatial join results based on predicate
      *         String: Object-1 TAB Object-2 TAB JaccardIndex TAB DiceIndex
      */
-    public //static // synchronized
+    public static // synchronized
 	native String[] resque(
 			       String[] data, 
 			       String predicate, 
@@ -80,11 +81,11 @@ public class JNIWrapper {
     }        
     
     public JNIWrapper(){
-	try{
-	    System.loadLibrary("gis");
-	}catch(Exception e){
-	    System.out.println("Error during static initialization");
-	}
+	// try{
+	//     System.loadLibrary("gis");
+	// }catch(Exception e){
+	//     System.out.println("Error during static initialization");
+	// }
     }
 }
 
