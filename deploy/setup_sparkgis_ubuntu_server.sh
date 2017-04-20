@@ -14,6 +14,10 @@ ssh-keygen
 ssh-copy-id -i ~/.ssh/id_rsa.pub localhost
 echo "$(tput setaf 2)Done ... $(tput sgr 0)"
 
+# setup dependencies GEOS & SpatialIndex
+sudo apt-get install libgeos++-dev
+sudo apt-get install libspatialindex-dev
+
 # Setup Java
 echo "$(tput setaf 2)Setting up Java ...$(tput sgr 0)"
 sudo apt-get install openjdk-8-jdk
@@ -21,23 +25,26 @@ echo "$(tput setaf 2)Done ... $(tput sgr 0)"
 
 # Setup hadoop
 echo "$(tput setaf 2)Setting up Hadoop ...$(tput sgr 0)"
-sudo mkdir /usr/local/hadoop
 wget http://download.nextag.com/apache/hadoop/common/hadoop-2.7.3/hadoop-2.7.3.tar.gz
 tar -xzf hadoop-2.7.3.tar.gz
 sudo mv hadoop-2.7.3 /usr/local/hadoop
+# sudo install -d -o sparkgis -g sparkgis -m 700 /usr/local/hadoop/tmp
+# sudo install -d -o sparkgis -g sparkgis -m 700 /usr/local/hadoop/logs
+sudo mkdir /usr/local/hadoop/logs
+sudo chmod -R 700 /usr/local/hadoop/logs
+sudo mkdir /usr/local/hadoop/tmp
+sudo chmod -R 700 /usr/local/hadoop/tmp
 echo "$(tput setaf 2)Hadoop set up successfully: $(tput setaf 5)/usr/local/hadoop $(tput sgr 0)"
 echo "$(tput setaf 1)$(tput setab 7)Setting up HDFS requires manual configuration. Please refer to $(tput setaf 5)setup_hdfs.sh$(tput setaf 1) for details $(tput sgr 0)"
 
 # Setup Spark
 echo "$(tput setaf 2)Setting up Spark ...$(tput sgr 0)"
-sudo mkdir /usr/local/spark
 wget http://d3kbcqa49mib13.cloudfront.net/spark-2.1.0-bin-hadoop2.7.tgz
 tar -xzf spark-2.1.0-bin-hadoop2.7.tgz
 sudo mv spark-2.1.0-bin-hadoop2.7 /usr/local/spark
 echo "$(tput setaf 2)Spark set up successfully: $(tput setaf 5)/usr/local/spark $(tput sgr 0)"
 
 # Setup SparkGIS
-
 
 # setup environment variables
 echo "$(tput setaf 2)Setting up environment variables ...$(tput sgr 0)"
