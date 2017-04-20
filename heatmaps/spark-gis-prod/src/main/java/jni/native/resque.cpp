@@ -52,15 +52,20 @@ void Resque::releaseShapeMem(const int k ){
 bool Resque::buildIndex(map<int,Geometry*> & geom_polygons) {
     // build spatial index on tile boundaries 
     id_type  indexIdentifier;
+    
     GEOSDataStream stream(&geom_polygons);
     storage = StorageManager::createNewMemoryStorageManager();
-    spidx   = RTree::createAndBulkLoadNewRTree(RTree::BLM_STR, stream, *storage, 
-	    FillFactor,
-	    IndexCapacity,
-	    LeafCapacity,
-	    2, 
-	    RTree::RV_RSTAR, indexIdentifier);
-
+    
+    spidx   = RTree::createAndBulkLoadNewRTree(RTree::BLM_STR,
+					       stream,
+					       *storage, 
+					       FillFactor,
+					       IndexCapacity,
+					       LeafCapacity,
+					       2, 
+					       RTree::RV_RSTAR,
+					       indexIdentifier);
+    
     // Error checking 
     return spidx->isIndexValid();
 }
@@ -459,7 +464,7 @@ void Resque::populate(string input_line)
   if (fields[index].size() < 4) // this number 4 is really arbitrary
     return; // empty spatial object 
 
-  try { 
+  try {
     poly = wkt_reader->read(fields[index]);
   }
   catch (...) {
@@ -486,7 +491,8 @@ void Resque::populate(string input_line)
 Resque::Resque(std::string predicate, int geomid1, int geomid2){
   init();
   wkt_reader = new WKTReader(new GeometryFactory(new PrecisionModel(),OSM_SRID));
-
+  //wkt_reader = WKTReader(new GeometryFactory(new PrecisionModel(),OSM_SRID));
+  
   stop.JOIN_PREDICATE = getJoinPredicate(predicate.c_str());
   // do geomid shifting implicitly from original data geomid
   // tileID appended in addition to setNumber & ID appended before mapping 

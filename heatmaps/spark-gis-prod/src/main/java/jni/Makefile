@@ -1,31 +1,23 @@
 
 UNAME		= $(shell uname)
 OPTFLAGS	= -O2 -Wno-write-strings -Wno-deprecated-declarations
-#INCBASE		= -I. -I extlib/include
-#LIBBASE		= -lspatialindex -lgeos -L extlib/lib
-JNIINC		= -I${JAVA_HOME}/include -I${JAVA_HOME}/include/linux
-#INCBASE		= -I. -I/usr/local/lib -I ${SATO_INC_PATH}
-INCBASE		= -I. -I ${SATO_INC_PATH}
-LIBBASE		= -lspatialindex -lgeos -L/usr/local/lib -L ${SATO_LIB_PATH}
+JNIINC		= -I${JAVA_HOME}/../include -I${JAVA_HOME}/../include/linux
+INCBASE		= -I. -I${SATO_INC_PATH}
+LIBBASE		= -L${SATO_LIB_PATH}  -lgeos -lspatialindex
 
-ifneq (,$(findstring Linux,$(shell uname -a)))
-    INCFLAGS = -I$(spatial)/include
-    LIBS = -L$(spatial)/lib
-else 
-    ifeq ($(UNAME), Darwin)
-    INCFLAGS = -I /Library/Frameworks/GEOS.framework/Headers
-    LIBS = -L /Library/Frameworks/GEOS.framework/unix/lib
-endif
-endif
-
-CFLAGS      = $(OPTFLAGS) $(INCBASE) $(INCFLAGS) 
-LDFLAGS     = $(LIBBASE) $(LIBS)
+CFLAGS      = $(OPTFLAGS) $(INCBASE) $(INCFLAGS)
+LDFLAGS     = $(LIBBASE)
 
 CC = g++
 
 all: gis
 
-gis: native/resque.cpp native/partitionMapperJoin.cpp include/partitionMapperJoin.hpp include/resque.hpp include/hadoopgis.h include/tokenizer.h include/resquecommon.h gis.cpp
-	$(CC) -std=c++0x -shared -fpic gis.cpp native/partitionMapperJoin.cpp native/resque.cpp -o libgis.so $(JNIINC) $(CFLAGS) $(LDFLAGS) $(OPTFLAGS)
+# gis: native/resque.cpp native/partitionMapperJoin.cpp include/partitionMapperJoin.hpp include/resque.hpp include/hadoopgis.h include/tokenizer.h include/resquecommon.h gis.cpp
+# 	$(CC) -std=c++0x -shared -fpic gis.cpp native/partitionMapperJoin.cpp native/resque.cpp -o libgis.so $(JNIINC) $(CFLAGS) $(LDFLAGS) $(OPTFLAGS)
+gis: native/resque.cpp include/resque.hpp include/hadoopgis.h include/tokenizer.h include/resquecommon.h gis.cpp
+	$(CC) -std=c++0x -shared -fpic gis.cpp native/resque.cpp -o libgis.so $(JNIINC) $(CFLAGS) $(LDFLAGS) $(OPTFLAGS)
+#$(CC) -std=c++0x -fPIC $(JNIINC) $(INCBASE) gis.cpp native/resque.cpp -o gis $(OPTFLAGS) $(LDFLAGS)
+#$(CC) -shared -o ./bin/libgis.so  gis.o -Wl,-rpath,${SATO_LIB_PATH} $(CFLAGS) $(LDFLAGS) $(OPTFLAGS)
+
 clean:
 	@rm -f *.o hgtiler mbbextractor
