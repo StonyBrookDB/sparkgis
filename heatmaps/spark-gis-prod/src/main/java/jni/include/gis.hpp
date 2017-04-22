@@ -7,46 +7,71 @@
 #include <algorithm>
 #include <map>
 #include <cstring>
+#include <string>
+#include <vector>
 
-// libspatialindex
-//#include <spatialindex/tools/Tools.h>
+/* libspatialindex */
 #include <spatialindex/SpatialIndex.h>
 
-// geos 
+/* geos */
 #include <geos/geom/PrecisionModel.h>
 #include <geos/geom/GeometryFactory.h>
 #include <geos/geom/Geometry.h>
 #include <geos/geom/Point.h>
 #include <geos/io/WKTReader.h>
-
-// from resquecommon
 #include <geos/io/WKTWriter.h>
-
-#include "tokenizer.h"
+#include <geos/opBuffer.h>
 
 #define FillFactor 0.9
 #define IndexCapacity 10 
 #define LeafCapacity 50
 #define COMPRESS true
 
-using namespace Tools;
+using namespace std;
+
 using namespace SpatialIndex;
 
 using namespace geos;
 using namespace geos::io;
 using namespace geos::geom;
-
+using namespace geos::operation::buffer;
 
 const string BAR = "|";
 const string DASH= "-";
 const string TAB = "\t";
 const string COMMA = ",";
 const string SPACE = " ";
+const string SEP = "\t";
 
 const string shapebegin = "POLYGON((";
 const string shapeend = "))";
 
+const int OSM_SRID = 4326;
+const int ST_INTERSECTS = 1;
+const int ST_TOUCHES = 2;
+const int ST_CROSSES = 3;
+const int ST_CONTAINS = 4;
+const int ST_ADJACENT = 5;
+const int ST_DISJOINT = 6;
+const int ST_EQUALS = 7;
+const int ST_DWITHIN = 8;
+const int ST_WITHIN = 9;
+const int ST_OVERLAPS = 10;
+
+const int SID_1 = 1;
+const int SID_2 = 2;
+
 //extern vector<id_type>hits;
+
+/* General Utility functions */
+namespace Util{
+  void tokenize ( const string& str,
+		  vector<string>& result,
+		  const string& delimiters = " ,;:\t", 
+		  const bool keepBlankFields=false,
+		  const string& quote="\"\'"
+		  );
+}
 
 /* 
  * The program maps the input tsv data into corresponding partition 
@@ -72,8 +97,8 @@ class GEOSDataStream : public IDataStream
 public:
   GEOSDataStream(map<int,Geometry*> * inputColl ) : m_pNext(0), len(0),m_id(0)
   {
-if (inputColl->empty())
-  throw IllegalArgumentException("Input size is ZERO.");
+    if (inputColl->empty())
+      throw Tools::IllegalArgumentException("Input size is ZERO.");
     shapes = inputColl;
     len = inputColl->size();
     iter = shapes->begin();
@@ -87,13 +112,13 @@ if (inputColl->empty())
   virtual IData* getNext()
   {
     if (m_pNext == 0) return 0;
-
+    
     RTree::Data* ret = m_pNext;
     m_pNext = 0;
     readNextEntry();
     return ret;
   }
-
+  
   virtual bool hasNext()
   {
     return (m_pNext != 0);
@@ -136,6 +161,7 @@ if (inputColl->empty())
   int len;
   id_type m_id;
 };
+
 class MyVisitor : public IVisitor
 {
 private:
@@ -156,4 +182,5 @@ public:
   void visitData(std::vector<const IData*>& v) {}
   void visitData(std::vector<uint32_t>& v){}
 };
+
 #endif

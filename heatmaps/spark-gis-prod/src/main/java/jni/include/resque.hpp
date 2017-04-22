@@ -1,9 +1,8 @@
-#include <vector>
-#include <string>
+#ifndef RESQUE_H
+#define RESQUE_H
 
 #include "gis.hpp"
-#include "statistics.h"
-#include "resquecommon.h"
+#include "statistics.hpp"
 					     
 class Resque{
 
@@ -26,7 +25,6 @@ private:
   map<int, vector<string> > rawdata;
   
   WKTReader *wkt_reader;
-  //WKTReader wkt_reader;
   ISpatialIndex * spidx;
   IStorageManager * storage;
   Jacc_object_cal * jacc_cal;
@@ -44,17 +42,20 @@ private:
   
   void init();
   void print_stop();
-  void releaseShapeMem(const int k );
-  bool buildIndex(map<int,Geometry*> & geom_polygons);
-  bool join_with_predicate(const Geometry * geom1 , const Geometry * geom2, 
-			   const Envelope * env1, const Envelope * env2,
-			   const int jp);
-  string project( vector<string> & fields, int sid);
-  void setProjectionParam(char * arg);
-  int getJoinPredicate(const char * predicate_str);
   string ReportResult(int i, int j);
- 
+  void releaseShapeMem(const int k);
+  void setProjectionParam(char * arg);
+  string project( vector<string> & fields, int sid);
+  int getJoinPredicate(const char * predicate_str); 
+  bool buildIndex(map<int,Geometry*> & geom_polygons);
   void populate_polygon(Geometry *poly, int sid, vector<string> fields);
+
+  bool join_with_predicate(const Geometry * geom1 ,
+			   const Geometry * geom2, 
+			   const Envelope * env1,
+			   const Envelope * env2,
+			   const int jp);
+
 public:
   Resque(string predicate, int geomid1, int geomid2); 
   // Refer to JNIWrapper.java for documentation of following functions
@@ -63,10 +64,6 @@ public:
   double tile_dice();
   
   ~Resque();
-
-  //bool populate2(string input_line);
-  //void populate_extra();
-  //void reset();
 
   friend void swap(Resque& first, Resque& second) // nothrow
   {
@@ -102,3 +99,4 @@ public:
 
 
 };
+#endif

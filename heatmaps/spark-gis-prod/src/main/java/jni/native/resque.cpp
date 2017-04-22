@@ -1,16 +1,6 @@
 #include <iostream>
 #include "../include/resque.hpp"
 
-// struct query_op { 
-//   int JOIN_PREDICATE;
-//   int shape_idx_1;
-//   int shape_idx_2;
-//   int join_cardinality;
-//   double expansion_distance;
-//   vector<int> proj1; /* Output fields for 1st set  */
-//   vector<int> proj2; /* Output fields for 2nd set */
-// } stop; // st operator 
-
 void Resque::init(){
   // initlize query operator 
   stop.expansion_distance = 0.0;
@@ -77,11 +67,11 @@ bool Resque::join_with_predicate(const Geometry * geom1 , const Geometry * geom2
   
   bool flag = false ; 
   BufferOp * buffer_op1 = NULL ;
-  BufferOp * buffer_op2 = NULL ;
+  //BufferOp * buffer_op2 = NULL ;
   Geometry* geom_buffer1 = NULL;
-  Geometry* geom_buffer2 = NULL;
-  Geometry* geomUni = NULL;
-  Geometry* geomIntersect = NULL; 
+  //Geometry* geom_buffer2 = NULL;
+  //Geometry* geomUni = NULL;
+  //Geometry* geomIntersect = NULL; 
 
   //jp = ST_INTERSECTS;
 
@@ -163,12 +153,12 @@ string Resque::project( vector<string> & fields, int sid) {
       if (stop.proj1.size() == 0) {
           /* Do not output tileid and joinid */
 	  ss << fields[2];
-          for (int i = 3 ; i < fields.size(); i++)
+          for (size_t i = 3 ; i < fields.size(); i++)
           {
              ss << TAB << fields[i];
           }
       } else {
-          for (int i = 0 ; i <stop.proj1.size();i++)
+          for (size_t i = 0 ; i <stop.proj1.size();i++)
           {
              if ( 0 == i )
                ss << fields[stop.proj1[i]] ;
@@ -184,12 +174,12 @@ string Resque::project( vector<string> & fields, int sid) {
        if (stop.proj2.size() == 0) {
           /* Do not output tileid and joinid */
 	  ss << fields[2];
-          for (int i = 3 ; i < fields.size(); i++)
+          for (size_t i = 3 ; i < fields.size(); i++)
           {
              ss << TAB << fields[i];
           }
       } else {
-          for (int i = 0 ; i <stop.proj2.size();i++)
+          for (size_t i = 0 ; i <stop.proj2.size();i++)
           {
              if ( 0 == i )
                ss << fields[stop.proj2[i]] ;
@@ -217,20 +207,20 @@ void Resque::setProjectionParam(char * arg)
   string param(arg);
   vector<string> fields;
   vector<string> selec;
-  tokenize(param, fields,":");
+  Util::tokenize(param, fields,":");
 
   if (fields.size()>0)
   {
-    tokenize(fields[0], selec,",");
-    for (int i =0 ;i < selec.size(); i++)
+    Util::tokenize(fields[0], selec,",");
+    for (size_t i =0 ;i < selec.size(); i++)
       stop.proj1.push_back(atoi(selec[i].c_str()) + 2);
   }
   selec.clear();
 
   if (fields.size()>1)
   {
-    tokenize(fields[1], selec,",");
-    for (int i =0 ;i < selec.size(); i++)
+    Util::tokenize(fields[1], selec,",");
+    for (size_t i =0 ;i < selec.size(); i++)
       stop.proj2.push_back(atoi(selec[i].c_str()) + 2);
   }
 }
@@ -290,7 +280,7 @@ string Resque::ReportResult( int i , int j)
     ss << rawdata[SID_1][i] << SEP << rawdata[SID_2][j]; 
     if (appendstats) {
       ss << SEP << area1 << TAB << area2;
-      for ( int k = 0; k < stat_report.size(); ++k) ss << TAB << stat_report[k];
+      for ( size_t k = 0; k < stat_report.size(); ++k) ss << TAB << stat_report[k];
           stat_report.clear();
     }
     // BAIG WAS HERE: changed previd to tile_id 
@@ -440,12 +430,12 @@ void Resque::populate(string input_line)
 
   Geometry *poly = NULL; 
   
-  int tile_counter = 0;
+  //int tile_counter = 0;
 
   //  std::cerr << "Bucketinfo:[ID] |A|x|B|=|R|" <<std::endl;
   int index = -1; 
   
-  tokenize(input_line, fields, TAB, true);
+  Util::tokenize(input_line, fields, TAB, true);
   sid = atoi(fields[1].c_str());
   tile_id = fields[0];  
   
