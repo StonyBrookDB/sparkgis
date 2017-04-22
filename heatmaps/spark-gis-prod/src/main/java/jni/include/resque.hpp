@@ -25,6 +25,7 @@ private:
   map<int, vector<string> > rawdata;
   
   WKTReader *wkt_reader;
+  //WKTReader wkt_reader;
   ISpatialIndex * spidx;
   IStorageManager * storage;
   Jacc_object_cal * jacc_cal;
