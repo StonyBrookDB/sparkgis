@@ -5,7 +5,42 @@
 #include "statistics.hpp"
 					     
 class Resque{
+  
+public:
+  Resque(string predicate, int geomid1, int geomid2); 
+  // Refer to JNIWrapper.java for documentation of following functions
+  void populate(string input_line); 
+  vector<string> join_bucket_spjoin();
+  double tile_dice();
+  
+  ~Resque();
+  
+  friend void swap(Resque& first, Resque& second) // nothrow
+  {
+    // enable ADL (not necessary in our case, but good practice)
+    using std::swap; 
 
+    // by swapping the members of two classes,
+    // the two classes are effectively swapped
+    swap(first.tile_id, second.tile_id); 
+    swap(first.prev_id, second.prev_id); 
+    swap(first.polydata, second.polydata); 
+    swap(first.rawdata, second.rawdata); 
+    swap(first.wkt_reader, second.wkt_reader); 
+    swap(first.jacc_cal, second.jacc_cal); 
+    swap(first.dice_cal, second.dice_cal); 
+    swap(first.appendstats, second.appendstats); 
+    swap(first.appendTileID, second.appendTileID); 
+    swap(first.area1, second.area1); 
+    swap(first.area2, second.area2); 
+    swap(first.stat_report, second.stat_report); 
+  }
+  Resque& operator=(Resque other)
+  {
+    swap(*this, other);
+    return *this;
+  }
+  
 private:
 
   struct query_op { 
@@ -19,15 +54,12 @@ private:
   } stop; // st operator
 
   string tile_id = "";
-  string prev_id = "";
 
   map<int, vector<Geometry*> > polydata;
   map<int, vector<string> > rawdata;
   
   WKTReader *wkt_reader;
   //WKTReader wkt_reader;
-  ISpatialIndex * spidx;
-  IStorageManager * storage;
   Jacc_object_cal * jacc_cal;
   Dice_object_cal * dice_cal;
   
@@ -36,68 +68,26 @@ private:
   double area1 = -1;
   double area2 = -1;
   vector<double> stat_report;
-
-  Geometry *extra_poly = NULL;
-  vector<string> extra_fields;
-  int extra_sid = -1;
   
   void init();
   void print_stop();
-  string ReportResult(int i, int j);
-  void releaseShapeMem(const int k);
-  void setProjectionParam(char * arg);
+  string report_result(int i, int j);
+  void release_shape_mem(const int k);
+  void set_projection_param(char * arg);
   string project( vector<string> & fields, int sid);
-  int getJoinPredicate(const char * predicate_str); 
-  bool buildIndex(map<int,Geometry*> & geom_polygons);
+  int get_join_predicate(const char * predicate_str);
   void populate_polygon(Geometry *poly, int sid, vector<string> fields);
 
+   
+  bool build_index(map<int,Geometry*> & geom_polygons,
+		   ISpatialIndex* & spidx,
+		   IStorageManager* & storage);
+  
   bool join_with_predicate(const Geometry * geom1 ,
 			   const Geometry * geom2, 
 			   const Envelope * env1,
 			   const Envelope * env2,
 			   const int jp);
-
-public:
-  Resque(string predicate, int geomid1, int geomid2); 
-  // Refer to JNIWrapper.java for documentation of following functions
-  void populate(string input_line); 
-  vector<string> join_bucket();
-  double tile_dice();
-  
-  ~Resque();
-
-  friend void swap(Resque& first, Resque& second) // nothrow
-  {
-    // enable ADL (not necessary in our case, but good practice)
-    using std::swap; 
-
-    // by swapping the members of two classes,
-    // the two classes are effectively swapped
-    swap(first.tile_id, second.tile_id); 
-    swap(first.prev_id, second.prev_id); 
-    swap(first.polydata, second.polydata); 
-    swap(first.rawdata, second.rawdata); 
-    swap(first.wkt_reader, second.wkt_reader); 
-    swap(first.spidx, second.spidx); 
-    swap(first.storage, second.storage); 
-    swap(first.jacc_cal, second.jacc_cal); 
-    swap(first.dice_cal, second.dice_cal); 
-    swap(first.appendstats, second.appendstats); 
-    swap(first.appendTileID, second.appendTileID); 
-    swap(first.area1, second.area1); 
-    swap(first.area2, second.area2); 
-    swap(first.stat_report, second.stat_report); 
-    swap(first.extra_poly, second.extra_poly); 
-    swap(first.extra_fields, second.extra_fields); 
-    swap(first.extra_sid, second.extra_sid); 
-
-  }
-  Resque& operator=(Resque other)
-  {
-    swap(*this, other);
-    return *this;
-  }
-
 
 };
 #endif

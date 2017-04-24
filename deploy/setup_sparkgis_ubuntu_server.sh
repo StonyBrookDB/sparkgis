@@ -66,7 +66,7 @@ echo alias hput=\'hdfs dfs -put\' >> ~/.bashrc
 echo alias hget=\'hdfs dfs -get\' >> ~/.bashrc
 echo alias hrm=\'hdfs dfs -rm\' >> ~/.bashrc
 
-echo export PATH=${SPARK_HOME}/bin:${HADOOP_HOME}/bin:${PATH} >> ~/.bashrc 
+echo export PATH=$PATH:${SPARK_HOME}/bin:${HADOOP_HOME}/bin:${PATH} >> ~/.bashrc 
 source ~/.bashrc
 
 # # start hdfs

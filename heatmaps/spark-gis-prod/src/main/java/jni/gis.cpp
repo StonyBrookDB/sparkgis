@@ -18,16 +18,20 @@ JNIEXPORT jobjectArray JNICALL Java_jni_JNIWrapper_resque
   Resque resq(p_str, geomid1, geomid2);
   /* populate datasets for join */
   for (int i=0; i<size; ++i){
-    
+    /* creating a new jstring here */
     jstring j_str = (jstring) env->GetObjectArrayElement(data, i);
+    /* make a copy of the string for further c/c++ processing */
     string c_str = env->GetStringUTFChars(j_str, NULL);
     resq.populate(c_str);
-    /* free memory to assist garbage collection by jvm */
+    /* 
+     * free memory to assist garbage collection by jvm 
+     * since new jstring created in loop, it should also be released in the loop 
+     */
     env->DeleteLocalRef(j_str);
   }
 
   /* data results for this tile */
-  vector<string> hits = resq.join_bucket();
+  vector<string> hits = resq.join_bucket_spjoin();
   size = hits.size();
 
   /* return as String[] back to Java */
