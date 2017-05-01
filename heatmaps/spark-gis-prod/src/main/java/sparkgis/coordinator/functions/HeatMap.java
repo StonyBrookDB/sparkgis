@@ -25,11 +25,11 @@ public class HeatMap{
      * @return Path to results heatmap directory
      */
     public static String execute(SparkGISContext spgc,
-			       List<String> algos,
-			       List<String> caseIDs,
-			       Predicate pred,
-			       HMType hmType,
-			       String result_analysis_exe_id){
+				 List<String> algos,
+				 List<String> caseIDs,
+				 Predicate pred,
+				 HMType hmType,
+				 String result_analysis_exe_id){
 	
 	String resultsDirPath = null;
 	/* create a thread pool for async jobs */

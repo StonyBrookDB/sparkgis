@@ -6,16 +6,12 @@
 using namespace std;
 
 /* RESQUE JNI INTERFACE */
-// JNIEXPORT jobjectArray JNICALL Java_jni_JNIWrapper_resque
-//   (JNIEnv *env , jclass c, jobjectArray data, jstring predicate, jint geomid1, jint geomid2)
-JNIEXPORT jobjectArray JNICALL Java_jni_JNIWrapper_resque
-  (JNIEnv *env, jclass c, jobjectArray data, jstring predicate, jint geomid1, jint geomid2)
+JNIEXPORT jobjectArray JNICALL Java_jni_JNIWrapper_resqueSPJ
+(JNIEnv *env, jclass c, jobjectArray data, jint predicate, jint geomid1, jint geomid2)
 {
   int size = env->GetArrayLength(data);
-  /* initialize resque */
-  string p_str = env->GetStringUTFChars(predicate, NULL);
-  
-  Resque resq(p_str, geomid1, geomid2);
+  /* initialize resque to handle spatial join query */
+  Resque resq(predicate, geomid1, geomid2);
   /* populate datasets for join */
   for (int i=0; i<size; ++i){
     /* creating a new jstring here */
@@ -47,13 +43,11 @@ JNIEXPORT jobjectArray JNICALL Java_jni_JNIWrapper_resque
 }
 
 JNIEXPORT jdouble JNICALL Java_jni_JNIWrapper_resqueTileDice
-(JNIEnv* env, jclass c, jobjectArray data, jstring predicate, jint geomid1, jint geomid2)
+(JNIEnv *env, jobject c, jobjectArray data, jint predicate, jint geomid1, jint geomid2)
 {
   int size = env->GetArrayLength(data);
   /* initialize resque */
-  string p_str = env->GetStringUTFChars(predicate, NULL);
-  
-  Resque resq(p_str, geomid1, geomid2);
+  Resque resq(predicate, geomid1, geomid2);
   /* populate datasets for join */
   for (int i=0; i<size; ++i){
     
@@ -72,6 +66,40 @@ JNIEXPORT jdouble JNICALL Java_jni_JNIWrapper_resqueTileDice
   //return js;
 }
 
+JNIEXPORT jobjectArray JNICALL Java_jni_JNIWrapper_resqueKNN
+(JNIEnv *env, jclass c, jobjectArray data, jint predicate, jint k, jint geomid1, jint geomid2)
+{
+  int size = env->GetArrayLength(data);
+  /* initialize resque for kNN query */
+  Resque resq(predicate, k, geomid1, geomid2);
+  /* populate datasets for join */
+  for (int i=0; i<size; ++i){
+    
+    jstring j_str = (jstring) env->GetObjectArrayElement(data, i);
+    string c_str = env->GetStringUTFChars(j_str, NULL);
+    resq.populate(c_str);
+    /* free memory to assist garbage collection by jvm */
+    env->DeleteLocalRef(j_str);
+  }
+
+  /* FIX: perform spatial query */
+  resq.join_bucket_knn();
+  
+  vector<string> hits;
+  size = hits.size();
+  
+  /* return as String[] back to Java */
+  jclass clazz = env->FindClass("java/lang/String");
+  jobjectArray objarray = env->NewObjectArray(size ,clazz ,0);
+  
+  for(int i = 0; i < size; i++) {
+    string s = hits[i]; 
+    jstring js = (env)->NewStringUTF(s.c_str());
+    (env)->SetObjectArrayElement(objarray , i , js);
+  }
+  return objarray;
+}
+
 namespace Util{
   void tokenize (const string& str,
   		 vector<string>& result,
@@ -82,13 +110,13 @@ namespace Util{
   {
     // clear the vector
     if ( false == result.empty() )
-    {
+      {
 	result.clear();
-    }
+      }
 
     // you must be kidding
     if (delimiters.empty())
-	return ;
+      return ;
 
     string::size_type pos = 0; // the current position (char) in the string
     char ch = 0; // buffer for the current character
@@ -104,7 +132,7 @@ namespace Util{
 
     // for every char in the input-string
     while ( len > pos )
-    {
+      {
 	// get the character of the string and reset the delimiter buffer
 	ch = str.at(pos);
 	//delimiter = 0;
@@ -115,66 +143,66 @@ namespace Util{
 
 	// ... if the delimiter is a quote
 	if ( false == quote.empty())
-	{
+	  {
 	    // if quote chars are provided and the char isn't protected
 	    if ( string::npos != quote.find_first_of(ch) )
-	    {
+	      {
 		// if not quoted, set state to open quote and set
 		// the quote character
 		if ( false == quoted )
-		{
+		  {
 		    quoted = true;
 		    current_quote = ch;
 
 		    // don't add the quote-char to the token
 		    add_char = false;
-		}
+		  }
 		else // if quote is open already
-		{
+		  {
 		    // check if it is the matching character to close it
 		    if ( current_quote == ch )
-		    {
+		      {
 			// close quote and reset the quote character
 			quoted = false;
 			current_quote = 0;
 
 			// don't add the quote-char to the token
 			add_char = false;
-		    }
-		} // else
-	    }
-	}
+		      }
+		  } // else
+	      }
+	  }
 
 	if ( false == delimiters.empty() && false == quoted )
-	{
+	  {
 	    // if ch is delemiter 
 	    if ( string::npos != delimiters.find_first_of(ch) )
-	    {
+	      {
 		token_complete = true;
 		// don't add the delimiter to the token
 		add_char = false;
-	    }
-	}
+	      }
+	  }
 
 	// add the character to the token
 	if ( true == add_char )
-	{
+	  {
 	    // add the current char
 	    token.push_back( ch );
-	}
+	  }
 
 	// add the token if it is complete
 	// if ( true == token_complete && false == token.empty() )
 	if ( true == token_complete )
-	{
+	  {
 	    if (token.empty())
-	    {
+	      {
 		if (keepBlankFields)
-		    result.push_back("");
-	    }
+		  result.push_back("");
+	      }
 	    else 
-		// add the token string
-		result.push_back( token );
+	      // add the token string
+	      result.push_back( token );
 
 	    // clear the contents
 	    token.clear();
@@ -182,19 +210,19 @@ namespace Util{
 	    // build the next token
 	    token_complete = false;
 
-	}
+	  }
 	// repeat for the next character
 	++pos;
-    } // while
+      } // while
     
     // add the final token
     if ( false == token.empty() ) {
-	result.push_back( token );
+      result.push_back( token );
     }
     else if(keepBlankFields && string::npos != delimiters.find_first_of(ch) ){
-	result.push_back("");
+      result.push_back("");
     }
-}
+  }
 }
 
 /* 

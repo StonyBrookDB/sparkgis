@@ -11,10 +11,16 @@ import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.Function;
+/* JTS imports */
+import com.vividsolutions.jts.io.WKBWriter;
+import com.vividsolutions.jts.io.WKTReader;
+import com.vividsolutions.jts.io.ByteOrderValues;
 /* Local imports */
 import sparkgis.data.DataConfig;
+import sparkgis.data.BinaryDataConfig;
 import sparkgis.data.SpatialObject;
 import sparkgis.core.SparkGISPrepareData;
+import sparkgis.core.SparkGISPrepareBinaryData;
 
 public class SparkGISContext extends JavaSparkContext{
 
@@ -68,6 +74,36 @@ public class SparkGISContext extends JavaSparkContext{
     }
 
     /**
+     * Read spatial data into w.k.b format RDD from HDFS, local file system (available
+     * on all nodes), or any Hadoop supported file system URI
+     * @param dataPath Data URI on HDFS, local file system or any Hadoop supported file system
+     * @param withID If true, get spatial data ID from input source (geometryIndex-1)
+     * @return RDD of spatial data in w.k.t format 
+     */
+    public JavaRDD<byte[]> getTextAsByteArray(String dataPath, final boolean withID){
+	return this.textFile(dataPath, this.defaultParallelism())
+	    .filter(new Function<String, Boolean>(){
+		    public Boolean call(String s) {return (!s.isEmpty());}
+		})
+	    .map(new Function<String, byte[]>(){
+		    public byte[] call(String s){
+			String[] fields = s.split(jobConf.getDelimiter());
+			int spdIndex = jobConf.getSpatialObjectIndex();
+			// if (withID)
+			//     return new SpatialObject(fields[spdIndex-1], fields[spdIndex]);
+			
+			// return new SpatialObject(fields[spdIndex]);
+			try{
+			    WKBWriter w = new WKBWriter(2, ByteOrderValues.LITTLE_ENDIAN);
+			    WKTReader reader = new WKTReader();
+			    return w.write(reader.read(fields[spdIndex]));
+			}catch(Exception e){e.printStackTrace();}
+			return null;
+		    }
+		});
+    }
+    
+    /**
      * A spatial data query usually consists of atleast two datasets
      * e.g. spatial join, kNN, Range etc. 
      * Before actual query processing, spatial data needs to be preprocessed
@@ -115,6 +151,31 @@ public class SparkGISContext extends JavaSparkContext{
     		/* Invoke spark job: Prepare Data */
     		SparkGISPrepareData job = new SparkGISPrepareData(dataPath);
     		DataConfig ret = job.execute(spatialDataRDD);
+    		return ret;
+    	    }
+    	    return null;
+    	}
+    }
+
+    /**
+     * Inner class to get binary data and generate data configuration
+     */
+    private class AsyncPrepareBinaryData implements Callable<BinaryDataConfig>{
+        private final String dataPath;	
+    	public AsyncPrepareBinaryData(String dataPath){
+    	    this.dataPath = dataPath;
+    	}
+	
+    	@Override
+    	public BinaryDataConfig call(){
+    	    /* get data from input source and keep in memory */
+	    JavaRDD<byte[]> spatialDataRDD =
+		getTextAsByteArray(dataPath, true).cache();
+	    long objCount = spatialDataRDD.count();
+    	    if (objCount != 0){
+    		/* Invoke spark job: Prepare Data */
+    		SparkGISPrepareBinaryData job = new SparkGISPrepareBinaryData(dataPath);
+    		BinaryDataConfig ret = job.execute(spatialDataRDD);
     		return ret;
     	    }
     	    return null;

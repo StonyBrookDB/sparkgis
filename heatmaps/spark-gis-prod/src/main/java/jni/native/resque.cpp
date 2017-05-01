@@ -1,27 +1,14 @@
 #include <iostream>
+/* geos */
+#include <geos/opBuffer.h>
+#include <geos/geom/Point.h>
+#include <geos/geom/PrecisionModel.h>
+#include <geos/geom/GeometryFactory.h>
+/* local */
 #include "../include/resque.hpp"
 
-void Resque::init(){
-  /* initlize query operator */
-  stop.expansion_distance = 0.0;
-  stop.JOIN_PREDICATE = 0;
-  stop.shape_idx_1 = 0;
-  stop.shape_idx_2 = 0 ;
-  stop.join_cardinality = 0;
-  /* initlize statistics calculater */
-  jacc_cal = new Jacc_object_cal();
-  dice_cal = new Dice_object_cal();
-}
-
-void Resque::print_stop(){
-  /* initlize query operator */
-  std::cerr << "predicate: " << stop.JOIN_PREDICATE << std::endl;
-  std::cerr << "distance: " << stop.expansion_distance << std::endl;
-  std::cerr << "shape index 1: " << stop.shape_idx_1 << std::endl;
-  std::cerr << "shape index 2: " << stop.shape_idx_2 << std::endl;
-  std::cerr << "join cardinality: " << stop.join_cardinality << std::endl;
-}
-
+using namespace geos::operation::buffer;
+using namespace geos::operation::distance;
 
 void Resque::release_shape_mem(const int k ){
   if (k <=0)
@@ -37,31 +24,6 @@ void Resque::release_shape_mem(const int k ){
       polydata[delete_index].clear();
       rawdata[delete_index].clear();
     }
-}
-/* 
- * Create an R-Tree index on given set of polygons
- */
-bool Resque::build_index(map<int,Geometry*> & geom_polygons,
-			 ISpatialIndex* & spidx,
-			 IStorageManager* & storage) {
-  /* build spatial index on tile boundaries */
-  id_type  indexIdentifier;
-    
-  GEOSDataStream stream(&geom_polygons);
-  storage = StorageManager::createNewMemoryStorageManager();
-    
-  spidx   = RTree::createAndBulkLoadNewRTree(RTree::BLM_STR,
-					     stream,
-					     *storage, 
-					     FillFactor,
-					     IndexCapacity,
-					     LeafCapacity,
-					     2, 
-					     RTree::RV_RSTAR,
-					     indexIdentifier);
-    
-  /* Error checking */
-  return spidx->isIndexValid();
 }
 
 /* 
@@ -82,16 +44,6 @@ bool Resque::join_with_predicate(const Geometry * geom1,
 
   case ST_INTERSECTS:
     flag = env1->intersects(env2) && geom1->intersects(geom2);
-    if (flag && appendstats) {
-      area1 = geom1->getArea();
-      area2 = geom2->getArea();
-             
-      std::vector<const Geometry*> g1, g2;
-      g1.push_back(geom1); 
-      g2.push_back(geom2);
-      stat_report.push_back(jacc_cal->calculate(g1,g2));
-      stat_report.push_back(dice_cal->calculate(g1,g2));
-    }
     break;
 
   case ST_TOUCHES:
@@ -124,7 +76,7 @@ bool Resque::join_with_predicate(const Geometry * geom1,
     if (NULL == buffer_op1)
       cerr << "NULL: buffer_op1" <<endl;
 
-    geom_buffer1 = buffer_op1->getResultGeometry(stop.expansion_distance);
+    geom_buffer1 = buffer_op1->getResultGeometry(st_op.expansion_distance);
       
     if (NULL == geom_buffer1)
       cerr << "NULL: geom_buffer1" <<endl;
@@ -144,6 +96,24 @@ bool Resque::join_with_predicate(const Geometry * geom1,
     std::cerr << "ERROR: unknown spatial predicate " << endl;
     break;
   }
+
+  /* extra spatial computation */
+  if (flag){
+    b_tmp.spj.area1 = geom1->getArea();
+    b_tmp.spj.area2 = geom2->getArea();
+
+    b_tmp.spj.union_area = geom1->Union(geom2)->getArea();
+    b_tmp.spj.intersection_area = geom1->intersection(geom2)->getArea();
+
+    b_tmp.spj.dice = 2*b_tmp.spj.intersection_area/(b_tmp.spj.area1 + b_tmp.spj.area1);
+    if (b_tmp.spj.union_area)
+      b_tmp.spj.jaccard = b_tmp.spj.intersection_area/b_tmp.spj.union_area;
+    
+  }
+  /* TODO: add parameters to toggle extra computation if not required*/
+  // stat_report.push_back(b_tmp.spj.jaccard);
+  // stat_report.push_back(b_tmp.spj.dice);
+  
   return flag; 
 }
 
@@ -155,7 +125,7 @@ string Resque::project( vector<string> & fields, int sid) {
   std::stringstream ss;
   switch (sid){
   case 1:
-    if (stop.proj1.size() == 0) {
+    if (st_op.proj1.size() == 0) {
       /* Do not output tileid and joinid */
       ss << fields[2];
       for (size_t i = 3 ; i < fields.size(); i++)
@@ -163,20 +133,20 @@ string Resque::project( vector<string> & fields, int sid) {
 	  ss << TAB << fields[i];
 	}
     } else {
-      for (size_t i = 0 ; i <stop.proj1.size();i++)
+      for (size_t i = 0 ; i <st_op.proj1.size();i++)
 	{
 	  if ( 0 == i )
-	    ss << fields[stop.proj1[i]] ;
+	    ss << fields[st_op.proj1[i]] ;
 	  else
 	    {
-	      if (stop.proj1[i] < fields.size())
-                ss << TAB << fields[stop.proj1[i]];
+	      if (st_op.proj1[i] < fields.size())
+                ss << TAB << fields[st_op.proj1[i]];
 	    }
 	}
     }
     break;
   case 2:
-    if (stop.proj2.size() == 0) {
+    if (st_op.proj2.size() == 0) {
       /* Do not output tileid and joinid */
       ss << fields[2];
       for (size_t i = 3 ; i < fields.size(); i++)
@@ -184,14 +154,14 @@ string Resque::project( vector<string> & fields, int sid) {
 	  ss << TAB << fields[i];
 	}
     } else {
-      for (size_t i = 0 ; i <stop.proj2.size();i++)
+      for (size_t i = 0 ; i <st_op.proj2.size();i++)
 	{
 	  if ( 0 == i )
-	    ss << fields[stop.proj2[i]] ;
+	    ss << fields[st_op.proj2[i]] ;
 	  else
 	    {
-	      if (stop.proj2[i] < fields.size())
-                ss << TAB << fields[stop.proj2[i]];
+	      if (st_op.proj2[i] < fields.size())
+                ss << TAB << fields[st_op.proj2[i]];
 	    }
 	}
     }
@@ -219,7 +189,7 @@ void Resque::set_projection_param(char * arg)
     {
       Util::tokenize(fields[0], selec,",");
       for (size_t i =0 ;i < selec.size(); i++)
-	stop.proj1.push_back(atoi(selec[i].c_str()) + 2);
+	st_op.proj1.push_back(atoi(selec[i].c_str()) + 2);
     }
   selec.clear();
 
@@ -227,47 +197,8 @@ void Resque::set_projection_param(char * arg)
     {
       Util::tokenize(fields[1], selec,",");
       for (size_t i =0 ;i < selec.size(); i++)
-	stop.proj2.push_back(atoi(selec[i].c_str()) + 2);
+	st_op.proj2.push_back(atoi(selec[i].c_str()) + 2);
     }
-}
-
-int Resque::get_join_predicate(const char * predicate_str)
-{
-  if (strcmp(predicate_str, "st_intersects") == 0) {
-    // stop.JOIN_PREDICATE = ST_INTERSECTS;
-    return ST_INTERSECTS ; 
-  } 
-  else if (strcmp(predicate_str, "st_touches") == 0) {
-    return ST_TOUCHES;
-  } 
-  else if (strcmp(predicate_str, "st_crosses") == 0) {
-    return ST_CROSSES;
-  } 
-  else if (strcmp(predicate_str, "st_contains") == 0) {
-    return ST_CONTAINS;
-  } 
-  else if (strcmp(predicate_str, "st_adjacent") == 0) {
-    return ST_ADJACENT;
-  } 
-  else if (strcmp(predicate_str, "st_disjoint") == 0) {
-    return ST_DISJOINT;
-  }
-  else if (strcmp(predicate_str, "st_equals") == 0) {
-    return ST_EQUALS;
-  }
-  else if (strcmp(predicate_str, "st_dwithin") == 0) {
-    return ST_DWITHIN;
-  }
-  else if (strcmp(predicate_str, "st_within") == 0) {
-    return ST_WITHIN;
-  }
-  else if (strcmp(predicate_str, "st_overlaps") == 0) {
-    return ST_OVERLAPS;
-  }
-  else {
-    // std::cerr << "unrecognized join predicate " << std::endl;
-    return 0;
-  }
 }
 
 /* 
@@ -278,18 +209,18 @@ string Resque::report_result( int i , int j)
 {
   stringstream ss;
   
-  switch (stop.join_cardinality){
+  switch (st_op.join_cardinality){
   case 1:
     ss << rawdata[SID_1][i] << SEP << rawdata[SID_1][j] << endl;
     break;
   case 2:
     ss << rawdata[SID_1][i] << SEP << rawdata[SID_2][j]; 
     if (appendstats) {
-      ss << SEP << area1 << TAB << area2;
-      for ( size_t k = 0; k < stat_report.size(); ++k) ss << TAB << stat_report[k];
-      stat_report.clear();
+      ss << SEP << b_tmp.spj.area1 << TAB << b_tmp.spj.area2;
+      //for ( size_t k = 0; k < stat_report.size(); ++k) ss << TAB << stat_report[k];
+      //stat_report.clear();
+      ss << TAB << b_tmp.spj.jaccard << TAB << b_tmp.spj.dice;
     }
-    /* BAIG WAS HERE: changed previd to tile_id  */
     if (appendTileID) {
       ss << TAB << tile_id << endl; 
     }
@@ -303,118 +234,269 @@ string Resque::report_result( int i , int j)
   return ss.str();
 }
 
-// BAIG WAS HERE: name changed from joinBucket()
+/*
+ * Perform tile level dice similarity coeffcient value
+ */
 double Resque::tile_dice(){
 
-  bool selfjoin = stop.join_cardinality ==1 ? true : false ;
-  int idx1 = SID_1 ; 
-  int idx2 = selfjoin ? SID_1 : SID_2 ;
-  std::vector<Geometry*>  & poly_set_one = polydata[idx1];
-  std::vector<Geometry*>  & poly_set_two = polydata[idx2];
-  
-  int len1 = poly_set_one.size();
-  int len2 = poly_set_two.size();
-  if (len1 <= 0 || len2 <= 0) {
-    return -1;
-  }
-  std::vector<const Geometry*> g1, g2;
-  for (int i=0; i<len1; ++i){
-    g1.push_back(poly_set_one[i]);
-  }
-  for (int i=0; i<len2; ++i){
-    g2.push_back(poly_set_two[i]);
-  }
-
-  Dice_tile_cal *tile_dice_cal = new Dice_tile_cal();
-  double tile_dice_result = tile_dice_cal->calculate(g1, g2);
-  
-  return tile_dice_result;
-  
-  //stringstream ss;
-  //ss << tile_id << TAB << tile_dice_result << endl;
-  //return ss.str();
+  Bucket b(st_op, polydata);
+  return b.get_bucket_level_dice();
 }
 
-vector<string> Resque::join_bucket_spjoin() 
+/* kNN helper functions */
+void Resque::update_nn(int object_id, double distance){
+  list<struct query_nn_dist*>::iterator it;
+  bool new_inserted = false;
+  struct query_nn_dist * tmp;
+
+  for (it = b_tmp.nearest_distances.begin(); 
+       it != b_tmp.nearest_distances.end(); it++) {
+    if ((*it)->distance > distance) {
+      /* Insert the new distance in */
+      tmp = new struct query_nn_dist();
+      tmp->distance = distance;
+      tmp->object_id = object_id;
+      b_tmp.nearest_distances.insert(it, tmp);
+      new_inserted = true;
+      break;
+    }
+  }
+  
+  if (b_tmp.nearest_distances.size() > st_op.k_neighbors) {
+    /* the last element is the furthest from all tracked nearest neighbors */
+    tmp = b_tmp.nearest_distances.back();
+    b_tmp.nearest_distances.pop_back(); 
+    delete tmp;
+  } else if (!new_inserted && 
+	     b_tmp.nearest_distances.size() < st_op.k_neighbors) {
+    /* Insert at the end */
+    tmp = new struct query_nn_dist();
+    tmp->distance = distance;
+    tmp->object_id = object_id;
+    b_tmp.nearest_distances.insert(it, tmp);
+  }
+  
+}
+
+vector<string> Resque::join_bucket_knn()
 {
-  
-  ISpatialIndex * spidx = NULL;
-  IStorageManager * storage = NULL;
-  
-  bool selfjoin = (stop.join_cardinality == 1) ? true : false ;
-  int idx1 = SID_1 ; 
-  int idx2 = selfjoin ? SID_1 : SID_2 ;
-  /* temp value placeholders for MBBs */
-  double low[2], high[2];
-  /* return string vector */
-  vector<string> ret_vec;
+  double tmp_distance;
+  /* reset all temp values */
+  b_tmp = {};
+  /* for nearest neighbor with unknown bounds */
+  double max_search_radius = -1;
+  double def_search_radius = -1;
+
+  Bucket b(st_op, polydata);
+
+  /* either of the dataset is empty */
+  if (b.len1 <= 0 || b.len2 <= 0) {
+    return vector<string>(); 
+  }
   
   /* for each tile (key) in the input stream */
   try { 
 
-    std::vector<Geometry*>  & poly_set_one = polydata[idx1];
-    std::vector<Geometry*>  & poly_set_two = polydata[idx2];
-    
-    int len1 = poly_set_one.size();
-    int len2 = poly_set_two.size();
+    std::vector<Geometry*>  & poly_set_one = b.get_dataset(b.idx1);
+    std::vector<Geometry*>  & poly_set_two = b.get_dataset(b.idx2);
 
-    /* either of the dataset is empty */
-    if (len1 <= 0 || len2 <= 0) {
+    if (st_op.join_predicate == ST_NEAREST_2){
+      /* update bucket information */
+      if (b.len2 > 0){
+	const Envelope *env_tmp = poly_set_two[0]->getEnvelopeInternal();
+	b_tmp.knn.min_x = env_tmp->getMinX();
+	b_tmp.knn.min_y = env_tmp->getMinY();
+	b_tmp.knn.max_x = env_tmp->getMaxX();
+	b_tmp.knn.max_y = env_tmp->getMaxY();
+      }
+      /* update bucket dimensions */
+      for (size_t i=0; i < b.len1; ++i){
+	const Envelope *env = poly_set_one[i]->getEnvelopeInternal();
+	if (b_tmp.knn.min_x >= env->getMinX()){ b_tmp.knn.min_x = env->getMinX();}
+	if (b_tmp.knn.min_y >= env->getMinY()){ b_tmp.knn.min_y = env->getMinY();}
+	if (b_tmp.knn.max_x <= env->getMaxX()){ b_tmp.knn.max_x = env->getMaxX();}
+	if (b_tmp.knn.max_y <= env->getMaxY()){ b_tmp.knn.max_y = env->getMaxY();}
+      }
+      if (!b.selfjoin){
+	for (size_t i=0; i < b.len1; ++i){
+	  const Envelope *env = poly_set_two[i]->getEnvelopeInternal();
+	  if (b_tmp.knn.min_x >= env->getMinX()){ b_tmp.knn.min_x = env->getMinX();}
+	  if (b_tmp.knn.min_y >= env->getMinY()){ b_tmp.knn.min_y = env->getMinY();}
+	  if (b_tmp.knn.max_x <= env->getMaxX()){ b_tmp.knn.max_x = env->getMaxX();}
+	  if (b_tmp.knn.max_y <= env->getMaxY()){ b_tmp.knn.max_y = env->getMaxY();}
+	}
+      }
+      double span_x = b_tmp.knn.max_x - b_tmp.knn.min_x;
+      double span_y = b_tmp.knn.max_y - b_tmp.knn.min_y;
+      max_search_radius = max(span_x, span_y);
+      def_search_radius = min(sqrt(span_x * span_y * st_op.k_neighbors/b.len2),
+			      max_search_radius);
+      if (def_search_radius == 0){
+	def_search_radius = DistanceOp::distance(poly_set_one[0], poly_set_two[0]);
+      }
+      
+    }
+    
+    /* build index on dataset 2 */
+    if (!b.build_rtree_index(2))
       return vector<string>();
-    }
-    /* make a copy of vector to map to build index (API restriction) */
-    map<int,Geometry*> geom_polygons2;
-    geom_polygons2.clear();
-    
-    for (int j = 0; j < len2; j++) {
-      geom_polygons2[j] = poly_set_two[j];
-    }
-    
-    /* build spatial index for input polygons from idx2 */
-    bool ret = build_index(geom_polygons2, spidx, storage);
-    if (ret == false) {
-      cout << "Error building index" << endl;
-      return vector<string>();
-    }
-    
-    for (int i = 0; i < len1; i++) {
+
+    for (size_t i = 0; i < b.len1; i++) {
       /* extract MBB */
       const Geometry* geom1 = poly_set_one[i];
       const Envelope * env1 = geom1->getEnvelopeInternal();
       
-      low[0] = env1->getMinX();
-      low[1] = env1->getMinY();
-      high[0] = env1->getMaxX();
-      high[1] = env1->getMaxY();
+      b_tmp.low[0] = env1->getMinX();
+      b_tmp.low[1] = env1->getMinY();
+      b_tmp.high[0] = env1->getMaxX();
+      b_tmp.high[1] = env1->getMaxY();
       /* Handle the buffer expansion for R-tree */
-      if (stop.JOIN_PREDICATE == ST_DWITHIN) {
-	low[0] -= stop.expansion_distance;
-	low[1] -= stop.expansion_distance;
-	high[0] += stop.expansion_distance;
-	high[1] += stop.expansion_distance;
+      if (st_op.join_predicate == ST_NEAREST_2) {
+	/* initial value when max search radius is not known */
+	st_op.expansion_distance = def_search_radius;
       }
-      /* Regular handling */
-      Region r(low, high, 2);
-      //        hits.clear();
+      if (st_op.join_predicate == ST_DWITHIN || st_op.join_predicate == ST_NEAREST) {
+	b_tmp.low[0] -= st_op.expansion_distance;
+	b_tmp.low[1] -= st_op.expansion_distance;
+	b_tmp.high[0] += st_op.expansion_distance;
+	b_tmp.high[1] += st_op.expansion_distance;
+      }
+
       MyVisitor vis;
-      /* get a list of Polygon MBBs intersecting with current polygon MBB */
-      spidx->intersectsWithQuery(r, vis);
+      double search_radius = def_search_radius;
+      /* retrive at least k neighbours */
+      do{
+	Region r(b_tmp.low, b_tmp.high, 2);
+	vis.clear_hits();
+	/* get a list of Polygon MBBs intersecting with current polygon MBB */
+	b.spidx->intersectsWithQuery(r, vis);
+
+	/* increase radius */
+	b_tmp.low[0] = env1->getMinX() - search_radius;
+	b_tmp.low[1] = env1->getMinY() - search_radius;
+	b_tmp.high[0] = env1->getMaxX() + search_radius;
+	b_tmp.high[1] = env1->getMaxY() + search_radius;
+
+	search_radius *= sqrt(2);
+	
+      }while(st_op.join_predicate == ST_NEAREST_2 &&
+	     vis.get_hits().size() <= st_op.k_neighbors+1 &&
+	     vis.get_hits().size() <= b.len2 &&
+	     search_radius <= sqrt(2) * max_search_radius);
+      
+      
+      if (st_op.join_predicate == ST_NEAREST_2){
+	/* handles special case of rectangular/circular expansion - sqrt(2) expansion */
+	vis.clear_hits();
+	b_tmp.low[0] = env1->getMinX() - search_radius;
+	b_tmp.low[1] = env1->getMinY() - search_radius;
+	b_tmp.high[0] = env1->getMaxX() + search_radius;
+	b_tmp.high[1] = env1->getMaxY() + search_radius;
+	Region r(b_tmp.low, b_tmp.high, 2);
+	/* get a list of Polygon MBBs intersecting with current polygon MBB */
+	b.spidx->intersectsWithQuery(r, vis);
+      }
 
       vector<id_type> hits = vis.get_hits();
       
-      for (uint32_t j = 0 ; j < hits.size(); j++ ) 
+      for (size_t j=0; j<hits.size(); ++j){
+	const Geometry* geom2 = poly_set_two[hits[j]];
+	// const Envelope * env2 = geom2->getEnvelopeInternal();
+
+	/* skip results seen before */
+	if (st_op.join_predicate == ST_NEAREST &&
+	    (!b.selfjoin || hits[j] != i)){
+	    
+	  tmp_distance = DistanceOp::distance(geom1, geom2);
+	  if (tmp_distance < st_op.expansion_distance){
+	    update_nn(hits[j], tmp_distance);
+	  }
+	}
+	else if (st_op.join_predicate == ST_NEAREST_2 &&
+		 (!b.selfjoin || hits[j] != i)){
+	  tmp_distance = DistanceOp::distance(geom1, geom2);
+	  update_nn(hits[j], tmp_distance);
+	}
+      }
+
+      /* report results - TODO: add to return vector */
+      for (std::list<struct query_nn_dist*>::iterator it = b_tmp.nearest_distances.begin();
+      	   it != b_tmp.nearest_distances.end();
+      	   ++it){
+      	b_tmp.knn.distance = (*it)->distance;
+      	// TODO ...
+	delete *it;
+      }
+      b_tmp.nearest_distances.clear();
+    }
+  }catch (Tools::Exception& e) {
+    cout << "******ERROR******" << endl;
+    std::cerr << e.what() << endl;
+  } /* end of catch */
+  /* free memory */
+  release_shape_mem(st_op.join_cardinality);
+  /* return results */
+  return b.ret_vec;
+}
+
+vector<string> Resque::join_bucket_spjoin() 
+{
+  Bucket b(st_op, polydata);
+  /* reset all temp values */
+  b_tmp = {};
+  /* either of the dataset is empty */
+  if (b.len1 <= 0 || b.len2 <= 0) {
+    return vector<string>(); 
+  }
+  
+  /* for each tile (key) in the input stream */
+  try { 
+
+    std::vector<Geometry*>  & poly_set_one = b.get_dataset(b.idx1);
+    std::vector<Geometry*>  & poly_set_two = b.get_dataset(b.idx2);
+    /* build index on dataset 2 */
+    if (!b.build_rtree_index(2))
+      return vector<string>(); 
+    
+    
+    for (size_t i = 0; i < b.len1; i++) {
+      /* extract MBB */
+      const Geometry* geom1 = poly_set_one[i];
+      const Envelope * env1 = geom1->getEnvelopeInternal();
+      
+      b_tmp.low[0] = env1->getMinX();
+      b_tmp.low[1] = env1->getMinY();
+      b_tmp.high[0] = env1->getMaxX();
+      b_tmp.high[1] = env1->getMaxY();
+      /* Handle the buffer expansion for R-tree */
+      if (st_op.join_predicate == ST_DWITHIN) {
+	b_tmp.low[0] -= st_op.expansion_distance;
+	b_tmp.low[1] -= st_op.expansion_distance;
+	b_tmp.high[0] += st_op.expansion_distance;
+	b_tmp.high[1] += st_op.expansion_distance;
+      }
+      /* Regular handling */
+      Region r(b_tmp.low, b_tmp.high, 2);
+      MyVisitor vis;
+      vis.clear_hits();
+      /* get a list of Polygon MBBs intersecting with current polygon MBB */
+      b.spidx->intersectsWithQuery(r, vis);
+
+      vector<id_type> hits = vis.get_hits();
+      
+      for (size_t j = 0 ; j < hits.size(); j++ ) 
         {
 	  /* skip results seen before */
-	  if (hits[j] == i && selfjoin) {
+	  if (hits[j] == i && b.selfjoin) {
 	    continue;
 	  }            
 	  const Geometry* geom2 = poly_set_two[hits[j]];
 	  const Envelope * env2 = geom2->getEnvelopeInternal();
 
 	  /* Perform actual spatial join only for polygons whose MBBs overlap */
-	  if (join_with_predicate(geom1, geom2, env1, env2, stop.JOIN_PREDICATE))  {
+	  if (join_with_predicate(geom1, geom2, env1, env2, st_op.join_predicate))  {
 	    /* create a vector of strings to return */
-	    ret_vec.push_back(report_result(i,hits[j]));
+	    b.ret_vec.push_back(report_result(i,hits[j]));
 	  }
         }
     }
@@ -424,15 +506,16 @@ vector<string> Resque::join_bucket_spjoin()
     std::cerr << e.what() << endl;
   } /* end of catch */
   /* free memory */
-  delete spidx;
-  delete storage;
-  release_shape_mem(stop.join_cardinality);
+  release_shape_mem(st_op.join_cardinality);
   /* return results */
-  return ret_vec;
+  return b.ret_vec;
 }
 
-/********************************* Modifed Code *******************************/
-
+/*
+ * Populate spatial data in bucket
+ * Takes in raw string spatial data and converts that to local 
+ * data structures required for further processing
+ */
 void Resque::populate(string input_line)
 {
   string value;
@@ -446,18 +529,24 @@ void Resque::populate(string input_line)
   Util::tokenize(input_line, fields, TAB, true);
   sid = atoi(fields[1].c_str());
   tile_id = fields[0];  
-  
-  switch(sid){
-  case SID_1:
-    index = stop.shape_idx_1 ; 
-    break;
-  case SID_2:
-    index = stop.shape_idx_2 ; 
-    break;
-  default:
+
+  if (sid != SID_1 || sid != SID_2){
     cout << "wrong sid : " << sid << endl;
     return;
   }
+  index = st_op.shape_idx[sid];
+  
+  // switch(sid){
+  // case SID_1:
+  //   index = st_op.shape_idx_1 ; 
+  //   break;
+  // case SID_2:
+  //   index = st_op.shape_idx_2 ; 
+  //   break;
+  // default:
+  //   cout << "wrong sid : " << sid << endl;
+  //   return;
+  // }
 
   if (fields[index].size() < 4) // this number 4 is really arbitrary
     return; // empty spatial object 
@@ -485,54 +574,78 @@ void Resque::populate(string input_line)
   }
 }
 
+void Resque::init_query_op(int predicate, int geomid1, int geomid2){
+  /* initlize query operator */
+  st_op = {};
 
-Resque::Resque(std::string predicate, int geomid1, int geomid2){
-  init();
-  wkt_reader = new WKTReader(new GeometryFactory(new PrecisionModel(),OSM_SRID));
-  //wkt_reader = WKTReader(new GeometryFactory(new PrecisionModel(),OSM_SRID));
+  st_op.join_predicate = predicate; //get_join_predicate(predicate.c_str());
   
-  stop.JOIN_PREDICATE = get_join_predicate(predicate.c_str());
   // do geomid shifting implicitly from original data geomid
   // tileID appended in addition to setNumber & ID appended before mapping 
   // Geomid shifted right by 2 i.e 4
-  stop.shape_idx_1 = geomid1 + 2;
-  stop.join_cardinality++;
+  st_op.shape_idx[0] = geomid1 + 2;
+  // st_op.shape_idx_1 = geomid1 + 2;
+  st_op.join_cardinality++;
 
-  stop.shape_idx_2 = geomid2 + 2;
-  stop.join_cardinality++;
+  st_op.shape_idx[1] = geomid2 + 2;
+  // st_op.shape_idx_2 = geomid2 + 2;
+  st_op.join_cardinality++;
   
-  stop.expansion_distance = 0;
-  // print all parametes
-  set_projection_param("");  
-  appendstats = true;
-  appendTileID = true; 
+  st_op.expansion_distance = 0;
 
   // query operator validation 
-  if (stop.JOIN_PREDICATE <= 0 )// is the predicate supported 
+  if (st_op.join_predicate <= 0 )// is the predicate supported 
     { 
       cerr << "Query predicate is NOT set properly. Please refer to the documentation." << endl ; 
       return;
     }
   // if the distance is valid 
-  if (ST_DWITHIN == stop.JOIN_PREDICATE && stop.expansion_distance == 0.0)
+  if (ST_DWITHIN == st_op.join_predicate && st_op.expansion_distance == 0.0)
     { 
       cerr << "Distance parameter is NOT set properly. Please refer to the documentation." << endl ;
       return;
     }
-  if (0 == stop.join_cardinality)
+  if (0 == st_op.join_cardinality)
     {
       cerr << "Geometry field indexes are NOT set properly. Please refer to the documentation." << endl ;
       return; 
     }
 }
 
+/*
+ * Constructor for spatial join
+ */
+Resque::Resque(int predicate, int geomid1, int geomid2){
+
+  init_query_op(predicate, geomid1, geomid2);
+  wkt_reader = new WKTReader(new GeometryFactory(new PrecisionModel(),OSM_SRID));
+  
+  // print all parametes
+  set_projection_param("");  
+  appendstats = true;
+  appendTileID = true; 
+
+}
+
+/*
+ * Constructor for kNN
+ */
+Resque::Resque(int predicate, int k, int geomid1, int geomid2){
+
+  init_query_op(predicate, geomid1, geomid2);
+  st_op.k_neighbors = k;
+  
+  wkt_reader = new WKTReader(new GeometryFactory(new PrecisionModel(),OSM_SRID));
+  
+  // print all parametes
+  set_projection_param("");  
+  appendstats = true;
+  appendTileID = true; 
+
+}
+
 
 Resque::~Resque(){
-  // garbage collection
-  // delete spidx;
-  // delete storage;
-  // delete jacc_cal;
-  // delete dice_cal;
- 
-  // delete wkt_reader ;
+  /* garbage collection */
+  delete wkt_reader;
 }

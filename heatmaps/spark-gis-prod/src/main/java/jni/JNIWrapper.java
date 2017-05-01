@@ -34,16 +34,16 @@ public class JNIWrapper {
      *
      * @param data      All spatial objects belonging to this tile
      *                  String: tile-id TAB algo-id TAB geometry-information
-     * @param predicate Spatial join predicate such as intersects, within etc.
+     * @param predicate Spatial join predicate such as intersects, within etc. Defined in sparkgis.enums.Predicate.java
      * @param geomID1   Geometry index of algorithm-1 in input string
      * @param geomID2   Geometry index of algorithm-2 in input string
      * @return Spatial join results based on predicate
      *         String: Object-1 TAB Object-2 TAB JaccardIndex TAB DiceIndex
      */
     public static // synchronized
-	native String[] resque(
+	native String[] resqueSPJ(
 			       String[] data, 
-			       String predicate, 
+			       int predicate, 
 			       int geomID1, 
 			       int geomID2
 			       );
@@ -55,11 +55,20 @@ public class JNIWrapper {
      */
     public native double resqueTileDice(
 					String[] data, 
-					String predicate, 
+					int predicate, 
 					int geomID1, 
 					int geomID2
 					);
 
+    public static // synchronized
+	native String[] resqueKNN(
+				  String[] data, 
+				  int predicate,
+				  int k,
+				  int geomID1, 
+				  int geomID2
+				  );
+    
     // Method-2
     /* 
      * Alternate approach 

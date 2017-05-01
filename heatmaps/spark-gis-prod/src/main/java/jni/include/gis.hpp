@@ -9,18 +9,7 @@
 #include <cstring>
 #include <string>
 #include <vector>
-
-/* libspatialindex */
-#include <spatialindex/SpatialIndex.h>
-
-/* geos */
-#include <geos/geom/PrecisionModel.h>
-#include <geos/geom/GeometryFactory.h>
-#include <geos/geom/Geometry.h>
-#include <geos/geom/Point.h>
-#include <geos/io/WKTReader.h>
-#include <geos/io/WKTWriter.h>
-#include <geos/opBuffer.h>
+#include <list>
 
 #define FillFactor 0.9
 #define IndexCapacity 10 
@@ -28,13 +17,6 @@
 #define COMPRESS true
 
 using namespace std;
-
-using namespace SpatialIndex;
-
-using namespace geos;
-using namespace geos::io;
-using namespace geos::geom;
-using namespace geos::operation::buffer;
 
 const string BAR = "|";
 const string DASH= "-";
@@ -57,11 +39,11 @@ const int ST_EQUALS = 7;
 const int ST_DWITHIN = 8;
 const int ST_WITHIN = 9;
 const int ST_OVERLAPS = 10;
+const int ST_NEAREST = 11;
+const int ST_NEAREST_2 = 12;
 
 const int SID_1 = 1;
 const int SID_2 = 2;
-
-//extern vector<id_type>hits;
 
 /* General Utility functions */
 namespace Util{
@@ -73,114 +55,50 @@ namespace Util{
 		  );
 }
 
-/* 
- * The program maps the input tsv data into corresponding partition 
- * (it adds the prefix partition id number at the beginning of the line)
- * */
+struct query_op { 
+  // int shape_idx_1;
+  // int shape_idx_2;
+  int shape_idx[2];
+  int join_cardinality;
+  double expansion_distance;
+  vector<int> proj1; /* Output fields for 1st set  */
+  vector<int> proj2; /* Output fields for 2nd set */
 
-static RTree::Data* parseInputPolygon(Geometry *p, id_type m_id) {
-  double low[2], high[2];
-  const Envelope * env = p->getEnvelopeInternal();
-  low [0] = env->getMinX();
-  low [1] = env->getMinY();
-
-  high [0] = env->getMaxX();
-  high [1] = env->getMaxY();
-
-  Region r(low, high, 2);
-
-  return new RTree::Data(0, 0 , r, m_id);// store a zero size null poiter.
-}
-
-class GEOSDataStream : public IDataStream
-{
-public:
-  GEOSDataStream(map<int,Geometry*> * inputColl ) : m_pNext(0), len(0),m_id(0)
-  {
-    if (inputColl->empty())
-      throw Tools::IllegalArgumentException("Input size is ZERO.");
-    shapes = inputColl;
-    len = inputColl->size();
-    iter = shapes->begin();
-    readNextEntry();
-  }
-  virtual ~GEOSDataStream()
-  {
-    if (m_pNext != 0) delete m_pNext;
-  }
-
-  virtual IData* getNext()
-  {
-    if (m_pNext == 0) return 0;
-    
-    RTree::Data* ret = m_pNext;
-    m_pNext = 0;
-    readNextEntry();
-    return ret;
-  }
-  
-  virtual bool hasNext()
-  {
-    return (m_pNext != 0);
-  }
-
-  virtual uint32_t size()
-  {
-    return len;
-    //throw Tools::NotSupportedException("Operation not supported.");
-  }
-
-  virtual void rewind()
-  {
-    if (m_pNext != 0)
-      {
-	delete m_pNext;
-	m_pNext = 0;
-      }
-
-    m_id  = 0;
-    iter = shapes->begin();
-    readNextEntry();
-  }
-
-  void readNextEntry()
-  {
-    if (iter != shapes->end())
-      {
-	//std::cerr<< "readNextEntry m_id == " << m_id << std::endl;
-	m_id = iter->first;
-	m_pNext = parseInputPolygon(iter->second, m_id);
-	iter++;
-      }
-  }
-
-  RTree::Data* m_pNext;
-  map<int,Geometry*> * shapes; 
-  map<int,Geometry*>::iterator iter; 
-
-  int len;
-  id_type m_id;
+  int join_predicate;
+  size_t k_neighbors; /* Number of neighbors in kNN */
 };
 
-class MyVisitor : public IVisitor
-{
-private:
-  vector<id_type> hits;
-public:
-  // BAIG WAS HERE
-  vector<id_type> get_hits() {return hits;}
-  // BAIG ENDS HERE
-  void visitNode(const INode& n) {}
-  void visitData(std::string &s) {}
+/* placeholder for nearest neighbor ranking */
+struct query_nn_dist{
+  int object_id;
+  double distance;
+};
 
-  void visitData(const IData& d)
-  {
-    hits.push_back(d.getIdentifier());
-    //std::cout << d.getIdentifier()<< std::endl;
-  }
-
-  void visitData(std::vector<const IData*>& v) {}
-  void visitData(std::vector<uint32_t>& v){}
+/* reusable temp variables in bucket processing */
+struct bucket_temp{
+  /* temp value placeholders for MBBs */
+  double low[2];
+  double high[2];
+  std::list<struct query_nn_dist*> nearest_distances;
+  union{
+    struct{
+      /* for kNN */
+      double min_x;
+      double min_y;
+      double max_x;
+      double max_y;
+      double distance;
+    }knn;
+    struct{
+      /* for spatial join statistics */
+      double area1;
+      double area2;
+      double union_area;
+      double intersection_area;
+      double dice;
+      double jaccard;
+    }spj;
+  };
 };
 
 #endif

@@ -9,19 +9,27 @@ extern "C" {
 #endif
 /*
  * Class:     jni_JNIWrapper
- * Method:    resque
- * Signature: ([Ljava/lang/String;Ljava/lang/String;II)[Ljava/lang/String;
+ * Method:    resqueSPJ
+ * Signature: ([Ljava/lang/String;III)[Ljava/lang/String;
  */
-JNIEXPORT jobjectArray JNICALL Java_jni_JNIWrapper_resque
-  (JNIEnv *, jclass, jobjectArray, jstring, jint, jint);
+JNIEXPORT jobjectArray JNICALL Java_jni_JNIWrapper_resqueSPJ
+  (JNIEnv *, jclass, jobjectArray, jint, jint, jint);
 
 /*
  * Class:     jni_JNIWrapper
  * Method:    resqueTileDice
- * Signature: ([Ljava/lang/String;Ljava/lang/String;II)D
+ * Signature: ([Ljava/lang/String;III)D
  */
 JNIEXPORT jdouble JNICALL Java_jni_JNIWrapper_resqueTileDice
-  (JNIEnv *, jobject, jobjectArray, jstring, jint, jint);
+  (JNIEnv *, jobject, jobjectArray, jint, jint, jint);
+
+/*
+ * Class:     jni_JNIWrapper
+ * Method:    resqueKNN
+ * Signature: ([Ljava/lang/String;IIII)[Ljava/lang/String;
+ */
+JNIEXPORT jobjectArray JNICALL Java_jni_JNIWrapper_resqueKNN
+  (JNIEnv *, jclass, jobjectArray, jint, jint, jint, jint);
 
 #ifdef __cplusplus
 }

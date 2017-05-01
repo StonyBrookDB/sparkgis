@@ -18,7 +18,7 @@ if __name__ == '__main__':
 END`
 
 # hardcoded values for debugging purposes
-className=sparkgis.SparkGISMain
+className=driver.SparkGISDriver
 jar=target/uber-sparkgis-1.0.jar
 # command line arguments
 uid='--uid 123456'

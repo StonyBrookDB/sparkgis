@@ -179,10 +179,10 @@ public class SparkSpatialJoinHM implements Serializable{
      * Called for all data corresponding to a given key after groupByKey()
      */
     class Resque implements Function<Iterable<String>, Iterable<String>>{
-    	private final String predicate;
+    	private final int predicate;
     	private final int geomid1;
     	private final int geomid2;
-    	public Resque(String predicate, int geomid1, int geomid2){
+    	public Resque(int predicate, int geomid1, int geomid2){
     	    this.predicate = predicate;
     	    this.geomid1 = geomid1;
     	    this.geomid2 = geomid2;
@@ -195,7 +195,7 @@ public class SparkSpatialJoinHM implements Serializable{
 	    
     	    String[] dataArray = new String[data.size()];	    
     	    JNIWrapper jni = new JNIWrapper();
-    	    String[] results = jni.resque(
+    	    String[] results = jni.resqueSPJ(
     					  data.toArray(dataArray),
     					  predicate,
     					  geomid1,
@@ -211,10 +211,10 @@ public class SparkSpatialJoinHM implements Serializable{
      * Replicated code. Fixed in newer version
      */
     class ResqueTileDice implements Function<Iterable<String>, Double>{
-    	private final String predicate;
+    	private final int predicate;
     	private final int geomid1;
     	private final int geomid2;
-    	public ResqueTileDice(String predicate, int geomid1, int geomid2){
+    	public ResqueTileDice(int predicate, int geomid1, int geomid2){
     	    this.predicate = predicate;
     	    this.geomid1 = geomid1;
     	    this.geomid2 = geomid2;

@@ -147,10 +147,10 @@ public class SparkSpatialJoin implements Serializable{
     class Resque
 	implements Function<Tuple2<Iterable<String>,Iterable<String>>, Iterable<String>>{
 
-	private final String predicate;
+	private final int predicate;
     	private final int geomid1;
     	private final int geomid2;
-    	public Resque(String predicate, int geomid1, int geomid2){
+    	public Resque(int predicate, int geomid1, int geomid2){
     	    this.predicate = predicate;
     	    this.geomid1 = geomid1;
     	    this.geomid2 = geomid2;
@@ -164,12 +164,12 @@ public class SparkSpatialJoin implements Serializable{
 	    
     	    String[] dataArray = new String[data.size()];	    
     	    JNIWrapper jni = new JNIWrapper();
-    	    String[] results = jni.resque(
-    					  data.toArray(dataArray),
-    					  predicate,
-    					  geomid1,
-    					  geomid2
-    					  );
+    	    String[] results = jni.resqueSPJ(
+					     data.toArray(dataArray),
+					     predicate,
+					     geomid1,
+					     geomid2
+					     );
     	    return Arrays.asList(results);
     	}
     }
