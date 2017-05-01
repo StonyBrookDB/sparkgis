@@ -18,7 +18,8 @@ import scala.Tuple2;
 /* Local imports */
 import jni.JNIWrapper;
 import sparkgis.data.Tile;
-import sparkgis.SparkGIS;
+import sparkgis.coordinator.SparkGISContext;
+//import sparkgis.SparkGIS;
 import sparkgis.data.SpatialObject;
 import sparkgis.data.TileStats;
 import sparkgis.data.DataConfig;
@@ -107,7 +108,7 @@ public class SparkSpatialJoinHM_Cogroup implements Serializable{
 	 */
     	final SparkSpatialIndex ssidx = new SparkSpatialIndex();
     	ssidx.build(partitionIDX);
-	ssidxBV = SparkGIS.sc.broadcast(ssidx);
+	ssidxBV = SparkGISContext.sparkContext.broadcast(ssidx);
 
 	JavaPairRDD<Integer, Tuple2<Iterable<String>,Iterable<String>>>
 	    groupedMapData = getDataByTile();
