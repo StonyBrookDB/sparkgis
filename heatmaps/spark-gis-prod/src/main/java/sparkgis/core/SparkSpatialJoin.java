@@ -104,7 +104,7 @@ public class SparkSpatialJoin implements Serializable{
 	 */
     	final SparkSpatialIndex ssidx = new SparkSpatialIndex();
     	ssidx.build(partitionIDX);
-	ssidxBV = sgc.broadcast(ssidx);
+	ssidxBV = SparkGISContext.sparkContext.broadcast(ssidx);
 
 	JavaPairRDD<Integer, Tuple2<Iterable<String>,Iterable<String>>>
 	    groupedMapData = getDataByTile();

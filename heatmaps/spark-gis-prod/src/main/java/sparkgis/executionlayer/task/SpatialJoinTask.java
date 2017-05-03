@@ -63,7 +63,7 @@ public class SpatialJoinTask extends Task implements Callable<JavaRDD<String>>{
 
 	/* Take union of all rdds and */
 	if (results.size() > 1){
-	    return sgc.union(results.get(0), results.subList(1, results.size()));
+	    return SparkGISContext.sparkContext.union(results.get(0), results.subList(1, results.size()));
 	}
 	return results.get(0);
     }
