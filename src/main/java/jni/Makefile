@@ -7,7 +7,6 @@ LIBBASE		= -L${SPGIS_LIB_PATH}  -lgeos -lspatialindex
 
 INCFLAGS	= $(JNIINC) $(INCBASE)
 CFLAGS		= -fpic -shared
-#CFLAGS      = $(OPTFLAGS) $(INCBASE)
 LDFLAGS     = $(LIBBASE)
 
 CC = g++
