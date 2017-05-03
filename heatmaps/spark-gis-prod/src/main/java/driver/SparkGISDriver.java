@@ -40,6 +40,7 @@ import sparkgis.SparkGISConfig;
 
 public class SparkGISDriver
 {
+    private static int partitionSize;
     /**
      * Command line arguments: 
      * -a Comma separated list of algos [yi-algorithm-v1 | yi-algorithm-v11]
@@ -174,7 +175,9 @@ public class SparkGISDriver
 	    }else throw new ParseException("result_analysis_exe_id not specified");
 	    final List<String> caseIDs = Arrays.asList(caseIDcsv.split(","));
 	    final List<String> algos = Arrays.asList(algosCsv.split(","));
-	    int partitionSize = SparkGISConfig.partition_size;
+	    
+	    /* PARTITION SIZE */
+	    partitionSize = SparkGISConfig.partition_size;
 
 
 	    /* print options */
@@ -222,7 +225,8 @@ public class SparkGISDriver
 	    setJobID(jobID).
 	    setBatchFactor(8).
 	    setDelimiter("\t").
-	    setSpatialObjectIndex(1);
+	    setSpatialObjectIndex(1).
+	    setPartitionSize(partitionSize);
 
 	/* Initialize SparkGISContext */
 	SparkGISContext spgc = new SparkGISContext(conf, spgConf);
