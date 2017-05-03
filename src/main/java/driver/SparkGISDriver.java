@@ -196,7 +196,7 @@ public class SparkGISDriver
 	    System.out.println("Output:\t" + ((spOut==IO.MONGODB)?"mongo":"hdfs"));
 
 	    // callHeatMap(jobID, spIn, caseIDs, algos, predicate, hmType, partitionSize, spOut, result_analysis_exe_id);
-	    
+	    heatmapBMI(algos, caseIDs);
 	}
 	catch(ParseException e){
 	    e.printStackTrace();
