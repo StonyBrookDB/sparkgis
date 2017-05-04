@@ -4,28 +4,28 @@
 The following steps needs to be followed in order to compile and run SparkGIS from source
 ### Setting up depenedencies
 * Based on user's operating system and available privileges, appropriate script needs to be executed in `deploy/` directory. For instance, if target operating system is Ubuntu-Server and user has root privileges, following set of commands needs to be executed
-'''bash
+```bash
 cd deploy
 sh ubuntu_setup_dependencies.sh
-'''
+```
 * Similarly for RHEL with root permissions
-'''bash
+```bash
 cd deploy
 sh ubuntu_setup_dependencies.sh
-'''
+```
 * In case user does not have root permissions, he has to have the following syetem packages available before he can setup dependencies. After that the following script can be executed to setup required spatial libraries 
   * gcc
   * g++
   * cmake
-'''bash
+```bash
 cd deploy
 sh setup_spatial_libs_from_source.sh
-'''
+```
 ### Compiling from source
 * Once dependencies are setup, following compile script can be executed which will compile native libraries as well as the Java code using `maven`
-'''bash
+```bash
 sh compile.sh
-'''
+```
 ### Linking with Apache Spark
 * The `lib/` directory needs to be available to spark worker nodes in order to process spatial queries. This can be done by setting following Spark properies either in `$SPARK_HOME/conf/spark-default-conf`, while creating `SparkConf` object or when submitting the job to spark through commandline
   * `spark.driver.extraLibraryPath`
@@ -34,14 +34,14 @@ sh compile.sh
 ## Running sample job (Single node)
 Current project comes with a sample data to test SparkGIS. After setting up environment and installation as mentioned in the above section, executing following set of commands will run a sample spatial join query on sample dataset and generate a per tile heatmap. This assumes that you have already setup and running HDFS, Spark and SparkGIS on your setup.
 ### Prepare input datasets
-'''bash
+```bash
 cd deploy
 hdfs dfs -mkdir -p /sparkgis/sample_data/algo-v1
 hdfs dfs -mkdir /sparkgis/sample_data/algo-v2
 hdfs dfs -put sample_pia_data/Algo1-TCGA-02-0007-01Z-00-DX1 /sparkgis/sample_data/algo-v1/TCGA-02-0007-01Z-00-DX1
 hdfs dfs -put sample_pia_data/Algo2-TCGA-02-0007-01Z-00-DX1 /sparkgis/sample_data/algo-v2/TCGA-02-0007-01Z-00-DX1
 cd ..
-'''
+```
 ### Modify SparkGIS properties
 * Update following variables in `conf/sparkgis.properies`
   * `hdfs-algo-data=/sparkgis/sample_data/` 
@@ -51,10 +51,10 @@ cd ..
   * caseIDs=' --caseids "TCGA-02-0007-01Z-00-DX1"'
 
 ### Execute SparkGIS
-'''bash
+```bash
 cd scripts
 sh generate_heatmap.sh
-'''
+```
 This should generate heatmap results in `hdfs://127.0.0.1:54310:/sparkgis/sample_results` directory.
 
 ## Directory Structure
