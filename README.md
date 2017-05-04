@@ -1,8 +1,8 @@
 # SparkGIS
 
-##Setup and Installation
+## Setup and Installation
 The following steps needs to be followed in order to compile and run SparkGIS from source
-###Setting up depenedencies
+### Setting up depenedencies
 * Based on user's operating system and available privileges, appropriate script needs to be executed in `deploy/` directory. For instance, if target operating system is Ubuntu-Server and user has root privileges, following set of commands needs to be executed
 '''bash
 cd deploy
@@ -26,14 +26,14 @@ sh setup_spatial_libs_from_source.sh
 '''bash
 sh compile.sh
 '''
-###Linking with Apache Spark
+### Linking with Apache Spark
 * The `lib/` directory needs to be available to spark worker nodes in order to process spatial queries. This can be done by setting following Spark properies either in `$SPARK_HOME/conf/spark-default-conf`, while creating `SparkConf` object or when submitting the job to spark through commandline
   * `spark.driver.extraLibraryPath`
   * `spark.executor.extraLibraryPath`
 
-##Running sample job (Single node)
+## Running sample job (Single node)
 Current project comes with a sample data to test SparkGIS. After setting up environment and installation as mentioned in the above section, executing following set of commands will run a sample spatial join query on sample dataset and generate a per tile heatmap. This assumes that you have already setup and running HDFS, Spark and SparkGIS on your setup.
-###Prepare input datasets
+### Prepare input datasets
 '''bash
 cd deploy
 hdfs dfs -mkdir -p /sparkgis/sample_data/algo-v1
@@ -42,7 +42,7 @@ hdfs dfs -put sample_pia_data/Algo1-TCGA-02-0007-01Z-00-DX1 /sparkgis/sample_dat
 hdfs dfs -put sample_pia_data/Algo2-TCGA-02-0007-01Z-00-DX1 /sparkgis/sample_data/algo-v2/TCGA-02-0007-01Z-00-DX1
 cd ..
 '''
-###Modify SparkGIS properties
+### Modify SparkGIS properties
 * Update following variables in `conf/sparkgis.properies`
   * `hdfs-algo-data=/sparkgis/sample_data/` 
   * `hdfs-hm-results=/sparkgis/sample_results/`
@@ -57,7 +57,7 @@ sh generate_heatmap.sh
 '''
 This should generate heatmap results in `hdfs://127.0.0.1:54310:/sparkgis/sample_results` directory.
 
-##Directory Structure
+## Directory Structure
 * conf/
   * Contains customizable properties for SparkGIS
 * deploy/
