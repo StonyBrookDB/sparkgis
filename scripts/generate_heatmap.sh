@@ -19,7 +19,7 @@ END`
 
 # hardcoded values for debugging purposes
 className=driver.SparkGISDriver
-jar=target/uber-sparkgis-1.0.jar
+jar=../target/uber-sparkgis-1.0.jar
 # command line arguments
 uid='--uid 123456'
 # algos=' --algos "yi-algorithm-v1,yi-algorithm-v11"'
