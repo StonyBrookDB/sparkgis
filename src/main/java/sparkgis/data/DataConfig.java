@@ -3,65 +3,68 @@ package sparkgis.data;
 import java.io.Serializable;
 /* Spark imports */
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.api.java.JavaPairRDD;
+import org.apache.spark.api.java.function.Function2;
 
 /**
  * Contains all data components required for querying. Populated and returned by SparkPrepareData
  */
-public class DataConfig implements Serializable
+public abstract class DataConfig<T> implements Serializable
 {
-    public final String caseID;
+    private final String dataID;
     /* 
      * geometry index in TAB separated string 
      * by default 1 (polygonID, polygonGeom)
      */
     private int geomid = 2;
-
-    // public JavaRDD<Polygon> originalData;
-    public JavaRDD<SpatialObject> originalData;
     
-    /* Space stuff */
-    private double dataMinX;
-    private double dataMinY;
-    private double dataMaxX;
-    private double dataMaxY;
-    private long numObjects = 0;
+    public Space space;
     
-    public DataConfig(String caseID){
-	this.caseID = caseID;
+    public DataConfig(String dataID){
+	this.dataID = dataID;
+	this.space = new Space();
     }
+
+    /**
+     * Abstract method to extract MBB from spatial data objects
+     */
+    protected abstract JavaRDD<Tile> extractMBBs();
+
+    public abstract void setData(JavaRDD<T> data);
+    public abstract JavaRDD<T> getData();
+    
+    public String getID(){return this.dataID;}
     
     public int getGeomid() {return this.geomid;}
     public void setGeomid(int geomid) {this.geomid = geomid;}
+
+    /**
+     * Preprocess spatial data for further spatial querying
+     * (1) IO
+     * (2) Extract MBBs
+     * (3) Extract Space parameters
+     */
+    public void prepare(){
+	Tile spaceDims = extractMBBs().reduce(new Function2<Tile, Tile, Tile>(){
+		public Tile call (Tile t1, Tile t2){
+		    Tile ret = new Tile();
+		    ret.minX = (t1.minX < t2.minX) ? t1.minX : t2.minX;
+		    ret.minY = (t1.minY < t2.minY) ? t1.minY : t2.minY;
+		    ret.maxX = (t1.maxX > t2.maxX) ? t1.maxX : t2.maxX;
+		    ret.maxY = (t1.maxY > t2.maxY) ? t1.maxY : t2.maxY;
+		    ret.count = t1.count + t2.count;
+		    return ret;
+		}
+	    });
+	this.space.setMinX(spaceDims.minX);
+	this.space.setMinY(spaceDims.minY);
+	this.space.setMaxX(spaceDims.maxX);
+	this.space.setMaxY(spaceDims.maxY);
+
+	this.space.setSpaceObjects(spaceDims.count);
+    }
     
     /********************* Space Stuff *******************/
-    /**
-     * Called from SparkPrepareData
-     */
-    public void setSpaceDimensions(double minX, double minY, double maxX, double maxY){
-	this.dataMinX = minX;
-	this.dataMinY = minY;
-	this.dataMaxX = maxX;
-	this.dataMaxY = maxY;
-    }
-    /**
-     * Called from SparkPrepareData
-     */
-    public void setSpaceObjects(long numObjects) {
-	this.numObjects = numObjects;
-    }
-    public double getSpanX(){
-	return (this.dataMaxX - this.dataMinX);
-    }
-    public double getSpanY(){
-	return (this.dataMaxY - this.dataMinY);
-    }
     
-    public double getMinX() {return this.dataMinX;}
-    public double getMinY() {return this.dataMinY;}
-    public double getMaxX() {return this.dataMaxX;}
-    public double getMaxY() {return this.dataMaxY;}
-    public long getSpaceObjects() {return this.numObjects;}
 
     /* Unecessary stuff */
 

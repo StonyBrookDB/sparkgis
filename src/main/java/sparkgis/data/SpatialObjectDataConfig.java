@@ -6,29 +6,26 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;
 /* JTS imports */
 import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.io.WKBReader;
+import com.vividsolutions.jts.io.WKTReader;
 import com.vividsolutions.jts.geom.Envelope;
 import com.vividsolutions.jts.io.ParseException;
 
-/**
- * Contains all data components required for querying. Populated and returned by SparkPrepareData
- */
-public class BinaryDataConfig extends DataConfig<byte[]> implements Serializable
+public class SpatialObjectDataConfig extends DataConfig<SpatialObject> implements Serializable
 {
-    private JavaRDD<byte[]> originalData;
-    
-    public BinaryDataConfig(String caseID){
+    private  JavaRDD<SpatialObject> originalData;
+
+    public SpatialObjectDataConfig(String caseID){
 	super(caseID);
     }
-    public BinaryDataConfig(String caseID, JavaRDD<byte[]> data){
+    public SpatialObjectDataConfig(String caseID, JavaRDD<SpatialObject> data){
 	super(caseID);
 	this.originalData = data;
     }
 
     @Override
-    public JavaRDD<byte[]> getData(){return originalData;}
+    public JavaRDD<SpatialObject> getData(){return originalData;}
     @Override
-    public void setData(JavaRDD<byte[]> data){this.originalData = data;}
+    public void setData(JavaRDD<SpatialObject> data){this.originalData = data;}
     @Override
     protected JavaRDD<Tile> extractMBBs(){
 	return originalData.map(new MBBExtractor())
@@ -40,14 +37,14 @@ public class BinaryDataConfig extends DataConfig<byte[]> implements Serializable
     }
 
     /**
-     * Minimum Bounding Box Extraction for binary spatial data
+     * Minimum Bounding Box Extraction
      */
-    class MBBExtractor implements Function<byte[], Tile>{
-	public Tile call(byte[] s){
+    class MBBExtractor implements Function<SpatialObject, Tile>{
+	public Tile call(SpatialObject s){
 	    Tile ret = new Tile();
 	    try{
-		WKBReader reader = new WKBReader();
-		Geometry geometry = reader.read(s);
+		WKTReader reader = new WKTReader();
+		Geometry geometry = reader.read(s.getSpatialData());
 		Envelope env = geometry.getEnvelopeInternal();
 		
 		if (env != null){

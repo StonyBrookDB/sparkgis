@@ -17,8 +17,8 @@ import com.vividsolutions.jts.io.WKBWriter;
 import com.vividsolutions.jts.io.WKTReader;
 import com.vividsolutions.jts.io.ByteOrderValues;
 /* Local imports */
+import sparkgis.data.DataConfig;
 import sparkgis.data.BinaryDataConfig;
-import sparkgis.core.SparkGISPrepareBinaryData;
 
 public class PrepareBinaryData implements Serializable{
 
@@ -37,7 +37,7 @@ public class PrepareBinaryData implements Serializable{
      * @param withID If true, get spatial data ID from input source (geometryIndex-1)
      * @return RDD of spatial data in w.k.b format 
      */
-    public JavaRDD<byte[]> getTextAsByteArray(String dataPath, final boolean withID){
+    private JavaRDD<byte[]> getTextAsByteArray(String dataPath){
 	return SparkGISContext.sparkContext.textFile(dataPath, SparkGISContext.sparkContext.defaultParallelism())
 	    .filter(new Function<String, Boolean>(){
 		    public Boolean call(String s) {return (!s.isEmpty());}
@@ -98,12 +98,11 @@ public class PrepareBinaryData implements Serializable{
     	public BinaryDataConfig call(){
     	    /* get data from input source and keep in memory */
 	    JavaRDD<byte[]> spatialDataRDD =
-		getTextAsByteArray(dataPath, true).cache();
+		getTextAsByteArray(dataPath).cache();
 	    long objCount = spatialDataRDD.count();
     	    if (objCount != 0){
-    		/* Invoke spark job: Prepare Data */
-    		SparkGISPrepareBinaryData job = new SparkGISPrepareBinaryData(dataPath);
-    		BinaryDataConfig ret = job.execute(spatialDataRDD);
+		BinaryDataConfig ret = new BinaryDataConfig(dataPath, spatialDataRDD);
+		ret.prepare();
     		return ret;
     	    }
     	    return null;

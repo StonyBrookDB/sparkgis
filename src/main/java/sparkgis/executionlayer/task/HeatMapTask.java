@@ -71,7 +71,7 @@ public class HeatMapTask extends Task implements Callable<String>{
 	    SparkGISConfig.hdfsHMResults +
 	    sgc.getJobConf().getJobID() + "/";
 	
-	String caseID = configs.get(0).caseID;
+	String caseID = configs.get(0).getID();
 	String orig_analysis_exe_id = algos.get(0);
 	String title = "Spark-" + type.strValue + "-";
 	for (String algo:algos)

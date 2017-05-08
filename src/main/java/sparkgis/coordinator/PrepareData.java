@@ -12,16 +12,10 @@ import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.Function;
-/* JTS imports */
-import com.vividsolutions.jts.io.WKBWriter;
-import com.vividsolutions.jts.io.WKTReader;
-import com.vividsolutions.jts.io.ByteOrderValues;
 /* Local imports */
 import sparkgis.data.DataConfig;
-import sparkgis.data.BinaryDataConfig;
 import sparkgis.data.SpatialObject;
-import sparkgis.core.SparkGISPrepareData;
-import sparkgis.core.SparkGISPrepareBinaryData;
+import sparkgis.data.SpatialObjectDataConfig;
 
 public class PrepareData implements Serializable{
 
@@ -102,9 +96,12 @@ public class PrepareData implements Serializable{
 		getTextAsSpatialString(dataPath, true).cache();
 	    long objCount = spatialDataRDD.count();
     	    if (objCount != 0){
-    		/* Invoke spark job: Prepare Data */
-    		SparkGISPrepareData job = new SparkGISPrepareData(dataPath);
-    		DataConfig ret = job.execute(spatialDataRDD);
+		/* Invoke spark job: Prepare Data */
+    		DataConfig ret = new SpatialObjectDataConfig(dataPath, spatialDataRDD);
+		ret.prepare();
+    		// /* Invoke spark job: Prepare Data */
+    		// SparkGISPrepareData job = new SparkGISPrepareData(dataPath);
+    		// DataConfig ret = job.execute(spatialDataRDD);
     		return ret;
     	    }
     	    return null;

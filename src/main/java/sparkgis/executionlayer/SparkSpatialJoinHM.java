@@ -17,6 +17,7 @@ import scala.Tuple2;
 import jni.JNIWrapper;
 import sparkgis.data.Tile;
 import sparkgis.enums.HMType;
+import sparkgis.data.Space;
 import sparkgis.data.TileStats;
 import sparkgis.data.DataConfig;
 import sparkgis.enums.Predicate;
@@ -32,11 +33,11 @@ public class SparkSpatialJoinHM implements Serializable{
     
     private final Predicate predicate;
     private final HMType hmType;
-    /* combined data configuration */
-    private final DataConfig combinedConfig;
+    
     private final DataConfig config1;
     private final DataConfig config2;
 
+    private final Space combinedSpace;
     private final double minX;
     private final double minY;
     private final double maxX;
@@ -59,16 +60,31 @@ public class SparkSpatialJoinHM implements Serializable{
 	this.hmType = hmType; 
 	this.config1 = config1;
 	this.config2 = config2;
-	combinedConfig = new DataConfig(config1.caseID);
-	/* set combined data configuration */
-	minX = (config1.getMinX() < config2.getMinX())?config1.getMinX():config2.getMinX();
-	minY = (config1.getMinY() < config2.getMinY())?config1.getMinY():config2.getMinY();
-	maxX = (config1.getMaxX() > config2.getMaxX())?config1.getMaxX():config2.getMaxX();
-	maxY = (config1.getMaxY() > config2.getMaxY())?config1.getMaxY():config2.getMaxY();
-	combinedConfig.setSpaceDimensions(minX, minY, maxX, maxY);
-	combinedConfig.setSpaceObjects(config1.getSpaceObjects() + config2.getSpaceObjects());
+	// combinedConfig = new DataConfig(config1.caseID);
+	// /* set combined data configuration */
+	// minX = (config1.getMinX() < config2.getMinX())?config1.getMinX():config2.getMinX();
+	// minY = (config1.getMinY() < config2.getMinY())?config1.getMinY():config2.getMinY();
+	// maxX = (config1.getMaxX() > config2.getMaxX())?config1.getMaxX():config2.getMaxX();
+	// maxY = (config1.getMaxY() > config2.getMaxY())?config1.getMaxY():config2.getMaxY();
+	// combinedConfig.setSpaceDimensions(minX, minY, maxX, maxY);
+	// combinedConfig.setSpaceObjects(config1.getSpaceObjects() + config2.getSpaceObjects());
 
-	//combinedConfig.setPartitionBucketSize(partitionSize);
+	// //combinedConfig.setPartitionBucketSize(partitionSize);
+
+	combinedSpace = new Space();
+	/* set combined data configuration */
+	minX = (config1.space.getMinX() < config2.space.getMinX())?config1.space.getMinX():config2.space.getMinX();
+	minY = (config1.space.getMinY() < config2.space.getMinY())?config1.space.getMinY():config2.space.getMinY();
+	maxX = (config1.space.getMaxX() > config2.space.getMaxX())?config1.space.getMaxX():config2.space.getMaxX();
+	maxY = (config1.space.getMaxY() > config2.space.getMaxY())?config1.space.getMaxY():config2.space.getMaxY();
+
+	combinedSpace.setMinX(minX);
+	combinedSpace.setMinY(minY);
+	combinedSpace.setMaxX(maxX);
+	combinedSpace.setMaxY(maxY);
+	
+	combinedSpace.setSpaceObjects(config1.space.getSpaceObjects() + config2.space.getSpaceObjects());
+	
 	this.partitionSize = partitionSize;
     }
     
@@ -127,8 +143,8 @@ public class SparkSpatialJoinHM implements Serializable{
     }
     
     public JavaPairRDD<Integer, Iterable<String>> getDataGroupedByTile(){
-	JavaRDD<String> data1 = config1.originalData.map(new Reformat(1));
-    	JavaRDD<String> data2 = config2.originalData.map(new Reformat(2));
+	JavaRDD<String> data1 = config1.getData().map(new Reformat(1));
+    	JavaRDD<String> data2 = config2.getData().map(new Reformat(2));
 
     	/* Join both datasets in same RDD */
     	JavaRDD<String> combinedData = data1.union(data2);
@@ -145,17 +161,17 @@ public class SparkSpatialJoinHM implements Serializable{
     	// 						       )
     	// 			       );
 	partitionIDX = Partitioner.fixedGrid(
-					     combinedConfig.getSpanX(), 
-					     combinedConfig.getSpanY(), 
+					     combinedSpace.getSpanX(), 
+					     combinedSpace.getSpanY(), 
 					     this.partitionSize,
-					     combinedConfig.getSpaceObjects()
+					     combinedSpace.getSpaceObjects()
 					     );
 	denormalizePartitionIDX(
 				partitionIDX,
-				combinedConfig.getMinX(),
-				combinedConfig.getMinY(),
-				combinedConfig.getSpanX(), 
-				combinedConfig.getSpanY()
+				combinedSpace.getMinX(),
+				combinedSpace.getMinY(),
+				combinedSpace.getSpanX(), 
+				combinedSpace.getSpanY()
 				);
 	//combinedConfig.setPartitionIDX(pIDX);
 	

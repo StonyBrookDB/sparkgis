@@ -3,25 +3,15 @@ package sparkgis.coordinator;
 import java.util.List;
 import java.util.ArrayList;
 import java.io.Serializable;
-import java.util.concurrent.Future;
-import java.util.concurrent.Callable;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ExecutorService;
 /* Spark imports */
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
-import org.apache.spark.api.java.function.Function;
-/* JTS imports */
-import com.vividsolutions.jts.io.WKBWriter;
-import com.vividsolutions.jts.io.WKTReader;
-import com.vividsolutions.jts.io.ByteOrderValues;
 /* Local imports */
 import sparkgis.data.DataConfig;
-import sparkgis.data.BinaryDataConfig;
 import sparkgis.data.SpatialObject;
-import sparkgis.core.SparkGISPrepareData;
-import sparkgis.core.SparkGISPrepareBinaryData;
+import sparkgis.data.BinaryDataConfig;
+
 
 public class SparkGISContext {
 
@@ -53,20 +43,40 @@ public class SparkGISContext {
      */
     public SparkGISJobConf getJobConf(){return this.jobConf;}
 
+    /**
+     * Prepare JavaRDD's with instances of SpatialObjects
+     * @param dataPaths HDFS paths to input spatial data
+     * @return List of dataConfig objects with raw spatialObjects 
+     * and required preprocessed spatial data
+     */
     public List<DataConfig> prepareData(List<String> dataPaths){
 	return (new PrepareData(jobConf.getDelimiter(),
 				jobConf.getSpatialObjectIndex())).prepareData(dataPaths);
     }
 
+    /**
+     * Prepare JavaRDD's with binary spatial data
+     * @param dataPaths HDFS paths to input spatial data
+     * @return List of dataConfig objects with binary spatial obejcts 
+     * and required preprocessed spatial data
+     */
     public List<BinaryDataConfig> prepareBinaryData(List<String> dataPaths){
 	return (new PrepareBinaryData(jobConf.getDelimiter(),
 				jobConf.getSpatialObjectIndex())).prepareBinaryData(dataPaths);
     }
-    
+
+    /**
+     * Stop SparkGISContext as well as Apache Spark Context
+     */
     public void stop(){
 	this.sparkContext.stop();
     }
 
+    /**
+     * A simple utility function to create TAB separated string
+     * from a list of strings
+     * @return A TAB separated string
+     */
     public static < E > String createTSString(E... args){
     	String tss = "";
     	for (E arg : args){  

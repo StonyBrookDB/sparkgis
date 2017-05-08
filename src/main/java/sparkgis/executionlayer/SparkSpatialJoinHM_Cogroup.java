@@ -20,6 +20,7 @@ import jni.JNIWrapper;
 import sparkgis.data.Tile;
 import sparkgis.enums.HMType;
 import sparkgis.data.TileStats;
+import sparkgis.data.Space;
 import sparkgis.data.DataConfig;
 import sparkgis.enums.Predicate;
 import sparkgis.data.SpatialObject;
@@ -34,11 +35,10 @@ public class SparkSpatialJoinHM_Cogroup implements Serializable{
     
     private final Predicate predicate;
     private final HMType hmType;
-    /* combined data configuration */
-    private final DataConfig combinedConfig;
     private final DataConfig config1;
     private final DataConfig config2;
 
+    private final Space combinedSpace;
     private final double minX;
     private final double minY;
     private final double maxX;
@@ -63,14 +63,20 @@ public class SparkSpatialJoinHM_Cogroup implements Serializable{
 	this.hmType = hmType; 
 	this.config1 = config1;
 	this.config2 = config2;
-	combinedConfig = new DataConfig(config1.caseID);
+
+	combinedSpace = new Space();
 	/* set combined data configuration */
-	minX = (config1.getMinX() < config2.getMinX())?config1.getMinX():config2.getMinX();
-	minY = (config1.getMinY() < config2.getMinY())?config1.getMinY():config2.getMinY();
-	maxX = (config1.getMaxX() > config2.getMaxX())?config1.getMaxX():config2.getMaxX();
-	maxY = (config1.getMaxY() > config2.getMaxY())?config1.getMaxY():config2.getMaxY();
-	combinedConfig.setSpaceDimensions(minX, minY, maxX, maxY);
-	combinedConfig.setSpaceObjects(config1.getSpaceObjects() + config2.getSpaceObjects());
+	minX = (config1.space.getMinX() < config2.space.getMinX())?config1.space.getMinX():config2.space.getMinX();
+	minY = (config1.space.getMinY() < config2.space.getMinY())?config1.space.getMinY():config2.space.getMinY();
+	maxX = (config1.space.getMaxX() > config2.space.getMaxX())?config1.space.getMaxX():config2.space.getMaxX();
+	maxY = (config1.space.getMaxY() > config2.space.getMaxY())?config1.space.getMaxY():config2.space.getMaxY();
+
+	combinedSpace.setMinX(minX);
+	combinedSpace.setMinY(minY);
+	combinedSpace.setMaxX(maxX);
+	combinedSpace.setMaxY(maxY);
+	
+	combinedSpace.setSpaceObjects(config1.space.getSpaceObjects() + config2.space.getSpaceObjects());
 
 	//combinedConfig.setPartitionBucketSize(partitionSize);
 	this.partitionSize = partitionSize;
@@ -87,24 +93,24 @@ public class SparkSpatialJoinHM_Cogroup implements Serializable{
 	
 	List<Tile> partitionIDX =
 	    Partitioner.fixedGridHM(
-				    combinedConfig.getMinX(), 
-				    combinedConfig.getMinY(), 
-				    combinedConfig.getMaxX(),
-				    combinedConfig.getMaxY(),
+				    combinedSpace.getMinX(), 
+				    combinedSpace.getMinY(), 
+				    combinedSpace.getMaxX(),
+				    combinedSpace.getMaxY(),
 				    this.partitionSize
 				  );
 	    // Partitioner.fixedGrid(
-	    // 			  combinedConfig.getSpanX(), 
-	    // 			  combinedConfig.getSpanY(), 
+	    // 			  combinedSpace.getSpanX(), 
+	    // 			  combinedSpace.getSpanY(), 
 	    // 			  this.partitionSize,
-	    // 			  combinedConfig.getSpaceObjects()
+	    // 			  combinedSpace.getSpaceObjects()
 	    // 			  );
 	denormalizePartitionIDX(
 				partitionIDX,
-				combinedConfig.getMinX(),
-				combinedConfig.getMinY(),
-				combinedConfig.getSpanX(), 
-				combinedConfig.getSpanY()
+				combinedSpace.getMinX(),
+				combinedSpace.getMinY(),
+				combinedSpace.getSpanX(), 
+				combinedSpace.getSpanY()
 				);
 
 	/* 
@@ -174,10 +180,10 @@ public class SparkSpatialJoinHM_Cogroup implements Serializable{
 	 */
 	
     	JavaPairRDD<Integer, String> joinMapData1 = 
-    	    config1.originalData.flatMapToPair(new PartitionMapperJoin(1));
+    	    config1.getData().flatMapToPair(new PartitionMapperJoin(1));
 
 	JavaPairRDD<Integer, String> joinMapData2 = 
-    	    config2.originalData.flatMapToPair(new PartitionMapperJoin(2));
+    	    config2.getData().flatMapToPair(new PartitionMapperJoin(2));
 
 	JavaPairRDD<Integer, Tuple2<Iterable<String>, Iterable<String>>> groupedData =
 	    joinMapData1.cogroup(joinMapData2);
