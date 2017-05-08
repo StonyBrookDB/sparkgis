@@ -56,36 +56,6 @@ public class PrepareData implements Serializable{
 		    }
 		});
     }
-
-    /**
-     * Read spatial data into w.k.b format RDD from HDFS, local file system (available
-     * on all nodes), or any Hadoop supported file system URI
-     * @param dataPath Data URI on HDFS, local file system or any Hadoop supported file system
-     * @param withID If true, get spatial data ID from input source (geometryIndex-1)
-     * @return RDD of spatial data in w.k.t format 
-     */
-    public JavaRDD<byte[]> getTextAsByteArray(String dataPath, final boolean withID){
-	return SparkGISContext.sparkContext.textFile(dataPath, SparkGISContext.sparkContext.defaultParallelism())
-	    .filter(new Function<String, Boolean>(){
-		    public Boolean call(String s) {return (!s.isEmpty());}
-		})
-	    .map(new Function<String, byte[]>(){
-		    public byte[] call(String s){
-			String[] fields = s.split(delimiter);
-			int spdIndex = index;
-			// if (withID)
-			//     return new SpatialObject(fields[spdIndex-1], fields[spdIndex]);
-			
-			// return new SpatialObject(fields[spdIndex]);
-			try{
-			    WKBWriter w = new WKBWriter(2, ByteOrderValues.LITTLE_ENDIAN);
-			    WKTReader reader = new WKTReader();
-			    return w.write(reader.read(fields[spdIndex]));
-			}catch(Exception e){e.printStackTrace();}
-			return null;
-		    }
-		});
-    }
     
     /**
      * A spatial data query usually consists of atleast two datasets
@@ -135,31 +105,6 @@ public class PrepareData implements Serializable{
     		/* Invoke spark job: Prepare Data */
     		SparkGISPrepareData job = new SparkGISPrepareData(dataPath);
     		DataConfig ret = job.execute(spatialDataRDD);
-    		return ret;
-    	    }
-    	    return null;
-    	}
-    }
-
-    /**
-     * Inner class to get binary data and generate data configuration
-     */
-    private class AsyncPrepareBinaryData implements Callable<BinaryDataConfig>{
-        private final String dataPath;	
-    	public AsyncPrepareBinaryData(String dataPath){
-    	    this.dataPath = dataPath;
-    	}
-	
-    	@Override
-    	public BinaryDataConfig call(){
-    	    /* get data from input source and keep in memory */
-	    JavaRDD<byte[]> spatialDataRDD =
-		getTextAsByteArray(dataPath, true).cache();
-	    long objCount = spatialDataRDD.count();
-    	    if (objCount != 0){
-    		/* Invoke spark job: Prepare Data */
-    		SparkGISPrepareBinaryData job = new SparkGISPrepareBinaryData(dataPath);
-    		BinaryDataConfig ret = job.execute(spatialDataRDD);
     		return ret;
     	    }
     	    return null;

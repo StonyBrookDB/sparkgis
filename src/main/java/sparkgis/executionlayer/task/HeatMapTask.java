@@ -49,20 +49,6 @@ public class HeatMapTask extends Task implements Callable<String>{
     public String call(){
 	List<JavaRDD<TileStats>> results = new ArrayList<JavaRDD<TileStats>>();
 	
-	// DataConfig[] configs = new DataConfig[algoCount];
-	// List<Future<DataConfig>> futures = new ArrayList<Future<DataConfig>>();
-	// for (int i=0; i<algoCount; ++i){
-	//     //futures.add(exeService.submit(new AsyncPrepareData(super.data, algos.get(i), super.inputSrc)));
-	//     futures.add(exeService.submit(new AsyncPrepareData(super.data,
-	// 						       algos.get(i))));
-	// }
-	// try{
-	//     for (int i=0; i<algoCount; ++i)
-	// 	configs[i] = futures.get(i).get();
-	// }catch(Exception e){e.printStackTrace();}
-	// /* close thread pool */
-	// exeService.shutdown();
-
 	List<DataConfig> configs = sgc.prepareData(this.generateDataPaths());
 
 	final List<Integer> pairs = generatePairs(algoCount);

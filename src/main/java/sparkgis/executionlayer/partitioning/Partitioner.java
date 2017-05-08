@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.ArrayList;
 import java.lang.Math;
 /* Local imports */
-import sparkgis.SparkGIS;
 import sparkgis.data.Tile;
 
 public class Partitioner
@@ -56,22 +55,25 @@ public class Partitioner
     /**
      * Fixed-grid partition for heatmap generation
      */
-    public static List<Tile> fixedGridHM(double minX, double minY, double maxX, double maxY, int step){
+    public static List<Tile> fixedGridHM(double minX, double minY, double maxX, double maxY, int partitionSize){
 	long id = 0;
-	//List<String> partitions = new ArrayList<String>();
 	List<Tile> partitions = new ArrayList<Tile>();
-	
-	for (int i=(int)minX; i<=maxX; i+=step){
-	    for (int j=(int)minY; j<=maxY; j+=step){
+	final double xStep = (maxX-minX)/(partitionSize-1);
+	final double yStep = (maxY-minY)/(partitionSize-1);
+
+	maxX = Math.ceil(maxX);
+	maxY = Math.ceil(maxY);
+
+	for (int i=(int)minX; i<=maxX; i+=xStep){
+	    for (int j=(int)minY; j<=maxY; j+=yStep){
 		id++;
 		Tile t = new Tile();
 		t.tileID = id;
 		t.minX = i;
 		t.minY = j;
-		t.maxX = (i+step);
-		t.maxY = (j+step);
+		t.maxX = (i+xStep);
+		t.maxY = (j+yStep);
 		partitions.add(t);
-		//partitions.add(SparkGIS.createTSString(id, i, j, (i+step), (j+step)));
 	    }
 	}
 	return partitions;

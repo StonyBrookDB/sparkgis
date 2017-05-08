@@ -15,10 +15,10 @@ import org.apache.spark.api.java.function.Function2;
 import org.apache.spark.api.java.function.PairFunction;
 import org.apache.spark.api.java.function.PairFlatMapFunction;
 /* Local imports */
-import sparkgis.SparkGIS;
 import sparkgis.data.Tile;
 import sparkgis.enums.HMType;
 import sparkgis.data.TileStats;
+import sparkgis.coordinator.SparkGISContext;
 
 public class Coefficient implements Serializable{
     
@@ -105,7 +105,7 @@ public class Coefficient implements Serializable{
 						      final HMType hmType
 						      ){
 	
-	JavaRDD<Tile> partfileRDD = SparkGIS.sc.parallelize(partfile);
+	JavaRDD<Tile> partfileRDD = SparkGISContext.sparkContext.parallelize(partfile);
 	
     	// Format: 
     	JavaPairRDD<Integer, Tile> pRDDPairs = 

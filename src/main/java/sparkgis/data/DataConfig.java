@@ -4,8 +4,6 @@ import java.io.Serializable;
 /* Spark imports */
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaPairRDD;
-/* Local imports */
-import sparkgis.SparkGIS;
 
 /**
  * Contains all data components required for querying. Populated and returned by SparkPrepareData

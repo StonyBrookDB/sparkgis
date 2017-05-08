@@ -23,10 +23,12 @@ import sparkgis.data.SpatialObject;
 import sparkgis.core.SparkGISPrepareData;
 import sparkgis.core.SparkGISPrepareBinaryData;
 
-public class SparkGISContext {//extends JavaSparkContext{
+public class SparkGISContext {
+
+    public static final String TAB = "\t";
+    public static JavaSparkContext sparkContext;
 
     private final SparkGISJobConf jobConf;
-    public static JavaSparkContext sparkContext;
     
     /**
      * SparkGISContext constructor with default SparkGISJobConf
@@ -55,9 +57,25 @@ public class SparkGISContext {//extends JavaSparkContext{
 	return (new PrepareData(jobConf.getDelimiter(),
 				jobConf.getSpatialObjectIndex())).prepareData(dataPaths);
     }
+
+    public List<BinaryDataConfig> prepareBinaryData(List<String> dataPaths){
+	return (new PrepareBinaryData(jobConf.getDelimiter(),
+				jobConf.getSpatialObjectIndex())).prepareBinaryData(dataPaths);
+    }
     
     public void stop(){
 	this.sparkContext.stop();
+    }
+
+    public static < E > String createTSString(E... args){
+    	String tss = "";
+    	for (E arg : args){  
+    	    if (tss == "")
+    		tss = tss + arg;
+    	    else
+    		tss = tss + TAB + arg;
+    	}
+    	return tss;
     }
 
 }

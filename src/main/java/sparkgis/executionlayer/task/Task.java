@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.ArrayList;
 /* Local imports*/
 import sparkgis.coordinator.SparkGISContext;
-import sparkgis.executionlayer.SparkPrepareData;
 
 public class Task{
     protected final String data;

@@ -15,7 +15,6 @@ import org.apache.spark.api.java.function.Function2;
 import org.apache.spark.api.java.function.PairFunction;
 import org.apache.spark.api.java.function.PairFlatMapFunction;
 /* Local imports */
-//import sparkgis.SparkGIS;
 import sparkgis.coordinator.SparkGISContext;
 import sparkgis.data.Tile;
 import sparkgis.enums.HMType;

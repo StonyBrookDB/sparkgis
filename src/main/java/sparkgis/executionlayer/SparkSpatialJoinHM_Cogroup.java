@@ -18,14 +18,12 @@ import scala.Tuple2;
 /* Local imports */
 import jni.JNIWrapper;
 import sparkgis.data.Tile;
-import sparkgis.coordinator.SparkGISContext;
-//import sparkgis.SparkGIS;
-import sparkgis.data.SpatialObject;
+import sparkgis.enums.HMType;
 import sparkgis.data.TileStats;
 import sparkgis.data.DataConfig;
 import sparkgis.enums.Predicate;
-import sparkgis.enums.HMType;
-import sparkgis.stats.Profile;
+import sparkgis.data.SpatialObject;
+import sparkgis.coordinator.SparkGISContext;
 import sparkgis.executionlayer.partitioning.Partitioner;
 import sparkgis.executionlayer.spatialindex.SparkSpatialIndex;
 
@@ -88,12 +86,19 @@ public class SparkSpatialJoinHM_Cogroup implements Serializable{
     public JavaRDD<TileStats> execute(){
 	
 	List<Tile> partitionIDX =
-	    Partitioner.fixedGrid(
-				  combinedConfig.getSpanX(), 
-				  combinedConfig.getSpanY(), 
-				  this.partitionSize,
-				  combinedConfig.getSpaceObjects()
+	    Partitioner.fixedGridHM(
+				    combinedConfig.getMinX(), 
+				    combinedConfig.getMinY(), 
+				    combinedConfig.getMaxX(),
+				    combinedConfig.getMaxY(),
+				    this.partitionSize
 				  );
+	    // Partitioner.fixedGrid(
+	    // 			  combinedConfig.getSpanX(), 
+	    // 			  combinedConfig.getSpanY(), 
+	    // 			  this.partitionSize,
+	    // 			  combinedConfig.getSpaceObjects()
+	    // 			  );
 	denormalizePartitionIDX(
 				partitionIDX,
 				combinedConfig.getMinX(),

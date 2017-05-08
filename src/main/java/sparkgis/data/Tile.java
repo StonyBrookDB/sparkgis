@@ -1,7 +1,6 @@
 package sparkgis.data;
 
 import java.io.Serializable;
-import sparkgis.SparkGIS;
 
 public class Tile implements Serializable
 {
@@ -17,6 +16,7 @@ public class Tile implements Serializable
     @SuppressWarnings("unchecked")
     public String toString()
     {
-	return SparkGIS.createTSString(tileID, minX, minY, maxX, maxY);
+	return sparkgis.coordinator.SparkGISContext.
+	    createTSString(tileID, minX, minY, maxX, maxY);
     }
 }

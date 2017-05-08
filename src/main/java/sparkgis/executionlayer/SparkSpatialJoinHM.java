@@ -16,13 +16,12 @@ import scala.Tuple2;
 /* Local imports */
 import jni.JNIWrapper;
 import sparkgis.data.Tile;
-import sparkgis.SparkGIS;
-import sparkgis.data.SpatialObject;
+import sparkgis.enums.HMType;
 import sparkgis.data.TileStats;
 import sparkgis.data.DataConfig;
 import sparkgis.enums.Predicate;
-import sparkgis.enums.HMType;
-import sparkgis.stats.Profile;
+import sparkgis.data.SpatialObject;
+import sparkgis.coordinator.SparkGISContext;
 import sparkgis.executionlayer.partitioning.Partitioner;
 import sparkgis.executionlayer.spatialindex.SparkSpatialIndex;
 
@@ -247,7 +246,7 @@ public class SparkSpatialJoinHM implements Serializable{
     	    this.geomID = geomID;
     	}
     	public Iterator<Tuple2<Integer, String>> call (final String line){
-    	    String[] fields = line.split(String.valueOf(SparkGIS.TAB));
+    	    String[] fields = line.split(String.valueOf(SparkGISContext.TAB));
 
     	    int joinIDX = (fields[0].equals("1"))? 2 : 1;
     	    List<Tuple2<Integer, String>> ret = new ArrayList<Tuple2<Integer, String>>();
@@ -269,7 +268,7 @@ public class SparkSpatialJoinHM implements Serializable{
     	private final int setNumber;
     	public Reformat(int setNumber){this.setNumber = setNumber;}
     	public String call(final SpatialObject s){
-	    return "" + this.setNumber + SparkGIS.TAB + s.toString();
+	    return "" + this.setNumber + SparkGISContext.TAB + s.toString();
     	}
     }
 

@@ -13,8 +13,8 @@ import com.vividsolutions.jts.index.strtree.STRtree;
 import com.vividsolutions.jts.index.SpatialIndex;
 import com.vividsolutions.jts.io.ParseException;
 /* Local imports */
-import sparkgis.SparkGIS;
 import sparkgis.data.Tile;
+import sparkgis.coordinator.SparkGISContext;
 
 public class SparkSpatialIndex implements Serializable{
     
@@ -70,7 +70,7 @@ public class SparkSpatialIndex implements Serializable{
 	int id = 0;
 	for (String data : inData){
 	    try{
-		String[] fields = data.split(String.valueOf(SparkGIS.TAB));
+		String[] fields = data.split(String.valueOf(SparkGISContext.TAB));
 		Geometry geom = reader.read(fields[geomid]);
 		IndexedGeometry iGeom = new IndexedGeometry(++id, geom);
 		/* add to index */
