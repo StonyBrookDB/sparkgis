@@ -29,6 +29,7 @@ public class BinaryDataConfig extends DataConfig<byte[]> implements Serializable
     public JavaRDD<byte[]> getData(){return originalData;}
     @Override
     public void setData(JavaRDD<byte[]> data){this.originalData = data;}
+    
     @Override
     protected JavaRDD<Tile> extractMBBs(){
 	return originalData.map(new MBBExtractor())

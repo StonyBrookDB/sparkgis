@@ -1,4 +1,4 @@
-package sparkgis.core;
+package sparkgis.pia;
 /* Java imports */
 import java.util.List;
 import java.util.Arrays;
@@ -18,25 +18,25 @@ import scala.Tuple2;
 /* Local imports */
 import jni.JNIWrapper;
 import sparkgis.data.Tile;
-import sparkgis.coordinator.SparkGISContext;
-import sparkgis.data.SpatialObject;
+import sparkgis.enums.HMType;
 import sparkgis.data.TileStats;
 import sparkgis.data.Space;
 import sparkgis.data.DataConfig;
 import sparkgis.enums.Predicate;
+import sparkgis.data.SpatialObject;
+import sparkgis.coordinator.SparkGISContext;
 import sparkgis.core.partitioning.Partitioner;
 import sparkgis.core.spatialindex.SparkSpatialIndex;
 
 /**
- * Spark Spatial Join
+ * Spark Spatial Join for HeatMap Generation
  */
-public class SparkSpatialJoin implements Serializable{
-
-    private final SparkGISContext sgc;
+public class SparkSpatialJoinHM_Cogroup implements Serializable{
     
-    protected final Predicate predicate;
-    protected final DataConfig config1;
-    protected final DataConfig config2;
+    private final Predicate predicate;
+    private final HMType hmType;
+    private final DataConfig config1;
+    private final DataConfig config2;
 
     private final Space combinedSpace;
     private final double minX;
@@ -49,20 +49,21 @@ public class SparkSpatialJoin implements Serializable{
      * No need to inflate DataConfig object 
      * since it has to be transferred over to workers
      */
+    private final int partitionSize;
     private Broadcast<SparkSpatialIndex> ssidxBV = null;
-
-    protected List<Tile> partitionIDX;
     
-    public SparkSpatialJoin(
-			    SparkGISContext sgc,
-			    DataConfig config1,
-			    DataConfig config2,
-			    Predicate predicate
-			    ){
-	this.sgc = sgc;
+    public SparkSpatialJoinHM_Cogroup(
+				      DataConfig config1,
+				      DataConfig config2,
+				      Predicate predicate,
+				      HMType hmType,
+				      int partitionSize
+				      ){
 	this.predicate = predicate;
+	this.hmType = hmType; 
 	this.config1 = config1;
 	this.config2 = config2;
+
 	combinedSpace = new Space();
 	/* set combined data configuration */
 	minX = (config1.space.getMinX() < config2.space.getMinX())?config1.space.getMinX():config2.space.getMinX();
@@ -76,32 +77,42 @@ public class SparkSpatialJoin implements Serializable{
 	combinedSpace.setMaxY(maxY);
 	
 	combinedSpace.setSpaceObjects(config1.space.getSpaceObjects() + config2.space.getSpaceObjects());
+
+	//combinedConfig.setPartitionBucketSize(partitionSize);
+	this.partitionSize = partitionSize;
     }
     
     /**
-     * Performs spatial join operation on data configurations specified in constructor
-     * @return JavaRDD<String>. Each string contains information about resulting pair of
-     * polygons with some basic stats such as area union, intersecting area etc. The format
-     * is as follows
-     * <p> 
-     * polygon-id \t polygon-coordinates \t polygon-id \t polygon-coordinates \t tile-id \t Jaccard \t dice
+     * Data formats:
+     * 1: config.mappedPartitions: <loadtile-id> <spatialObject-id> <spatialObject>
+     * 2: data (after reformat): <setNumber> <loadtile-id> <spatialObject-id> <spatialObject>
+     * 3: joinMapData (after JNI): 
+     *  <combinedtile-id> <join-idx> <setNumber> <loadtile-id> <spatialObject-id> <spatialObject>
      */
-    public JavaRDD execute(){
+    public JavaRDD<TileStats> execute(){
 	
-	partitionIDX =
-	    Partitioner.fixedGrid(
-				  combinedSpace.getSpanX(), 
-				  combinedSpace.getSpanY(), 
-				  this.sgc.getJobConf().getPartitionSize(),
-				  combinedSpace.getSpaceObjects()
+	List<Tile> partitionIDX =
+	    /* DONOT DENORMALIZE IF USING 'HM' PARTITIONER */
+	    Partitioner.fixedGridHM(
+				    combinedSpace.getMinX(), 
+				    combinedSpace.getMinY(), 
+				    combinedSpace.getMaxX(),
+				    combinedSpace.getMaxY(),
+				    this.partitionSize
 				  );
-	denormalizePartitionIDX(
-				partitionIDX,
-				combinedSpace.getMinX(),
-				combinedSpace.getMinY(),
-				combinedSpace.getSpanX(), 
-				combinedSpace.getSpanY()
-				);
+	    // Partitioner.fixedGrid(
+	    // 			  combinedSpace.getSpanX(), 
+	    // 			  combinedSpace.getSpanY(), 
+	    // 			  this.partitionSize,
+	    // 			  combinedSpace.getSpaceObjects()
+	    // 			  );
+	// denormalizePartitionIDX(
+	// 			partitionIDX,
+	// 			combinedSpace.getMinX(),
+	// 			combinedSpace.getMinY(),
+	// 			combinedSpace.getSpanX(), 
+	// 			combinedSpace.getSpanY()
+	// 			);
 
 	/* 
 	 * Broadcast ssidx 
@@ -114,20 +125,56 @@ public class SparkSpatialJoin implements Serializable{
 	JavaPairRDD<Integer, Tuple2<Iterable<String>,Iterable<String>>>
 	    groupedMapData = getDataByTile();
 
-	/* Native C++: Resque */
-	JavaPairRDD<Integer, String> results = 
-	    groupedMapData.flatMapValues(new Resque(
-						    predicate.value, 
-						    config1.getGeomid(),
-						    config2.getGeomid())
-					 );
-	return results.values();
+
+	System.out.println("POJO Count: " + groupedMapData.count());
+	return SparkGISContext.sparkContext.emptyRDD();
+	
+	// /* Native C++: Resque */
+	// if (hmType == HMType.TILEDICE){
+	//     throw new java.lang.RuntimeException("Not implemented in Cogroup version yet");
+	//     // JavaPairRDD<Integer, Double> tileDiceResults = 
+	//     // 	groupedMapData.mapValues(new ResqueTileDice(
+	//     // 						    predicate.value,
+	//     // 						    config1.getGeomid(),
+	//     // 						    config2.getGeomid()
+	//     // 						    )
+	//     // 				 ).filter(new Function<Tuple2<Integer, Double>, Boolean>(){
+	//     // 					 public Boolean call(Tuple2<Integer, Double> t){
+	//     // 					     if (t._2() == -1)
+	//     // 						 return false;
+	//     // 					     return true;
+	//     // 					 }
+	//     // 				     });
+	//     // return Coefficient.mapResultsToTile(
+	//     // 					this.partitionIDX, 
+	//     // 					tileDiceResults,
+	//     // 					hmType
+	//     // 					);
+	// }
+	// else{
+	//     JavaPairRDD<Integer, Iterable<String>> results = 
+	// 	groupedMapData.mapValues(new Resque(
+    	// 				      predicate.value, 
+    	// 				      config1.getGeomid(),
+    	// 				      config2.getGeomid())
+	// 			     );	
+    	// JavaRDD<Iterable<String>> vals = results.values();
+
+    	// /* Call Jaccard function to calculate jaccard coefficients per tile */
+    	// return Coefficient.execute(
+    	// 			   results.values(),
+    	// 			   /*spJoinResult,*/ 
+    	// 			   partitionIDX,
+    	// 			   hmType
+    	// 			   );
+	// }
+	
     }
 
     /*
      * Cogroup version
      */
-    protected JavaPairRDD<Integer, Tuple2<Iterable<String>, Iterable<String>>> getDataByTile(){
+    public JavaPairRDD<Integer, Tuple2<Iterable<String>, Iterable<String>>> getDataByTile(){
 
 	/* 
 	 * Reformat stage only appends a set number to data from algo1 and algo2 
@@ -161,6 +208,7 @@ public class SparkSpatialJoin implements Serializable{
     	    this.geomid2 = geomid2;
     	}
     	public Iterable<String> call (final Tuple2<Iterable<String>,Iterable<String>> inData){
+    	    //List<String> ret = new ArrayList<String>();
     	    ArrayList<String> data = new ArrayList<String>();
     	    for (String in : inData._1())
     		data.add(in);
@@ -170,12 +218,43 @@ public class SparkSpatialJoin implements Serializable{
     	    String[] dataArray = new String[data.size()];	    
     	    JNIWrapper jni = new JNIWrapper();
     	    String[] results = jni.resqueSPJ(
-					     data.toArray(dataArray),
-					     predicate,
-					     geomid1,
-					     geomid2
-					     );
+    					  data.toArray(dataArray),
+    					  predicate,
+    					  geomid1,
+    					  geomid2
+    					  );
+    	    //for (String res : results)
+	    //ret.add(res);
     	    return Arrays.asList(results);
+    	}
+    }
+    
+    /**
+     * Replicated code. Fixed in newer version
+     */
+    class ResqueTileDice implements Function<Iterable<String>, Double>{
+    	private final int predicate;
+    	private final int geomid1;
+    	private final int geomid2;
+    	public ResqueTileDice(int predicate, int geomid1, int geomid2){
+    	    this.predicate = predicate;
+    	    this.geomid1 = geomid1;
+    	    this.geomid2 = geomid2;
+    	}
+    	public Double call (final Iterable<String> inData){
+    	    ArrayList<String> data = new ArrayList<String>();
+    	    for (String in : inData)
+    		data.add(in);	    
+	    
+    	    String[] dataArray = new String[data.size()];	    
+    	    JNIWrapper jni = new JNIWrapper();
+    	    double result = jni.resqueTileDice(
+					data.toArray(dataArray),
+					predicate,
+					geomid1,
+					geomid2
+					);
+    	    return new Double(result);
     	}
     }
     

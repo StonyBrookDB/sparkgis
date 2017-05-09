@@ -1,4 +1,4 @@
-package sparkgis.executionlayer.spatialindex;
+package sparkgis.core.spatialindex;
 /* Java imports */
 import java.util.List;
 import java.util.ArrayList;
@@ -6,6 +6,7 @@ import java.io.Serializable;
 /* JTS imports */
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.io.WKTReader;
+import com.vividsolutions.jts.io.WKBReader;
 import com.vividsolutions.jts.geom.Envelope;
 import com.vividsolutions.jts.geom.GeometryFactory; 
 import com.vividsolutions.jts.geom.PrecisionModel;
@@ -89,6 +90,32 @@ public class SparkSpatialIndex implements Serializable{
 	    /* create geometry for this polygon */
 	    WKTReader reader = new WKTReader();
 	    Geometry geometry = reader.read(polygonString);
+	    Envelope env = geometry.getEnvelopeInternal();
+	    /* get all intersecting polygons from index for this geometry */
+	    if (env != null){
+		List<?> list = spidx.query(env);
+		
+		for (Object o : list){
+		    IndexedGeometry iGeom = (IndexedGeometry) o;		    
+		    tileIDs.add(iGeom.getKey());
+		}
+	    }
+	}catch (ParseException e) {
+	    e.printStackTrace();
+	}
+	return tileIDs;
+    }
+
+    /**
+     * @param polygonByteArray Binary polygon information  
+     * @return List of IDs of index tiles overlapped by this polygon
+     */
+    public List<Long> getIntersectingIndexTiles(byte[] polygonByteArray){
+	List<Long> tileIDs = new ArrayList<Long>();
+	try{
+	    /* create geometry for this polygon */
+	    WKBReader reader = new WKBReader();
+	    Geometry geometry = reader.read(polygonByteArray);
 	    Envelope env = geometry.getEnvelopeInternal();
 	    /* get all intersecting polygons from index for this geometry */
 	    if (env != null){

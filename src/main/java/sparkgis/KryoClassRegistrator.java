@@ -7,11 +7,12 @@ import sparkgis.data.DataConfig;
 //import sparkgis.io.mongodb.ReadMongoSplit;
 //import sparkgis.io.hdfs.HDFSDataAccess;
 //import sparkgis.io.mongodb.MongoDBDataAccess;
-import sparkgis.executionlayer.Coefficient;
-import sparkgis.executionlayer.SparkSpatialJoinHM;
-import sparkgis.executionlayer.partitioning.Partitioner;
-import sparkgis.executionlayer.spatialindex.IndexedGeometry;
-import sparkgis.executionlayer.spatialindex.SparkSpatialIndex;
+import sparkgis.pia.Coefficient;
+import sparkgis.pia.SparkSpatialJoinHMBinary;
+import sparkgis.core.SparkSpatialJoin;
+import sparkgis.core.partitioning.Partitioner;
+import sparkgis.core.spatialindex.IndexedGeometry;
+import sparkgis.core.spatialindex.SparkSpatialIndex;
 /* Kryo Serializer */
 import org.apache.spark.serializer.KryoRegistrator;
 import com.esotericsoftware.kryo.Kryo;
@@ -30,7 +31,9 @@ public class KryoClassRegistrator implements KryoRegistrator{
 	kryo.register(Partitioner.class, new FieldSerializer(kryo, Partitioner.class));
 	kryo.register(Coefficient.class, new FieldSerializer(kryo, Coefficient.class));
 	//kryo.register(SparkPrepareData.class, new FieldSerializer(kryo, SparkPrepareData.class));
-	kryo.register(SparkSpatialJoinHM.class, new FieldSerializer(kryo, SparkSpatialJoinHM.class));
+	//kryo.register(SparkSpatialJoinHM.class, new FieldSerializer(kryo, SparkSpatialJoinHM.class));
+	kryo.register(SparkSpatialJoin.class, new FieldSerializer(kryo, SparkSpatialJoin.class));
+	kryo.register(SparkSpatialJoinHMBinary.class, new FieldSerializer(kryo, SparkSpatialJoinHMBinary.class));
 	// sparkgis.io.*
 	//kryo.register(ReadMongoSplit.class, new FieldSerializer(kryo, ReadMongoSplit.class));
 	//kryo.register(HDFSDataAccess.class, new FieldSerializer(kryo, HDFSDataAccess.class));

@@ -9,7 +9,8 @@ import java.util.concurrent.ExecutorService;
 import sparkgis.enums.HMType;
 import sparkgis.enums.Predicate;
 import sparkgis.coordinator.SparkGISContext;
-import sparkgis.executionlayer.task.HeatMapTask;
+import sparkgis.core.task.HeatMapTask;
+import sparkgis.core.task.BinaryHeatMapTask;
 
 public class HeatMap{
 
@@ -37,15 +38,25 @@ public class HeatMap{
 	    Executors.newFixedThreadPool(spgc.getJobConf().getBatchFactor());
 	
     	/* for a given algorithm pair create parallel heatmap generation tasks */
-    	List<HeatMapTask> tasks = new ArrayList<HeatMapTask>();
+	// List<HeatMapTask> tasks = new ArrayList<HeatMapTask>();
+    	List<BinaryHeatMapTask> tasks = new ArrayList<BinaryHeatMapTask>();
     	for (String caseID : caseIDs){
-    	    HeatMapTask t =
-    		new HeatMapTask(spgc,
-    				caseID,
-    				algos,
-    				pred,
-    				hmType,
-    				result_analysis_exe_id);
+    	    // HeatMapTask t =
+    	    // 	new HeatMapTask(spgc,
+    	    // 			caseID,
+    	    // 			algos,
+    	    // 			pred,
+    	    // 			hmType,
+    	    // 			result_analysis_exe_id);
+
+	    BinaryHeatMapTask t =
+    	    	new BinaryHeatMapTask(spgc,
+	    			      caseID,
+	    			      algos,
+	    			      pred,
+	    			      hmType,
+	    			      result_analysis_exe_id);
+	    
     	    tasks.add(t);
     	}
     	/* wait for all jobs to complete */

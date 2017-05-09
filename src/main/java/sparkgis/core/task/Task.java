@@ -1,4 +1,4 @@
-package sparkgis.executionlayer.task;
+package sparkgis.core.task;
 /* Java imports */
 import java.util.List;
 import java.util.ArrayList;

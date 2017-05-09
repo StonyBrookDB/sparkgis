@@ -1,4 +1,4 @@
-package sparkgis.executionlayer.spatialindex;
+package sparkgis.core.spatialindex;
 /* Java imports */
 import java.io.Serializable;
 /* JTS imports */

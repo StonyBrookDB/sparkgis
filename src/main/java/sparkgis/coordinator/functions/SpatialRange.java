@@ -11,7 +11,7 @@ import org.apache.spark.api.java.JavaRDD;
 import sparkgis.data.DataConfig;
 import sparkgis.enums.Predicate;
 import sparkgis.coordinator.SparkGISContext;
-import sparkgis.executionlayer.task.SpatialJoinTask;
+import sparkgis.core.task.SpatialJoinTask;
 
 public class SpatialRange{
 

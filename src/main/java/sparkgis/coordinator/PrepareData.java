@@ -99,9 +99,6 @@ public class PrepareData implements Serializable{
 		/* Invoke spark job: Prepare Data */
     		DataConfig ret = new SpatialObjectDataConfig(dataPath, spatialDataRDD);
 		ret.prepare();
-    		// /* Invoke spark job: Prepare Data */
-    		// SparkGISPrepareData job = new SparkGISPrepareData(dataPath);
-    		// DataConfig ret = job.execute(spatialDataRDD);
     		return ret;
     	    }
     	    return null;

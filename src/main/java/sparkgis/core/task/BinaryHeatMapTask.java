@@ -1,4 +1,4 @@
-package sparkgis.executionlayer.task;
+package sparkgis.core.task;
 /* Java imports */
 import java.util.List;
 import java.util.ArrayList;
@@ -9,12 +9,13 @@ import org.apache.spark.api.java.JavaRDD;
 import sparkgis.enums.HMType;
 import sparkgis.data.TileStats;
 import sparkgis.data.DataConfig;
+import sparkgis.data.BinaryDataConfig;
 import sparkgis.enums.Predicate;
 import sparkgis.SparkGISConfig;
 import sparkgis.coordinator.SparkGISContext;
-import sparkgis.executionlayer.SparkSpatialJoinHM_Cogroup;
+import sparkgis.pia.SparkSpatialJoinHMBinary;
 
-public class HeatMapTask extends Task implements Callable<String>{
+public class BinaryHeatMapTask extends Task implements Callable<String>{
 
     private final String hdfsPrefix = "hdfs://"+SparkGISConfig.hdfsNameNodeIP;
     
@@ -25,12 +26,12 @@ public class HeatMapTask extends Task implements Callable<String>{
 
     private int algoCount;
     
-    public HeatMapTask(SparkGISContext sgc,
-		       String caseID,
-		       List<String> algos,
-		       Predicate predicate,
-		       HMType hmType,
-		       String result_analysis_exe_id){
+    public BinaryHeatMapTask(SparkGISContext sgc,
+			     String caseID,
+			     List<String> algos,
+			     Predicate predicate,
+			     HMType hmType,
+			     String result_analysis_exe_id){
 	super(sgc, caseID);
 	
 	this.algos = algos;
@@ -49,7 +50,7 @@ public class HeatMapTask extends Task implements Callable<String>{
     public String call(){
 	List<JavaRDD<TileStats>> results = new ArrayList<JavaRDD<TileStats>>();
 	
-	List<DataConfig> configs = sgc.prepareData(this.generateDataPaths());
+	List<BinaryDataConfig> configs = sgc.prepareBinaryData(this.generateDataPaths());
 
 	final List<Integer> pairs = generatePairs(algoCount);
 	for (int i=0; i<pairs.size(); i+=2){
@@ -103,13 +104,13 @@ public class HeatMapTask extends Task implements Callable<String>{
     /**
      * Stage-2: Generate heatmap from data configurations
      */
-    private JavaRDD<TileStats> generateHeatMap(DataConfig config1, DataConfig config2){
-	SparkSpatialJoinHM_Cogroup heatmap1 =
-	    new SparkSpatialJoinHM_Cogroup(config1,
-					   config2,
-					   predicate,
-					   type,
-					   sgc.getJobConf().getPartitionSize());
+    private JavaRDD<TileStats> generateHeatMap(BinaryDataConfig config1, BinaryDataConfig config2){
+	SparkSpatialJoinHMBinary heatmap1 =
+	    new SparkSpatialJoinHMBinary(config1,
+					 config2,
+					 predicate,
+					 type,
+					 sgc.getJobConf().getPartitionSize());
 	return heatmap1.execute();
     }
 }

@@ -15,39 +15,43 @@ import org.apache.spark.api.java.function.Function2;
 import org.apache.spark.api.java.function.PairFunction;
 import org.apache.spark.api.java.function.PairFlatMapFunction;
 /* Local imports */
+import sparkgis.coordinator.SparkGISContext;
 import sparkgis.data.Tile;
 import sparkgis.enums.HMType;
 import sparkgis.data.TileStats;
-import sparkgis.coordinator.SparkGISContext;
 
 public class Coefficient implements Serializable{
     
     private static final int numPartitions = 100; 
     
     public static JavaRDD<TileStats> execute(
-					     JavaRDD<String> data, 
+					     JavaRDD<Iterable<String>> data, 
 					     List<Tile> partfile, 
 					     final HMType hmType
 					     ){
 	
-    	// Coefficient type to use
+    	// make variable final to pass to inner class
     	final int index = hmType.value;
     	// map data to Tuple <tileID,Jaccard Coefficient>
     	JavaPairRDD<Integer, Double> pairs = 
-    	    data.mapToPair(new PairFunction<String, Integer, Double>(){
-    		    public Tuple2<Integer, Double> call (String s){
+    	    data.flatMapToPair(new PairFlatMapFunction<Iterable<String>, Integer, Double>(){
+    		    public Iterator<Tuple2<Integer, Double>> call (Iterable<String> is){
+			List<Tuple2<Integer, Double>> ret = new ArrayList<Tuple2<Integer, Double>>();
 			
-			String[] fields = s.split("\t");
-			int len = fields.length;
-			Tuple2<Integer, Double> t = 
-			new Tuple2<Integer, Double>(
-						    Integer.parseInt(fields[len-1].trim()), 
-						    Double.parseDouble(fields[len-index].trim())
-						    );
-			return t;			
+			for (String s : is){
+			    String[] fields = s.split("\t");
+			    int len = fields.length;
+			    Tuple2<Integer, Double> t = 
+				new Tuple2<Integer, Double>(
+							    Integer.parseInt(fields[len-1].trim()), 
+							    Double.parseDouble(fields[len-index].trim())
+							    );
+				ret.add(t);
+			}
+			return ret.iterator();
 		    }
-		});
-	
+    	    });
+
     	/** Helper functions for average calculation used by combineByKey **/
     	Function<Double, Tuple2<Double, Integer>> f1 = 
     	    new Function<Double, Tuple2<Double, Integer>>(){

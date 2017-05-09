@@ -1,4 +1,4 @@
-package sparkgis.executionlayer.partitioning;
+package sparkgis.core.partitioning;
 /* Java imports */
 import java.util.List;
 import java.util.ArrayList;
@@ -46,7 +46,6 @@ public class Partitioner
 		t.maxX = ((x+1)*xTile);
 		t.maxY = ((y+1)*yTile);
 		partitions.add(t);
-		//partitions.add(SparkGIS.createTSString(id, (x*xTile), (y*yTile), ((x+1)*xTile), ((y+1)*yTile)));
 	    }
 	}
 	return partitions;
@@ -54,6 +53,7 @@ public class Partitioner
 
     /**
      * Fixed-grid partition for heatmap generation
+     * NOTE: DONT DENORMALIZE IF USING THIS FUNCTION
      */
     public static List<Tile> fixedGridHM(double minX, double minY, double maxX, double maxY, int partitionSize){
 	long id = 0;

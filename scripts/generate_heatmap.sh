@@ -22,22 +22,25 @@ className=driver.SparkGISDriver
 jar=../target/uber-sparkgis-1.0.jar
 # command line arguments
 uid='--uid 123456'
-# algos=' --algos "yi-algorithm-v1,yi-algorithm-v11"'
+algos=' --algos "yi-algorithm-v1,yi-algorithm-v11"'
 # caseIDs=' --caseids '$caseids
-algos=' --algos "algo1,algo2"'
-caseIDs=' --caseids "TCGA-06-1802-01Z-00-DX1"'
+# algos=' --algos "algo1,algo2"'
+# small
+# caseIDs=' --caseids "TCGA-06-1802-01Z-00-DX1"'
+# bigger
+caseIDs=' --caseids "TCGA-02-0003-01Z-00-DX2"'
 heatmapType=' --metric jaccard'
-input=' --input hdfs'
-output=' --output client'
-# mongodb specific params
-inputdb='--inputdb u24_segmentation'
-outputdb='' #'--outputdb temp_db'
-inputcollection='--inputcollection results'
-outputcollection='' #'--outputcollection temp_col'
+# input=' --input hdfs'
+# output=' --output client'
+# # mongodb specific params
+# inputdb='--inputdb u24_segmentation'
+# outputdb='' #'--outputdb temp_db'
+# inputcollection='--inputcollection results'
+# outputcollection='' #'--outputcollection temp_col'
 
-resultExeID='--result_exe_id fbaig'
+# resultExeID='--result_exe_id fbaig'
 
 # run spark job
-echo "Executing command $SPARK_HOME/bin/spark-submit --class $className $jar $algos $caseIDs $heatmapType $input $output $inputdb $inputcollection $outputdb $outputcollection $resultExeID"
+echo "Executing command $SPARK_HOME/bin/spark-submit --class $className $jar $algos $caseIDs $heatmapType"
 
-$SPARK_HOME/bin/spark-submit --class $className $jar $algos $caseIDs $heatmapType $input $output $inputdb $inputcollection $outputdb $outputcollection $resultExeID
+$SPARK_HOME/bin/spark-submit --class $className $jar $algos $caseIDs $heatmapType

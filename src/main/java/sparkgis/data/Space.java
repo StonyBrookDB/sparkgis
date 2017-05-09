@@ -2,7 +2,7 @@ package sparkgis.data;
 /* Java imports */
 import java.io.Serializable;
 
-public class Space{
+public class Space implements Serializable{
     
     
     /* Space stuff */

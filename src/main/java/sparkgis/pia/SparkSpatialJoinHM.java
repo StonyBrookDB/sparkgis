@@ -25,8 +25,8 @@ import sparkgis.enums.HMType;
 import sparkgis.data.SpatialObject;
 import sparkgis.core.SparkSpatialJoin;
 import sparkgis.coordinator.SparkGISContext;
-import sparkgis.executionlayer.partitioning.Partitioner;
-import sparkgis.executionlayer.spatialindex.SparkSpatialIndex;
+import sparkgis.core.partitioning.Partitioner;
+import sparkgis.core.spatialindex.SparkSpatialIndex;
 
 /**
  * Spark Spatial Join for HeatMap Generation
@@ -55,12 +55,14 @@ public class SparkSpatialJoinHM extends SparkSpatialJoin implements Serializable
 	
     	JavaRDD<String> results = super.execute();
 
+	throw new java.lang.RuntimeException("Not implemented yet");
+	
     	/* Call Jaccard function to calculate jaccard coefficients per tile */
-    	return Coefficient.execute(
-    				   results,
-    				   /*spJoinResult,*/ 
-    				   partitionIDX,
-    				   hmType
-    				   );
+    	// return Coefficient.execute(
+    	// 			   results.values(),
+    	// 			   /*spJoinResult,*/ 
+    	// 			   partitionIDX,
+    	// 			   hmType
+    	// 			   );
     }
 }

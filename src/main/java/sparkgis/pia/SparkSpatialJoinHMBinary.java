@@ -1,4 +1,4 @@
-package sparkgis.executionlayer;
+package sparkgis.pia;
 /* Java imports */
 import java.util.List;
 import java.util.Arrays;
@@ -21,22 +21,22 @@ import sparkgis.data.Tile;
 import sparkgis.enums.HMType;
 import sparkgis.data.TileStats;
 import sparkgis.data.Space;
-import sparkgis.data.DataConfig;
+import sparkgis.data.BinaryDataConfig;
 import sparkgis.enums.Predicate;
 import sparkgis.data.SpatialObject;
 import sparkgis.coordinator.SparkGISContext;
-import sparkgis.executionlayer.partitioning.Partitioner;
-import sparkgis.executionlayer.spatialindex.SparkSpatialIndex;
+import sparkgis.core.partitioning.Partitioner;
+import sparkgis.core.spatialindex.SparkSpatialIndex;
 
 /**
  * Spark Spatial Join for HeatMap Generation
  */
-public class SparkSpatialJoinHM_Cogroup implements Serializable{
+public class SparkSpatialJoinHMBinary implements Serializable{
     
     private final Predicate predicate;
     private final HMType hmType;
-    private final DataConfig config1;
-    private final DataConfig config2;
+    private final BinaryDataConfig config1;
+    private final BinaryDataConfig config2;
 
     private final Space combinedSpace;
     private final double minX;
@@ -52,13 +52,13 @@ public class SparkSpatialJoinHM_Cogroup implements Serializable{
     private final int partitionSize;
     private Broadcast<SparkSpatialIndex> ssidxBV = null;
     
-    public SparkSpatialJoinHM_Cogroup(
-				      DataConfig config1,
-				      DataConfig config2,
-				      Predicate predicate,
-				      HMType hmType,
-				      int partitionSize
-				      ){
+    public SparkSpatialJoinHMBinary(
+				  BinaryDataConfig config1,
+				  BinaryDataConfig config2,
+				  Predicate predicate,
+				  HMType hmType,
+				  int partitionSize
+				  ){
 	this.predicate = predicate;
 	this.hmType = hmType; 
 	this.config1 = config1;
@@ -92,26 +92,27 @@ public class SparkSpatialJoinHM_Cogroup implements Serializable{
     public JavaRDD<TileStats> execute(){
 	
 	List<Tile> partitionIDX =
+	    /* DONOT DENORMALIZE IF USING 'HM' PARTITIONER */
 	    Partitioner.fixedGridHM(
-				    combinedSpace.getMinX(), 
-				    combinedSpace.getMinY(), 
-				    combinedSpace.getMaxX(),
-				    combinedSpace.getMaxY(),
-				    this.partitionSize
-				  );
-	    // Partitioner.fixedGrid(
-	    // 			  combinedSpace.getSpanX(), 
-	    // 			  combinedSpace.getSpanY(), 
-	    // 			  this.partitionSize,
-	    // 			  combinedSpace.getSpaceObjects()
-	    // 			  );
-	denormalizePartitionIDX(
-				partitionIDX,
-				combinedSpace.getMinX(),
-				combinedSpace.getMinY(),
-				combinedSpace.getSpanX(), 
-				combinedSpace.getSpanY()
-				);
+	    			    combinedSpace.getMinX(), 
+	    			    combinedSpace.getMinY(), 
+	    			    combinedSpace.getMaxX(),
+	    			    combinedSpace.getMaxY(),
+	    			    this.partitionSize
+	    			    );
+	// Partitioner.fixedGrid(
+	// 		      combinedSpace.getSpanX(), 
+	// 		      combinedSpace.getSpanY(), 
+	// 		      this.partitionSize,
+	// 		      combinedSpace.getSpaceObjects()
+	// 		      );
+	// denormalizePartitionIDX(
+	// 			partitionIDX,
+	// 			combinedSpace.getMinX(),
+	// 			combinedSpace.getMinY(),
+	// 			combinedSpace.getSpanX(), 
+	// 			combinedSpace.getSpanY()
+	// 			);
 
 	/* 
 	 * Broadcast ssidx 
@@ -121,71 +122,76 @@ public class SparkSpatialJoinHM_Cogroup implements Serializable{
     	ssidx.build(partitionIDX);
 	ssidxBV = SparkGISContext.sparkContext.broadcast(ssidx);
 
-	JavaPairRDD<Integer, Tuple2<Iterable<String>,Iterable<String>>>
+	JavaPairRDD<Integer, Tuple2<Iterable<byte[]>,Iterable<byte[]>>>
 	    groupedMapData = getDataByTile();
 
 
-	//groupedMapData
-	//return SparkGIS.sc.emptyRDD();
+	System.out.println("Tiles: " + partitionIDX.size());
+	System.out.println("Config1: " + config1.getData().count());
+	System.out.println("Config2: " + config2.getData().count());
+	System.out.println("Binary Count: " + groupedMapData.count());
 	
-	/* Native C++: Resque */
-	if (hmType == HMType.TILEDICE){
-	    throw new java.lang.RuntimeException("Not implemented in Cogroup version yet");
-	    // JavaPairRDD<Integer, Double> tileDiceResults = 
-	    // 	groupedMapData.mapValues(new ResqueTileDice(
-	    // 						    predicate.value,
-	    // 						    config1.getGeomid(),
-	    // 						    config2.getGeomid()
-	    // 						    )
-	    // 				 ).filter(new Function<Tuple2<Integer, Double>, Boolean>(){
-	    // 					 public Boolean call(Tuple2<Integer, Double> t){
-	    // 					     if (t._2() == -1)
-	    // 						 return false;
-	    // 					     return true;
-	    // 					 }
-	    // 				     });
-	    // return Coefficient.mapResultsToTile(
-	    // 					this.partitionIDX, 
-	    // 					tileDiceResults,
-	    // 					hmType
-	    // 					);
-	}
-	else{
-	    JavaPairRDD<Integer, Iterable<String>> results = 
-		groupedMapData.mapValues(new Resque(
-    					      predicate.value, 
-    					      config1.getGeomid(),
-    					      config2.getGeomid())
-				     );	
-    	JavaRDD<Iterable<String>> vals = results.values();
+	return SparkGISContext.sparkContext.emptyRDD();
+	
+	// /* Native C++: Resque */
+	// if (hmType == HMType.TILEDICE){
+	//     throw new java.lang.RuntimeException("Not implemented in Cogroup version yet");
+	//     // JavaPairRDD<Integer, Double> tileDiceResults = 
+	//     // 	groupedMapData.mapValues(new ResqueTileDice(
+	//     // 						    predicate.value,
+	//     // 						    config1.getGeomid(),
+	//     // 						    config2.getGeomid()
+	//     // 						    )
+	//     // 				 ).filter(new Function<Tuple2<Integer, Double>, Boolean>(){
+	//     // 					 public Boolean call(Tuple2<Integer, Double> t){
+	//     // 					     if (t._2() == -1)
+	//     // 						 return false;
+	//     // 					     return true;
+	//     // 					 }
+	//     // 				     });
+	//     // return Coefficient.mapResultsToTile(
+	//     // 					this.partitionIDX, 
+	//     // 					tileDiceResults,
+	//     // 					hmType
+	//     // 					);
+	// }
+	// else{
+	//     JavaPairRDD<Integer, Iterable<String>> results = 
+	// 	groupedMapData.mapValues(new Resque(
+    	// 				      predicate.value, 
+    	// 				      config1.getGeomid(),
+    	// 				      config2.getGeomid())
+	// 			     );	
+    	// JavaRDD<Iterable<String>> vals = results.values();
 
-    	/* Call Jaccard function to calculate jaccard coefficients per tile */
-    	return Coefficient.execute(
-    				   results.values(),
-    				   /*spJoinResult,*/ 
-    				   partitionIDX,
-    				   hmType
-    				   );
-	}	
+    	// /* Call Jaccard function to calculate jaccard coefficients per tile */
+    	// return Coefficient.execute(
+    	// 			   results.values(),
+    	// 			   /*spJoinResult,*/ 
+    	// 			   partitionIDX,
+    	// 			   hmType
+    	// 			   );
+	// }
+	
     }
 
     /*
      * Cogroup version
      */
-    public JavaPairRDD<Integer, Tuple2<Iterable<String>, Iterable<String>>> getDataByTile(){
+    public JavaPairRDD<Integer, Tuple2<Iterable<byte[]>, Iterable<byte[]>>> getDataByTile(){
 
 	/* 
 	 * Reformat stage only appends a set number to data from algo1 and algo2 
 	 * It has been merged with Partition mapper join stage
 	 */
 	
-    	JavaPairRDD<Integer, String> joinMapData1 = 
-    	    config1.getData().flatMapToPair(new PartitionMapperJoin(1));
+    	JavaPairRDD<Integer, byte[]> joinMapData1 = 
+    	    config1.getData().flatMapToPair(new PartitionMapperJoin());
 
-	JavaPairRDD<Integer, String> joinMapData2 = 
-    	    config2.getData().flatMapToPair(new PartitionMapperJoin(2));
+	JavaPairRDD<Integer, byte[]> joinMapData2 = 
+    	    config2.getData().flatMapToPair(new PartitionMapperJoin());
 
-	JavaPairRDD<Integer, Tuple2<Iterable<String>, Iterable<String>>> groupedData =
+	JavaPairRDD<Integer, Tuple2<Iterable<byte[]>, Iterable<byte[]>>> groupedData =
 	    joinMapData1.cogroup(joinMapData2);
 
 	return groupedData;
@@ -261,25 +267,26 @@ public class SparkSpatialJoinHM_Cogroup implements Serializable{
      * NOTE: There is a difference between joinIDX and setNumber
      * In case of any issue, please refer to Journal Entry: Jan 24, 2017
      * @param setNumber Dataset this spatialObject belongs to
-     * @return tileID,joinIDX,setNumber,id,spatialObject
+     * @return tileID,binarySpatialObject
+     //@return tileID,joinIDX,setNumber,id,spatialObject
      */
-    class PartitionMapperJoin implements PairFlatMapFunction<SpatialObject, Integer, String>{
-	private final int setNumber;
+    class PartitionMapperJoin implements PairFlatMapFunction<byte[], Integer, byte[]>{
+	// private final int setNumber;
 
-	public PartitionMapperJoin(int setNumber){
-	    this.setNumber = setNumber;
-    	}
-    	public Iterator<Tuple2<Integer, String>> call (final SpatialObject s){
+	// public PartitionMapperJoin(int setNumber){
+	//     this.setNumber = setNumber;
+    	// }
+    	public Iterator<Tuple2<Integer, byte[]>> call (final byte[] binaryPolygon){
 
 	    /* get spatial index from braodcast variable */
 	    final SparkSpatialIndex ssidx = ssidxBV.value();
-	    final int joinIDX = (setNumber==1)? 2 : 1;
+	    // final int joinIDX = (setNumber==1)? 2 : 1;
 	    
-    	    List<Tuple2<Integer, String>> ret = new ArrayList<Tuple2<Integer, String>>();
-	    List<Long> tileIDs = ssidx.getIntersectingIndexTiles(s.getSpatialData());
+    	    List<Tuple2<Integer, byte[]>> ret = new ArrayList<Tuple2<Integer, byte[]>>();
+	    List<Long> tileIDs = ssidx.getIntersectingIndexTiles(binaryPolygon);
     	    for (long id : tileIDs){
-		String retLine = id + "\t" + joinIDX + "\t" + this.setNumber + "\t" + s.toString();
-    		Tuple2<Integer, String> t = new Tuple2<Integer, String>((int)id, retLine);
+		//String retLine = id + "\t" + joinIDX + "\t" + this.setNumber + "\t" + s.toString();
+    		Tuple2<Integer, byte[]> t = new Tuple2<Integer, byte[]>((int)id, binaryPolygon);
     		ret.add(t);
     	    }
     	    return ret.iterator();
