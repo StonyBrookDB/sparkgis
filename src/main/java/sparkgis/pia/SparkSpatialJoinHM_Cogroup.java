@@ -126,48 +126,48 @@ public class SparkSpatialJoinHM_Cogroup implements Serializable{
 	    groupedMapData = getDataByTile();
 
 
-	System.out.println("POJO Count: " + groupedMapData.count());
-	return SparkGISContext.sparkContext.emptyRDD();
+	// System.out.println("POJO Count: " + groupedMapData.count());
+	// return SparkGISContext.sparkContext.emptyRDD();
 	
-	// /* Native C++: Resque */
-	// if (hmType == HMType.TILEDICE){
-	//     throw new java.lang.RuntimeException("Not implemented in Cogroup version yet");
-	//     // JavaPairRDD<Integer, Double> tileDiceResults = 
-	//     // 	groupedMapData.mapValues(new ResqueTileDice(
-	//     // 						    predicate.value,
-	//     // 						    config1.getGeomid(),
-	//     // 						    config2.getGeomid()
-	//     // 						    )
-	//     // 				 ).filter(new Function<Tuple2<Integer, Double>, Boolean>(){
-	//     // 					 public Boolean call(Tuple2<Integer, Double> t){
-	//     // 					     if (t._2() == -1)
-	//     // 						 return false;
-	//     // 					     return true;
-	//     // 					 }
-	//     // 				     });
-	//     // return Coefficient.mapResultsToTile(
-	//     // 					this.partitionIDX, 
-	//     // 					tileDiceResults,
-	//     // 					hmType
-	//     // 					);
-	// }
-	// else{
-	//     JavaPairRDD<Integer, Iterable<String>> results = 
-	// 	groupedMapData.mapValues(new Resque(
-    	// 				      predicate.value, 
-    	// 				      config1.getGeomid(),
-    	// 				      config2.getGeomid())
-	// 			     );	
-    	// JavaRDD<Iterable<String>> vals = results.values();
+	/* Native C++: Resque */
+	if (hmType == HMType.TILEDICE){
+	    throw new java.lang.RuntimeException("Not implemented in Cogroup version yet");
+	    // JavaPairRDD<Integer, Double> tileDiceResults = 
+	    // 	groupedMapData.mapValues(new ResqueTileDice(
+	    // 						    predicate.value,
+	    // 						    config1.getGeomid(),
+	    // 						    config2.getGeomid()
+	    // 						    )
+	    // 				 ).filter(new Function<Tuple2<Integer, Double>, Boolean>(){
+	    // 					 public Boolean call(Tuple2<Integer, Double> t){
+	    // 					     if (t._2() == -1)
+	    // 						 return false;
+	    // 					     return true;
+	    // 					 }
+	    // 				     });
+	    // return Coefficient.mapResultsToTile(
+	    // 					this.partitionIDX, 
+	    // 					tileDiceResults,
+	    // 					hmType
+	    // 					);
+	}
+	else{
+	    JavaPairRDD<Integer, Iterable<String>> results = 
+		groupedMapData.mapValues(new Resque(
+    					      predicate.value, 
+    					      config1.getGeomid(),
+    					      config2.getGeomid())
+				     );	
+    	JavaRDD<Iterable<String>> vals = results.values();
 
-    	// /* Call Jaccard function to calculate jaccard coefficients per tile */
-    	// return Coefficient.execute(
-    	// 			   results.values(),
-    	// 			   /*spJoinResult,*/ 
-    	// 			   partitionIDX,
-    	// 			   hmType
-    	// 			   );
-	// }
+    	/* Call Jaccard function to calculate jaccard coefficients per tile */
+    	return Coefficient.execute(
+    				   results.values(),
+    				   /*spJoinResult,*/ 
+    				   partitionIDX,
+    				   hmType
+    				   );
+	}
 	
     }
 

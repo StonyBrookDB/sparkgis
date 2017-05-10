@@ -41,21 +41,21 @@ public class HeatMap{
 	// List<HeatMapTask> tasks = new ArrayList<HeatMapTask>();
     	List<BinaryHeatMapTask> tasks = new ArrayList<BinaryHeatMapTask>();
     	for (String caseID : caseIDs){
-    	    // HeatMapTask t =
-    	    // 	new HeatMapTask(spgc,
-    	    // 			caseID,
-    	    // 			algos,
-    	    // 			pred,
-    	    // 			hmType,
-    	    // 			result_analysis_exe_id);
+    	    HeatMapTask t =
+    	    	new HeatMapTask(spgc,
+    	    			caseID,
+    	    			algos,
+    	    			pred,
+    	    			hmType,
+    	    			result_analysis_exe_id);
 
-	    BinaryHeatMapTask t =
-    	    	new BinaryHeatMapTask(spgc,
-	    			      caseID,
-	    			      algos,
-	    			      pred,
-	    			      hmType,
-	    			      result_analysis_exe_id);
+	    // BinaryHeatMapTask t =
+    	    // 	new BinaryHeatMapTask(spgc,
+	    // 			      caseID,
+	    // 			      algos,
+	    // 			      pred,
+	    // 			      hmType,
+	    // 			      result_analysis_exe_id);
 	    
     	    tasks.add(t);
     	}
