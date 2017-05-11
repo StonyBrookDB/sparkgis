@@ -25,9 +25,9 @@ import sparkgis.coordinator.functions.HeatMap;
 import sparkgis.coordinator.functions.SpatialJoin;
 import sparkgis.enums.HMType;
 import sparkgis.enums.Predicate;
-import sparkgis.enums.Partitioner;
 import sparkgis.data.DataConfig;
 import sparkgis.SparkGISConfig;
+import sparkgis.enums.PartitionMethod;
 
 
 public class SparkGISDriver
@@ -53,7 +53,7 @@ public class SparkGISDriver
 	String jobID = null;
 	Predicate predicate = Predicate.INTERSECTS;
 	HMType hmType = null;
-	Partitioner partitioner = null;
+	PartitionMethod partitionMethod = null;
 	String result_analysis_exe_id = null;
 
 	/******************************************************/
@@ -143,7 +143,9 @@ public class SparkGISDriver
 	    setBatchFactor(8).
 	    setDelimiter("\t").
 	    setSpatialObjectIndex(1).
-	    setPartitionSize(partitionSize);
+	    setPartitionSize(partitionSize).
+	    setPartitionMethod(PartitionMethod.FIXED_GRID_HM);
+	
 
 	/* Initialize SparkGISContext */
 	SparkGISContext spgc = new SparkGISContext(conf, spgConf);
@@ -169,7 +171,7 @@ public class SparkGISDriver
 
 	/* Initialize SparkGISContext */
 	SparkGISContext spgc = initSparkGISContext();
-	JavaRDD<String> spjResults = SpatialJoin.execute(spgc, datasetPaths, pred);
+	JavaRDD<Iterable<String>> spjResults = SpatialJoin.execute(spgc, datasetPaths, pred);
     }
     
     /**

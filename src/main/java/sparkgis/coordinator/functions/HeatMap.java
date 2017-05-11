@@ -38,8 +38,8 @@ public class HeatMap{
 	    Executors.newFixedThreadPool(spgc.getJobConf().getBatchFactor());
 	
     	/* for a given algorithm pair create parallel heatmap generation tasks */
-	// List<HeatMapTask> tasks = new ArrayList<HeatMapTask>();
-    	List<BinaryHeatMapTask> tasks = new ArrayList<BinaryHeatMapTask>();
+	List<HeatMapTask> tasks = new ArrayList<HeatMapTask>();
+    	// List<BinaryHeatMapTask> tasks = new ArrayList<BinaryHeatMapTask>();
     	for (String caseID : caseIDs){
     	    HeatMapTask t =
     	    	new HeatMapTask(spgc,

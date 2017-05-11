@@ -1,4 +1,7 @@
 package sparkgis.coordinator;
+/* Local imports */
+import sparkgis.enums.PartitionMethod;
+
 
 public class SparkGISJobConf{
 
@@ -9,6 +12,7 @@ public class SparkGISJobConf{
     private String delimiter = "\t";
     private int spatialObjectIndex = 1;
     private int partitionSize = 512;
+    private PartitionMethod partitionMethod = PartitionMethod.FIXED_GRID;
     /**
      * @param jobID Sets jobID for this job
      */
@@ -48,6 +52,16 @@ public class SparkGISJobConf{
 	this.partitionSize = partitionSize;
 	return this;
     }
+    /**
+     * @param partitioner Sets the partitioning method to be used for SparkGIS job
+     * (default is FIXED_GRID)
+     */
+    public SparkGISJobConf setPartitionMethod(PartitionMethod partitionMethod){
+	this.partitionMethod = partitionMethod;
+	return this;
+    }
+    
+    
 
     /**
      * @return Current jobID
@@ -70,5 +84,8 @@ public class SparkGISJobConf{
      * @return The partition size for distributed spatial jobs
      */
     public int getPartitionSize(){return this.partitionSize;}
-    
+    /**
+     * @return The partitioner method for this jobs
+     */
+    public PartitionMethod getPartitionMethod(){return this.partitionMethod;}
 }

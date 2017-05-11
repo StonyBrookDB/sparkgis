@@ -24,6 +24,7 @@ import sparkgis.data.Space;
 import sparkgis.data.BinaryDataConfig;
 import sparkgis.enums.Predicate;
 import sparkgis.data.SpatialObject;
+import sparkgis.core.ASpatialJoin;
 import sparkgis.coordinator.SparkGISContext;
 import sparkgis.core.partitioning.Partitioner;
 import sparkgis.core.spatialindex.SparkSpatialIndex;
@@ -32,33 +33,29 @@ import sparkgis.core.spatialindex.SparkSpatialIndex;
  * Spark Spatial Join for HeatMap Generation
  */
 public class SparkSpatialJoinHMBinary implements Serializable{
-    
-    private final Predicate predicate;
+
+    private final SparkGISContext sgc;
     private final HMType hmType;
+    private final Predicate predicate;
     private final BinaryDataConfig config1;
     private final BinaryDataConfig config2;
-
     private final Space combinedSpace;
-    private final double minX;
-    private final double minY;
-    private final double maxX;
-    private final double maxY;
 
     /* 
      * Combined configuration values removed from DataConfig 
      * No need to inflate DataConfig object 
      * since it has to be transferred over to workers
      */
-    private final int partitionSize;
     private Broadcast<SparkSpatialIndex> ssidxBV = null;
     
     public SparkSpatialJoinHMBinary(
-				  BinaryDataConfig config1,
-				  BinaryDataConfig config2,
-				  Predicate predicate,
-				  HMType hmType,
-				  int partitionSize
+				    SparkGISContext sgc,
+				    BinaryDataConfig config1,
+				    BinaryDataConfig config2,
+				    Predicate predicate,
+				    HMType hmType
 				  ){
+	this.sgc = sgc;
 	this.predicate = predicate;
 	this.hmType = hmType; 
 	this.config1 = config1;
@@ -66,10 +63,10 @@ public class SparkSpatialJoinHMBinary implements Serializable{
 
 	combinedSpace = new Space();
 	/* set combined data configuration */
-	minX = (config1.space.getMinX() < config2.space.getMinX())?config1.space.getMinX():config2.space.getMinX();
-	minY = (config1.space.getMinY() < config2.space.getMinY())?config1.space.getMinY():config2.space.getMinY();
-	maxX = (config1.space.getMaxX() > config2.space.getMaxX())?config1.space.getMaxX():config2.space.getMaxX();
-	maxY = (config1.space.getMaxY() > config2.space.getMaxY())?config1.space.getMaxY():config2.space.getMaxY();
+	final double minX = (config1.space.getMinX() < config2.space.getMinX())?config1.space.getMinX():config2.space.getMinX();
+	final double minY = (config1.space.getMinY() < config2.space.getMinY())?config1.space.getMinY():config2.space.getMinY();
+	final double maxX = (config1.space.getMaxX() > config2.space.getMaxX())?config1.space.getMaxX():config2.space.getMaxX();
+	final double maxY = (config1.space.getMaxY() > config2.space.getMaxY())?config1.space.getMaxY():config2.space.getMaxY();
 
 	combinedSpace.setMinX(minX);
 	combinedSpace.setMinY(minY);
@@ -78,17 +75,8 @@ public class SparkSpatialJoinHMBinary implements Serializable{
 	
 	combinedSpace.setSpaceObjects(config1.space.getSpaceObjects() + config2.space.getSpaceObjects());
 
-	//combinedConfig.setPartitionBucketSize(partitionSize);
-	this.partitionSize = partitionSize;
     }
     
-    /**
-     * Data formats:
-     * 1: config.mappedPartitions: <loadtile-id> <spatialObject-id> <spatialObject>
-     * 2: data (after reformat): <setNumber> <loadtile-id> <spatialObject-id> <spatialObject>
-     * 3: joinMapData (after JNI): 
-     *  <combinedtile-id> <join-idx> <setNumber> <loadtile-id> <spatialObject-id> <spatialObject>
-     */
     public JavaRDD<TileStats> execute(){
 	
 	List<Tile> partitionIDX =
@@ -98,22 +86,8 @@ public class SparkSpatialJoinHMBinary implements Serializable{
 	    			    combinedSpace.getMinY(), 
 	    			    combinedSpace.getMaxX(),
 	    			    combinedSpace.getMaxY(),
-	    			    this.partitionSize
+	    			    this.sgc.getJobConf().getPartitionSize()
 	    			    );
-	// Partitioner.fixedGrid(
-	// 		      combinedSpace.getSpanX(), 
-	// 		      combinedSpace.getSpanY(), 
-	// 		      this.partitionSize,
-	// 		      combinedSpace.getSpaceObjects()
-	// 		      );
-	// denormalizePartitionIDX(
-	// 			partitionIDX,
-	// 			combinedSpace.getMinX(),
-	// 			combinedSpace.getMinY(),
-	// 			combinedSpace.getSpanX(), 
-	// 			combinedSpace.getSpanY()
-	// 			);
-
 	/* 
 	 * Broadcast ssidx 
 	 * ssidx is not very big, will this help???
@@ -178,7 +152,7 @@ public class SparkSpatialJoinHMBinary implements Serializable{
     /*
      * Cogroup version
      */
-    public JavaPairRDD<Integer, Tuple2<Iterable<byte[]>, Iterable<byte[]>>> getDataByTile(){
+    protected JavaPairRDD<Integer, Tuple2<Iterable<byte[]>, Iterable<byte[]>>> getDataByTile(){
 
 	/* 
 	 * Reformat stage only appends a set number to data from algo1 and algo2 
@@ -291,29 +265,5 @@ public class SparkSpatialJoinHMBinary implements Serializable{
     	    }
     	    return ret.iterator();
     	}
-    }
-
-    /**
-     * PARTFILE DENORMALIZATION
-     * ADD TO NEWER VERSION
-     * @param gMinX Global minimum x
-     * @param gMinY Global minimum y
-     * @param gSpanX Global span x
-     * @param gSpanY Global span y
-     * @return denormalized partition index
-     */
-    private void denormalizePartitionIDX(
-					 List<Tile> partitionIDX, 
-					 double gMinX,
-					 double gMinY,
-					 double gSpanX,
-					 double gSpanY
-					 ){
-	for (Tile t:partitionIDX){
-	    t.minX = t.minX * gSpanX + gMinX;
-	    t.maxX = t.maxX * gSpanX + gMinX;
-	    t.minY = t.minY * gSpanY + gMinY;
-	    t.maxY = t.maxY * gSpanY + gMinY;
-	}
     }
 }

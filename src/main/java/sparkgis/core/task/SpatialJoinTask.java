@@ -12,7 +12,7 @@ import sparkgis.enums.Predicate;
 import sparkgis.core.SparkSpatialJoin;
 import sparkgis.coordinator.SparkGISContext;
 
-public class SpatialJoinTask extends Task implements Callable<JavaRDD<String>>{
+public class SpatialJoinTask extends Task implements Callable<JavaRDD<Iterable<String>>>{
 
     private final List<String> datasetPaths;
     private final Predicate predicate;
@@ -39,17 +39,17 @@ public class SpatialJoinTask extends Task implements Callable<JavaRDD<String>>{
      *   2. Perform pairwise spatial join on all datasets
      */
     @Override
-    public JavaRDD<String> call(){
+    public JavaRDD<Iterable<String>> call(){
 	List<DataConfig> configs = sgc.prepareData(this.datasetPaths);
 
 	return call(configs);
     }
 
-    public JavaRDD<String> call(List<DataConfig> configs){
+    public JavaRDD<Iterable<String>> call(List<DataConfig> configs){
 	SparkSpatialJoin spj = null;
 	/* generate pairs of all datasets */
 	final List<Integer> pairs = super.generatePairs(configs.size());
-	List<JavaRDD<String>> results = new ArrayList<JavaRDD<String>>(pairs.size());
+	List<JavaRDD<Iterable<String>>> results = new ArrayList<JavaRDD<Iterable<String>>>(pairs.size());
 	
 	for (int i=0; i<pairs.size(); i+=2){
 	    /* perform spatial join from configuration pairs */

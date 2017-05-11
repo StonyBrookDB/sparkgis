@@ -105,11 +105,12 @@ public class HeatMapTask extends Task implements Callable<String>{
      */
     private JavaRDD<TileStats> generateHeatMap(DataConfig config1, DataConfig config2){
 	SparkSpatialJoinHM_Cogroup heatmap1 =
-	    new SparkSpatialJoinHM_Cogroup(config1,
+	    new SparkSpatialJoinHM_Cogroup(sgc,
+					   config1,
 					   config2,
 					   predicate,
-					   type,
-					   sgc.getJobConf().getPartitionSize());
+					   type
+					   );
 	return heatmap1.execute();
     }
 }

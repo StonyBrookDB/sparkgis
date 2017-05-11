@@ -24,7 +24,7 @@ public class SpatialKNN{
      *                               (required only if writing result to MongoDB)  
      * @return String RDD. Each String contains information of overlapping spatial objects
      */
-    public static JavaRDD<String> execute(SparkGISContext spgc,
+    public static JavaRDD<Iterable<String>> execute(SparkGISContext spgc,
 					  List datasets,
 					  Predicate pred){
 
