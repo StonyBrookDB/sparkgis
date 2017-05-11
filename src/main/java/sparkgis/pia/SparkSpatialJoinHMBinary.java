@@ -26,6 +26,7 @@ import sparkgis.enums.Predicate;
 import sparkgis.data.SpatialObject;
 import sparkgis.core.ASpatialJoin;
 import sparkgis.coordinator.SparkGISContext;
+import sparkgis.coordinator.SparkGISJobConf;
 import sparkgis.core.partitioning.Partitioner;
 import sparkgis.core.spatialindex.SparkSpatialIndex;
 
@@ -34,7 +35,7 @@ import sparkgis.core.spatialindex.SparkSpatialIndex;
  */
 public class SparkSpatialJoinHMBinary implements Serializable{
 
-    private final SparkGISContext sgc;
+    private final SparkGISJobConf sgjConf;
     private final HMType hmType;
     private final Predicate predicate;
     private final BinaryDataConfig config1;
@@ -49,13 +50,13 @@ public class SparkSpatialJoinHMBinary implements Serializable{
     private Broadcast<SparkSpatialIndex> ssidxBV = null;
     
     public SparkSpatialJoinHMBinary(
-				    SparkGISContext sgc,
+				    SparkGISJobConf sgjConf,
 				    BinaryDataConfig config1,
 				    BinaryDataConfig config2,
 				    Predicate predicate,
 				    HMType hmType
 				  ){
-	this.sgc = sgc;
+	this.sgjConf = sgjConf;
 	this.predicate = predicate;
 	this.hmType = hmType; 
 	this.config1 = config1;
@@ -86,7 +87,7 @@ public class SparkSpatialJoinHMBinary implements Serializable{
 	    			    combinedSpace.getMinY(), 
 	    			    combinedSpace.getMaxX(),
 	    			    combinedSpace.getMaxY(),
-	    			    this.sgc.getJobConf().getPartitionSize()
+	    			    this.sgjConf.getPartitionSize()
 	    			    );
 	/* 
 	 * Broadcast ssidx 

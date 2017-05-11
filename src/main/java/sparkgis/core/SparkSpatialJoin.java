@@ -11,6 +11,7 @@ import sparkgis.data.DataConfig;
 import sparkgis.enums.Predicate;
 import sparkgis.enums.PartitionMethod;
 import sparkgis.coordinator.SparkGISContext;
+import sparkgis.coordinator.SparkGISJobConf;
 import sparkgis.core.partitioning.Partitioner;
 import sparkgis.core.spatialindex.SparkSpatialIndex;
 
@@ -20,12 +21,12 @@ import sparkgis.core.spatialindex.SparkSpatialIndex;
 public class SparkSpatialJoin extends ASpatialJoin<Iterable<String>> implements Serializable{
 
     public SparkSpatialJoin(
-			    SparkGISContext sgc,
+			    SparkGISJobConf sgjConf,
 			    DataConfig config1,
 			    DataConfig config2,
 			    Predicate predicate
 			    ){
-	super(sgc, config1, config2, predicate);
+	super(sgjConf, config1, config2, predicate);
     }
     
     /**
@@ -38,34 +39,6 @@ public class SparkSpatialJoin extends ASpatialJoin<Iterable<String>> implements 
      */
     public JavaRDD<Iterable<String>> execute(){
 
-	if (this.sgc.getJobConf().getPartitionMethod() == PartitionMethod.FIXED_GRID){
-	    partitionIDX = Partitioner.fixedGrid(
-						 combinedSpace.getSpanX(), 
-						 combinedSpace.getSpanY(), 
-						 this.sgc.getJobConf().getPartitionSize(),
-						 combinedSpace.getSpaceObjects()
-						 );
-	    denormalizePartitionIDX(
-				    partitionIDX,
-				    combinedSpace.getMinX(),
-				    combinedSpace.getMinY(),
-				    combinedSpace.getSpanX(), 
-				    combinedSpace.getSpanY()
-				    );
-	}
-	else if (this.sgc.getJobConf().getPartitionMethod() == PartitionMethod.FIXED_GRID_HM){
-	    partitionIDX = Partitioner.fixedGridHM(
-						   combinedSpace.getMinX(), 
-						   combinedSpace.getMinY(), 
-						   combinedSpace.getMaxX(),
-						   combinedSpace.getMaxY(),
-						   this.sgc.getJobConf().getPartitionSize()
-						   );
-	}
-	else{
-	    throw new java.lang.RuntimeException("Invalid paritioner method");
-	}
-
 	/* 
 	 * Broadcast ssidx 
 	 * ssidx is not very big, will this help???
@@ -77,16 +50,12 @@ public class SparkSpatialJoin extends ASpatialJoin<Iterable<String>> implements 
 	JavaPairRDD<Integer, Tuple2<Iterable<String>,Iterable<String>>>
 	    groupedMapData = getDataByTile();
 
-	
 	JavaPairRDD<Integer, Iterable<String>> results = 
 	    groupedMapData.mapValues(new Resque(
 						predicate.value, 
 						config1.getGeomid(),
 						config2.getGeomid())
 				     );	
-	
-	/******************************************/
-	
 	// /* Native C++: Resque */
 	//     JavaPairRDD<Integer, String> results = 
 	// 	groupedMapData.flatMapValues(new Resque(

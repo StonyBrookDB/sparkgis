@@ -24,7 +24,7 @@ import sparkgis.data.DataConfig;
 import sparkgis.enums.Predicate;
 import sparkgis.data.SpatialObject;
 import sparkgis.enums.PartitionMethod;
-import sparkgis.coordinator.SparkGISContext;
+import sparkgis.coordinator.SparkGISJobConf;
 import sparkgis.core.partitioning.Partitioner;
 import sparkgis.core.spatialindex.SparkSpatialIndex;
 
@@ -35,13 +35,16 @@ import sparkgis.core.spatialindex.SparkSpatialIndex;
  * 2: data (after reformat): <setNumber> <loadtile-id> <spatialObject-id> <spatialObject>
  * 3: joinMapData (after JNI): 
  *  <combinedtile-id> <join-idx> <setNumber> <loadtile-id> <spatialObject-id> <spatialObject>
+ *
+ * T: Input spatial data type (SpatialObject OR byte[])
+ * R: Return type (Iterable<String> OR TileStats)
  */
 public abstract class ASpatialJoin<T> implements Serializable{
 
-    protected final SparkGISContext sgc;
+    protected final SparkGISJobConf sgjConf;
     protected final Predicate predicate;
-    protected final DataConfig config1;
-    protected final DataConfig config2;
+    protected final DataConfig<SpatialObject> config1;
+    protected final DataConfig<SpatialObject> config2;
     protected final Space combinedSpace;
     
     /* 
@@ -54,12 +57,12 @@ public abstract class ASpatialJoin<T> implements Serializable{
     protected List<Tile> partitionIDX;
     
     public ASpatialJoin(
-			SparkGISContext sgc,
-			DataConfig config1,
-			DataConfig config2,
+			SparkGISJobConf sgjConf,
+			DataConfig<SpatialObject> config1,
+			DataConfig<SpatialObject> config2,
 			Predicate predicate
 			){
-	this.sgc = sgc;
+	this.sgjConf = sgjConf;
 	this.predicate = predicate;
 	this.config1 = config1;
 	this.config2 = config2;
@@ -76,12 +79,44 @@ public abstract class ASpatialJoin<T> implements Serializable{
 	combinedSpace.setMaxY(maxY);
 	
 	combinedSpace.setSpaceObjects(config1.space.getSpaceObjects() + config2.space.getSpaceObjects());
+
+	generateTiles();
     }
 
     /**
      * A generic SpatialJoin execute method
      */
     public abstract JavaRDD<T> execute();
+
+    private void generateTiles(){
+	if (this.sgjConf.getPartitionMethod() == PartitionMethod.FIXED_GRID){
+	    partitionIDX = Partitioner.fixedGrid(
+						 combinedSpace.getSpanX(), 
+						 combinedSpace.getSpanY(), 
+						 this.sgjConf.getPartitionSize(),
+						 combinedSpace.getSpaceObjects()
+						 );
+	    denormalizePartitionIDX(
+				    partitionIDX,
+				    combinedSpace.getMinX(),
+				    combinedSpace.getMinY(),
+				    combinedSpace.getSpanX(), 
+				    combinedSpace.getSpanY()
+				    );
+	}
+	else if (this.sgjConf.getPartitionMethod() == PartitionMethod.FIXED_GRID_HM){
+	    partitionIDX = Partitioner.fixedGridHM(
+						   combinedSpace.getMinX(), 
+						   combinedSpace.getMinY(), 
+						   combinedSpace.getMaxX(),
+						   combinedSpace.getMaxY(),
+						   this.sgjConf.getPartitionSize()
+						   );
+	}
+	else{
+	    throw new java.lang.RuntimeException("Invalid paritioner method");
+	}
+    }
 
     /*
      * Cogroup version

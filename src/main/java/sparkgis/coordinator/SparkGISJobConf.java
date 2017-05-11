@@ -1,9 +1,11 @@
 package sparkgis.coordinator;
+/* Java imports */
+import java.io.Serializable;
 /* Local imports */
 import sparkgis.enums.PartitionMethod;
 
 
-public class SparkGISJobConf{
+public class SparkGISJobConf implements Serializable{
 
     public static final String DUMMY_ID = "10tgaj17ga986";
     

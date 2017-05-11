@@ -54,7 +54,7 @@ public class SpatialJoinTask extends Task implements Callable<JavaRDD<Iterable<S
 	for (int i=0; i<pairs.size(); i+=2){
 	    /* perform spatial join from configuration pairs */
 	    if ((configs.get(i) != null) && (configs.get(i+1) != null)){
-		spj = new SparkSpatialJoin(sgc, configs.get(i), configs.get(i+1), predicate);
+		spj = new SparkSpatialJoin(sgc.getJobConf(), configs.get(i), configs.get(i+1), predicate);
 		results.add(spj.execute());
 	    }
 	    else

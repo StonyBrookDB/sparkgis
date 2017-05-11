@@ -11,7 +11,7 @@ import sparkgis.data.DataConfig;
 import sparkgis.enums.Predicate;
 import sparkgis.core.ASpatialJoin;
 import sparkgis.core.SparkSpatialJoin;
-import sparkgis.coordinator.SparkGISContext;
+import sparkgis.coordinator.SparkGISJobConf;
 
 /**
  * Spark Spatial Join for HeatMap Generation
@@ -20,27 +20,27 @@ public class SparkSpatialJoinHM_Cogroup extends ASpatialJoin<TileStats> implemen
 
     private final HMType hmType;
     
-    public SparkSpatialJoinHM_Cogroup(SparkGISContext sgc,
+    public SparkSpatialJoinHM_Cogroup(SparkGISJobConf sgjConf,
 				      DataConfig config1,
 				      DataConfig config2,
 				      Predicate predicate,
 				      HMType hmType
 				      ){
-	super(sgc, config1, config2, predicate);
+	super(sgjConf, config1, config2, predicate);
 	this.hmType = hmType; 
     }
     
     public JavaRDD<TileStats> execute(){
 
 	/* Spatial join results */
-	JavaRDD<Iterable<String>> results = (new SparkSpatialJoin(sgc, config1, config2, predicate)).execute();
-	/* Call Jaccard function to calculate jaccard coefficients per tile */
-    	return Coefficient.execute(
+	JavaRDD<Iterable<String>> results = (new SparkSpatialJoin(sgjConf, config1, config2, predicate)).execute();
+	/* Call function to calculate similarity coefficients per tile */
+	JavaRDD<TileStats> stats = Coefficient.execute(
     				   results,
-    				   /*spJoinResult,*/ 
     				   partitionIDX,
     				   hmType
     				   );
+    	return stats;
 	
 	// /* Native C++: Resque */
 	// if (hmType == HMType.TILEDICE){

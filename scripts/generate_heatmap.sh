@@ -26,9 +26,9 @@ algos=' --algos "yi-algorithm-v1,yi-algorithm-v11"'
 # caseIDs=' --caseids '$caseids
 # algos=' --algos "algo1,algo2"'
 # small
-# caseIDs=' --caseids "TCGA-06-1802-01Z-00-DX1"'
+caseIDs=' --caseids "TCGA-06-1802-01Z-00-DX1"'
 # bigger
-caseIDs=' --caseids "TCGA-02-0003-01Z-00-DX2"'
+# caseIDs=' --caseids "TCGA-02-0003-01Z-00-DX2"'
 heatmapType=' --metric jaccard'
 # input=' --input hdfs'
 # output=' --output client'
@@ -43,4 +43,4 @@ heatmapType=' --metric jaccard'
 # run spark job
 echo "Executing command $SPARK_HOME/bin/spark-submit --class $className $jar $algos $caseIDs $heatmapType"
 
-$SPARK_HOME/bin/spark-submit --class $className --conf "spark.driver.extraLibraryPath=/home/fbaig/sbu-bmi-u24/spark-gis/lib" --conf "spark.executor.extraLibraryPath=/home/fbaig/sbu-bmi-u24/spark-gis/lib" --conf "spark.default.parallelism=400" $jar $algos $caseIDs $heatmapType
+$SPARK_HOME/bin/spark-submit --class $className --conf "spark.driver.extraLibraryPath=/home/fbaig/sbu-bmi-u24/spark-gis/lib" --conf "spark.executor.extraLibraryPath=/home/fbaig/sbu-bmi-u24/spark-gis/lib" --conf "spark.default.parallelism=96" $jar $algos $caseIDs $heatmapType

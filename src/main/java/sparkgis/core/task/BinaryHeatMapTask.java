@@ -106,7 +106,7 @@ public class BinaryHeatMapTask extends Task implements Callable<String>{
      */
     private JavaRDD<TileStats> generateHeatMap(BinaryDataConfig config1, BinaryDataConfig config2){
 	SparkSpatialJoinHMBinary heatmap1 =
-	    new SparkSpatialJoinHMBinary(sgc,
+	    new SparkSpatialJoinHMBinary(sgc.getJobConf(),
 					 config1,
 					 config2,
 					 predicate,
