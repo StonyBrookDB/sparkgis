@@ -24,6 +24,7 @@ import sparkgis.data.DataConfig;
 import sparkgis.enums.Predicate;
 import sparkgis.data.SpatialObject;
 import sparkgis.enums.PartitionMethod;
+import sparkgis.coordinator.SparkGISContext;
 import sparkgis.coordinator.SparkGISJobConf;
 import sparkgis.core.partitioning.Partitioner;
 import sparkgis.core.spatialindex.SparkSpatialIndex;
@@ -33,35 +34,47 @@ import sparkgis.core.spatialindex.SparkSpatialIndex;
  * Data formats:
  * 1: config.mappedPartitions: <loadtile-id> <spatialObject-id> <spatialObject>
  * 2: data (after reformat): <setNumber> <loadtile-id> <spatialObject-id> <spatialObject>
- * 3: joinMapData (after JNI): 
+ * 3: joinMapData (after JNI):
  *  <combinedtile-id> <join-idx> <setNumber> <loadtile-id> <spatialObject-id> <spatialObject>
  *
  * T: Input spatial data type (SpatialObject OR byte[])
  * R: Return type (Iterable<String> OR TileStats)
  */
-public abstract class ASpatialJoin<T> implements Serializable{
+public abstract class ASpatialQuery<T, R> implements Serializable{
 
     protected final SparkGISJobConf sgjConf;
     protected final Predicate predicate;
-    protected final DataConfig<SpatialObject> config1;
-    protected final DataConfig<SpatialObject> config2;
+    protected final DataConfig<T> config1;
+    protected final DataConfig<T> config2;
     protected final Space combinedSpace;
-    
-    /* 
-     * Combined configuration values removed from DataConfig 
-     * No need to inflate DataConfig object 
+
+
+    /*
+     * Combined configuration values removed from DataConfig
+     * No need to inflate DataConfig object
      * since it has to be transferred over to workers
      */
     protected Broadcast<SparkSpatialIndex> ssidxBV = null;
+    protected final List<Tile> partitionIDX;
 
-    protected List<Tile> partitionIDX;
-    
-    public ASpatialJoin(
+    protected final SparkSpatialIndex ssidx;
+
+    public ASpatialQuery(
 			SparkGISJobConf sgjConf,
-			DataConfig<SpatialObject> config1,
-			DataConfig<SpatialObject> config2,
+			DataConfig<T> config1,
+			DataConfig<T> config2,
 			Predicate predicate
 			){
+	this(sgjConf, config1, config2, predicate, null);
+    }
+
+    public ASpatialQuery(
+			SparkGISJobConf sgjConf,
+			DataConfig<T> config1,
+			DataConfig<T> config2,
+			Predicate predicate,
+			List<Tile> partitionIDX
+			 ){
 	this.sgjConf = sgjConf;
 	this.predicate = predicate;
 	this.config1 = config1;
@@ -77,64 +90,78 @@ public abstract class ASpatialJoin<T> implements Serializable{
 	combinedSpace.setMinY(minY);
 	combinedSpace.setMaxX(maxX);
 	combinedSpace.setMaxY(maxY);
-	
-	combinedSpace.setSpaceObjects(config1.space.getSpaceObjects() + config2.space.getSpaceObjects());
 
-	generateTiles();
+	combinedSpace.setSpaceObjects(config1.space.getSpaceObjects() + config2.space.getSpaceObjects());
+	if (partitionIDX == null)
+	    this.partitionIDX = generateTiles();
+	else{
+	    /* no need to recompute partitionIDX/Tiles */
+	    this.partitionIDX = partitionIDX;
+	}
+
+	/*
+	 * Create and Broadcast spatial index on tile boundaries
+	 */
+	ssidx = new SparkSpatialIndex();
+    	ssidx.build(this.partitionIDX);
+	ssidxBV = SparkGISContext.sparkContext.broadcast(ssidx);
     }
 
     /**
-     * A generic SpatialJoin execute method
+     * A generic SpatialQuery execute method to be
+     * implemented by concrete Query classes
      */
-    public abstract JavaRDD<T> execute();
+    public abstract JavaRDD<R> execute();
 
-    private void generateTiles(){
+    private List<Tile> generateTiles(){
+	List<Tile> ret;
 	if (this.sgjConf.getPartitionMethod() == PartitionMethod.FIXED_GRID){
-	    partitionIDX = Partitioner.fixedGrid(
-						 combinedSpace.getSpanX(), 
-						 combinedSpace.getSpanY(), 
-						 this.sgjConf.getPartitionSize(),
-						 combinedSpace.getSpaceObjects()
-						 );
+	    ret = Partitioner.fixedGrid(
+					combinedSpace.getSpanX(),
+					combinedSpace.getSpanY(),
+					this.sgjConf.getPartitionSize(),
+					combinedSpace.getSpaceObjects()
+					);
 	    denormalizePartitionIDX(
-				    partitionIDX,
+				    ret,
 				    combinedSpace.getMinX(),
 				    combinedSpace.getMinY(),
-				    combinedSpace.getSpanX(), 
+				    combinedSpace.getSpanX(),
 				    combinedSpace.getSpanY()
 				    );
 	}
 	else if (this.sgjConf.getPartitionMethod() == PartitionMethod.FIXED_GRID_HM){
-	    partitionIDX = Partitioner.fixedGridHM(
-						   combinedSpace.getMinX(), 
-						   combinedSpace.getMinY(), 
-						   combinedSpace.getMaxX(),
-						   combinedSpace.getMaxY(),
-						   this.sgjConf.getPartitionSize()
-						   );
+	    ret = Partitioner.fixedGridHM(
+					  combinedSpace.getMinX(),
+					  combinedSpace.getMinY(),
+					  combinedSpace.getMaxX(),
+					  combinedSpace.getMaxY(),
+					  this.sgjConf.getPartitionSize()
+					  );
 	}
 	else{
 	    throw new java.lang.RuntimeException("Invalid paritioner method");
 	}
+	return ret;
     }
 
     /*
      * Cogroup version
      */
-    protected JavaPairRDD<Integer, Tuple2<Iterable<String>, Iterable<String>>> getDataByTile(){
+    protected JavaPairRDD<Integer, Tuple2<Iterable<T>, Iterable<T>>> getDataByTile(){
 
-	/* 
-	 * Reformat stage only appends a set number to data from algo1 and algo2 
+	/*
+	 * Reformat stage only appends a set number to data from algo1 and algo2
 	 * It has been merged with Partition mapper join stage
 	 */
-	
-    	JavaPairRDD<Integer, String> joinMapData1 = 
-    	    config1.getData().flatMapToPair(new PartitionMapperJoin(1));
 
-	JavaPairRDD<Integer, String> joinMapData2 = 
-    	    config2.getData().flatMapToPair(new PartitionMapperJoin(2));
+    	JavaPairRDD<Integer, T> joinMapData1 =
+    	    config1.getData().flatMapToPair(new PartitionMapperJoin());
 
-	JavaPairRDD<Integer, Tuple2<Iterable<String>, Iterable<String>>> groupedData =
+	JavaPairRDD<Integer, T> joinMapData2 =
+    	    config2.getData().flatMapToPair(new PartitionMapperJoin());
+
+	JavaPairRDD<Integer, Tuple2<Iterable<T>, Iterable<T>>> groupedData =
 	    joinMapData1.cogroup(joinMapData2);
 
 	return groupedData;
@@ -144,25 +171,53 @@ public abstract class ASpatialJoin<T> implements Serializable{
      * Called for all data corresponding to a given key after groupByKey()
      */
     protected class Resque
-	implements Function<Tuple2<Iterable<String>,Iterable<String>>, Iterable<String>>{
+	implements Function<Tuple2<Iterable<T>,Iterable<T>>, Iterable<String>>{
 
 	private final int predicate;
     	private final int geomid1;
     	private final int geomid2;
+
     	public Resque(int predicate, int geomid1, int geomid2){
     	    this.predicate = predicate;
     	    this.geomid1 = geomid1;
     	    this.geomid2 = geomid2;
-    	}
-    	public Iterable<String> call (final Tuple2<Iterable<String>,Iterable<String>> inData){
+	}
+
+    	public Iterable<String> call (final Tuple2<Iterable<T>,Iterable<T>> inData){
     	    //List<String> ret = new ArrayList<String>();
     	    ArrayList<String> data = new ArrayList<String>();
-    	    for (String in : inData._1())
-    		data.add(in);
-	    for (String in : inData._2())
-    		data.add(in);
-	    
-    	    String[] dataArray = new String[data.size()];	    
+    	    short setNumber = 1;
+	    short joinIDX = 2;
+	    for (T in : inData._1()){
+		if (in instanceof SpatialObject){
+		    data.add(((SpatialObject)in).getTileID() +
+			     "\t" +
+			     joinIDX +
+			     "\t" +
+			     setNumber +
+			     "\t" +
+			     ((SpatialObject)in).toString());
+		}
+		else
+		    throw new RuntimeException("[ASpatialQuery-Resque] Not implemented yet");
+	    }
+	    setNumber = 2;
+	    joinIDX = 1;
+	    for (T in : inData._2()){
+		if (in instanceof SpatialObject){
+		    data.add(((SpatialObject)in).getTileID() +
+			     "\t" +
+			     joinIDX +
+			     "\t" +
+			     setNumber +
+			     "\t" +
+			     ((SpatialObject)in).toString());
+		}
+		else
+		    throw new RuntimeException("[ASpatialQuery-Resque] Not implemented yet");
+	    }
+
+    	    String[] dataArray = new String[data.size()];
     	    JNIWrapper jni = new JNIWrapper();
     	    String[] results = jni.resqueSPJ(
     					  data.toArray(dataArray),
@@ -175,7 +230,7 @@ public abstract class ASpatialJoin<T> implements Serializable{
     	    return Arrays.asList(results);
     	}
     }
-    
+
     /**
      *
      */
@@ -191,9 +246,9 @@ public abstract class ASpatialJoin<T> implements Serializable{
     	public Double call (final Iterable<String> inData){
     	    ArrayList<String> data = new ArrayList<String>();
     	    for (String in : inData)
-    		data.add(in);	    
-	    
-    	    String[] dataArray = new String[data.size()];	    
+    		data.add(in);
+
+    	    String[] dataArray = new String[data.size()];
     	    JNIWrapper jni = new JNIWrapper();
     	    double result = jni.resqueTileDice(
 					data.toArray(dataArray),
@@ -205,7 +260,7 @@ public abstract class ASpatialJoin<T> implements Serializable{
     	}
     }
 
-    
+
     /**
      * Maps each spatialObject to a tile from spatial index after appending a set number to the data.
      * NOTE: There is a difference between joinIDX and setNumber
@@ -213,25 +268,52 @@ public abstract class ASpatialJoin<T> implements Serializable{
      * @param setNumber Dataset this spatialObject belongs to
      * @return tileID,joinIDX,setNumber,id,spatialObject
      */
-    protected class PartitionMapperJoin implements PairFlatMapFunction<SpatialObject, Integer, String>{
-    	private final int setNumber;
+    private class PartitionMapperJoin implements PairFlatMapFunction<T, Integer, T>{
 
-    	public PartitionMapperJoin(int setNumber){
-    	    this.setNumber = setNumber;
-    	}
-    	public Iterator<Tuple2<Integer, String>> call (final SpatialObject s){
-
+    	public Iterator<Tuple2<Integer, T>> call (final T s){
+	    boolean assignedOnce = false;
     	    /* get spatial index from braodcast variable */
     	    final SparkSpatialIndex ssidx = ssidxBV.value();
-    	    final int joinIDX = (setNumber==1)? 2 : 1;
+    	    // final int joinIDX = (setNumber==1)? 2 : 1;
+
+    	    List<Tuple2<Integer, T>> ret = new ArrayList<Tuple2<Integer, T>>();
+	    List<Long> tileIDs;
+	    if (s instanceof SpatialObject){
+		tileIDs = ssidx.getIntersectingIndexTiles((SpatialObject)s);
+
+		for (long id : tileIDs){
+		    //String retLine = id + "\t" + joinIDX + "\t" + this.setNumber + "\t" + s.toString();
+		    // Tuple2<Integer, T> t = new Tuple2<Integer, R>((int)id, retLine);
+		    if (assignedOnce){
+			/*
+			 * make a copy of spatial object
+			 * should only happen for cross boundary objects
+			 */
+			SpatialObject nSO = new SpatialObject(((SpatialObject)s).getId(),
+							      ((SpatialObject)s).getSpatialData());
+			nSO.setTileID(id);
+			Tuple2<Integer, T> t = new Tuple2<Integer, T>((int)id, (T)nSO);
+			ret.add(t);
+		    }
+		    else{
+			((SpatialObject)s).setTileID(id);
+			Tuple2<Integer, T> t = new Tuple2<Integer, T>((int)id, s);
+			ret.add(t);
+			assignedOnce = true;
+		    }
+		}
+	    }
+	    else if (s instanceof byte[]){
+		tileIDs = ssidx.getIntersectingIndexTiles((byte[])s);
+		for (long id : tileIDs){
+		    Tuple2<Integer, T> t = new Tuple2<Integer, T>((int)id, s);
+		    ret.add(t);
+		}
+	    }
+	    else
+		throw new RuntimeException("[ASpatialQuery-PartitionMapperJoin] Invalid input data type");
 	    
-    	    List<Tuple2<Integer, String>> ret = new ArrayList<Tuple2<Integer, String>>();
-    	    List<Long> tileIDs = ssidx.getIntersectingIndexTiles(s.getSpatialData());
-    	    for (long id : tileIDs){
-    		String retLine = id + "\t" + joinIDX + "\t" + this.setNumber + "\t" + s.toString();
-    		Tuple2<Integer, String> t = new Tuple2<Integer, String>((int)id, retLine);
-    		ret.add(t);
-    	    }
+    	    
     	    return ret.iterator();
     	}
     }
@@ -246,7 +328,7 @@ public abstract class ASpatialJoin<T> implements Serializable{
      * @return denormalized partition index
      */
     protected void denormalizePartitionIDX(
-					 List<Tile> partitionIDX, 
+					 List<Tile> partitionIDX,
 					 double gMinX,
 					 double gMinY,
 					 double gSpanX,

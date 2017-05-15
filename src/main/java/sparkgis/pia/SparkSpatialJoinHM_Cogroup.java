@@ -9,31 +9,41 @@ import sparkgis.enums.HMType;
 import sparkgis.data.TileStats;
 import sparkgis.data.DataConfig;
 import sparkgis.enums.Predicate;
-import sparkgis.core.ASpatialJoin;
+import sparkgis.data.SpatialObject;
+import sparkgis.core.ASpatialQuery;
 import sparkgis.core.SparkSpatialJoin;
 import sparkgis.coordinator.SparkGISJobConf;
 
 /**
  * Spark Spatial Join for HeatMap Generation
+ * T Input spatial data type (SpatialObject OR byte[])
  */
-public class SparkSpatialJoinHM_Cogroup extends ASpatialJoin<TileStats> implements Serializable{
+public class SparkSpatialJoinHM_Cogroup <T>
+    extends ASpatialQuery<T, TileStats>
+    implements Serializable
+{
 
     private final HMType hmType;
-    
+
     public SparkSpatialJoinHM_Cogroup(SparkGISJobConf sgjConf,
-				      DataConfig config1,
-				      DataConfig config2,
+				      DataConfig<T> config1,
+				      DataConfig<T> config2,
 				      Predicate predicate,
 				      HMType hmType
 				      ){
 	super(sgjConf, config1, config2, predicate);
-	this.hmType = hmType; 
+	this.hmType = hmType;
     }
-    
+
     public JavaRDD<TileStats> execute(){
 
 	/* Spatial join results */
-	JavaRDD<Iterable<String>> results = (new SparkSpatialJoin(sgjConf, config1, config2, predicate)).execute();
+	JavaRDD<Iterable<String>> results =
+	    (new SparkSpatialJoin<T>(sgjConf,
+				     config1,
+				     config2,
+				     predicate,
+				     super.partitionIDX)).execute();
 	/* Call function to calculate similarity coefficients per tile */
 	JavaRDD<TileStats> stats = Coefficient.execute(
     				   results,
@@ -41,11 +51,11 @@ public class SparkSpatialJoinHM_Cogroup extends ASpatialJoin<TileStats> implemen
     				   hmType
     				   );
     	return stats;
-	
+
 	// /* Native C++: Resque */
 	// if (hmType == HMType.TILEDICE){
 	//     throw new java.lang.RuntimeException("Not implemented in Cogroup version yet");
-	//     // JavaPairRDD<Integer, Double> tileDiceResults = 
+	//     // JavaPairRDD<Integer, Double> tileDiceResults =
 	//     // 	groupedMapData.mapValues(new ResqueTileDice(
 	//     // 						    predicate.value,
 	//     // 						    config1.getGeomid(),
@@ -59,19 +69,19 @@ public class SparkSpatialJoinHM_Cogroup extends ASpatialJoin<TileStats> implemen
 	//     // 					 }
 	//     // 				     });
 	//     // return Coefficient.mapResultsToTile(
-	//     // 					this.partitionIDX, 
+	//     // 					this.partitionIDX,
 	//     // 					tileDiceResults,
 	//     // 					hmType
 	//     // 					);
 	// }
 	// else{
-	//     JavaPairRDD<Integer, Iterable<String>> results = 
+	//     JavaPairRDD<Integer, Iterable<String>> results =
 	// 	groupedMapData.mapValues(new Resque(
-    	// 				      predicate.value, 
+    	// 				      predicate.value,
     	// 				      config1.getGeomid(),
     	// 				      config2.getGeomid())
-	// 			     );	
+	// 			     );
     	// JavaRDD<Iterable<String>> vals = results.values();
-	
+
     }
 }

@@ -9,6 +9,7 @@ import org.apache.spark.api.java.JavaPairRDD;
 /* Local imports */
 import sparkgis.data.DataConfig;
 import sparkgis.enums.Predicate;
+import sparkgis.data.SpatialObject;
 import sparkgis.core.SparkSpatialJoin;
 import sparkgis.coordinator.SparkGISContext;
 
@@ -40,12 +41,13 @@ public class SpatialJoinTask extends Task implements Callable<JavaRDD<Iterable<S
      */
     @Override
     public JavaRDD<Iterable<String>> call(){
-	List<DataConfig> configs = sgc.prepareData(this.datasetPaths);
+	List<DataConfig<SpatialObject>> configs = 
+	    sgc.prepareData(this.datasetPaths);
 
 	return call(configs);
     }
 
-    public JavaRDD<Iterable<String>> call(List<DataConfig> configs){
+    public JavaRDD<Iterable<String>> call(List<DataConfig<SpatialObject>> configs){
 	SparkSpatialJoin spj = null;
 	/* generate pairs of all datasets */
 	final List<Integer> pairs = super.generatePairs(configs.size());

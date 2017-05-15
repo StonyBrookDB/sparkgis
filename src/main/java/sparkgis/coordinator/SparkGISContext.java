@@ -49,7 +49,7 @@ public class SparkGISContext {
      * @return List of dataConfig objects with raw spatialObjects 
      * and required preprocessed spatial data
      */
-    public List<DataConfig> prepareData(List<String> dataPaths){
+    public List<DataConfig<SpatialObject>> prepareData(List<String> dataPaths){
 	return (new PrepareData(jobConf.getDelimiter(),
 				jobConf.getSpatialObjectIndex())).prepareData(dataPaths);
     }
@@ -60,7 +60,7 @@ public class SparkGISContext {
      * @return List of dataConfig objects with binary spatial obejcts 
      * and required preprocessed spatial data
      */
-    public List<BinaryDataConfig> prepareBinaryData(List<String> dataPaths){
+    public List<DataConfig<byte[]>> prepareBinaryData(List<String> dataPaths){
 	return (new PrepareBinaryData(jobConf.getDelimiter(),
 				jobConf.getSpatialObjectIndex())).prepareBinaryData(dataPaths);
     }

@@ -15,8 +15,10 @@ import org.apache.spark.api.java.function.Function;
 /* Local imports */
 import sparkgis.data.DataConfig;
 import sparkgis.data.SpatialObject;
-import sparkgis.data.SpatialObjectDataConfig;
 
+/**
+ * T Input spatial data type (SpatialObject OR byte[])
+ */
 public class PrepareData implements Serializable{
 
     private final int index;
@@ -34,7 +36,7 @@ public class PrepareData implements Serializable{
      * @param withID If true, get spatial data ID from input source (geometryIndex-1)
      * @return RDD of spatial data in w.k.t format 
      */
-    public JavaRDD<SpatialObject> getTextAsSpatialString(String dataPath, final boolean withID){
+    private JavaRDD<SpatialObject> getTextAsSpatialObject(String dataPath, final boolean withID){
 	return SparkGISContext.sparkContext.textFile(dataPath, SparkGISContext.sparkContext.defaultParallelism())
 	    .filter(new Function<String, Boolean>(){
 		    public Boolean call(String s) {return (!s.isEmpty());}
@@ -50,7 +52,7 @@ public class PrepareData implements Serializable{
 		    }
 		});
     }
-    
+
     /**
      * A spatial data query usually consists of atleast two datasets
      * e.g. spatial join, kNN, Range etc. 
@@ -60,10 +62,13 @@ public class PrepareData implements Serializable{
      * This function allows multiple spatial datasets to be preprocessed
      * concurrently. 
      */
-    public List<DataConfig> prepareData(List<String> dataPaths){
+    // public List<DataConfig> prepareData(List<String> dataPaths){
+    public List<DataConfig<SpatialObject>> prepareData(List<String> dataPaths){
 	final int datasetCount = dataPaths.size();
-	List<DataConfig> configs = new ArrayList<DataConfig>(datasetCount);
-	List<Future<DataConfig>> futures = new ArrayList<Future<DataConfig>>(datasetCount);
+	List<DataConfig<SpatialObject>> configs = 
+	    new ArrayList<DataConfig<SpatialObject>>(datasetCount);
+	List<Future<DataConfig<SpatialObject>>> futures = 
+	    new ArrayList<Future<DataConfig<SpatialObject>>>(datasetCount);
 	/* To generate data configurations in parallel */
 	final ExecutorService exeServ = Executors.newFixedThreadPool(datasetCount);
 	
@@ -83,21 +88,24 @@ public class PrepareData implements Serializable{
     /**
      * Inner class to get data and generate data configuration
      */
-    private class AsyncPrepareData implements Callable<DataConfig>{
-        private final String dataPath;	
-    	public AsyncPrepareData(String dataPath){
+    private class AsyncPrepareData implements Callable<DataConfig<SpatialObject>>{
+        private final String dataPath;
+    	
+	public AsyncPrepareData(String dataPath){
     	    this.dataPath = dataPath;
     	}
 	
     	@Override
-    	public DataConfig call(){
+    	public DataConfig<SpatialObject> call(){
     	    /* get data from input source and keep in memory */
 	    JavaRDD<SpatialObject> spatialDataRDD =
-		getTextAsSpatialString(dataPath, true).cache();
+		getTextAsSpatialObject(dataPath, true).cache();
+	    	    
 	    long objCount = spatialDataRDD.count();
     	    if (objCount != 0){
 		/* Invoke spark job: Prepare Data */
-    		DataConfig ret = new SpatialObjectDataConfig(dataPath, spatialDataRDD);
+    		DataConfig<SpatialObject> ret = 
+		    new DataConfig<SpatialObject>(dataPath, spatialDataRDD);
 		ret.prepare();
     		return ret;
     	    }

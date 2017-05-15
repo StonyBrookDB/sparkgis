@@ -50,7 +50,7 @@ public class BinaryHeatMapTask extends Task implements Callable<String>{
     public String call(){
 	List<JavaRDD<TileStats>> results = new ArrayList<JavaRDD<TileStats>>();
 	
-	List<BinaryDataConfig> configs = sgc.prepareBinaryData(this.generateDataPaths());
+	List<DataConfig<byte[]>> configs = sgc.prepareBinaryData(this.generateDataPaths());
 
 	final List<Integer> pairs = generatePairs(algoCount);
 	for (int i=0; i<pairs.size(); i+=2){
@@ -104,13 +104,21 @@ public class BinaryHeatMapTask extends Task implements Callable<String>{
     /**
      * Stage-2: Generate heatmap from data configurations
      */
-    private JavaRDD<TileStats> generateHeatMap(BinaryDataConfig config1, BinaryDataConfig config2){
-	SparkSpatialJoinHMBinary heatmap1 =
-	    new SparkSpatialJoinHMBinary(sgc.getJobConf(),
-					 config1,
-					 config2,
-					 predicate,
-					 type);
-	return heatmap1.execute();
+    private JavaRDD<TileStats> generateHeatMap(DataConfig<byte[]> config1, 
+					       DataConfig<byte[]> config2){
+	// SparkSpatialJoinHMBinary heatmap1 =
+	//     new SparkSpatialJoinHMBinary(sgc.getJobConf(),
+	// 				 config1,
+	// 				 config2,
+	// 				 predicate,
+	// 				 type);
+	// SparkSpatialJoinHMBinary heatmap1 =
+	//     new SparkSpatialJoinHMBinary(sgc.getJobConf(),
+	// 				 config1,
+	// 				 config2,
+	// 				 predicate,
+	// 				 type);
+	// return heatmap1.execute();
+	return null;
     }
 }

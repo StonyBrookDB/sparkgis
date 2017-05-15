@@ -8,6 +8,7 @@ import java.util.concurrent.ExecutorService;
 /* Local imports */
 import sparkgis.enums.HMType;
 import sparkgis.enums.Predicate;
+import sparkgis.data.SpatialObject;
 import sparkgis.coordinator.SparkGISContext;
 import sparkgis.core.task.HeatMapTask;
 import sparkgis.core.task.BinaryHeatMapTask;
@@ -47,15 +48,9 @@ public class HeatMap{
     	    			algos,
     	    			pred,
     	    			hmType,
-    	    			result_analysis_exe_id);
-
-	    // BinaryHeatMapTask t =
-    	    // 	new BinaryHeatMapTask(spgc,
-	    // 			      caseID,
-	    // 			      algos,
-	    // 			      pred,
-	    // 			      hmType,
-	    // 			      result_analysis_exe_id);
+    	    			result_analysis_exe_id,
+				//SpatialObject.class
+				byte[].class);
 	    
     	    tasks.add(t);
     	}

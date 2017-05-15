@@ -1,5 +1,6 @@
 package sparkgis.core;
 /* Java imports */
+import java.util.List;
 import java.io.Serializable;
 /* Spark imports */
 import org.apache.spark.api.java.JavaRDD;
@@ -7,8 +8,10 @@ import org.apache.spark.broadcast.Broadcast;
 import org.apache.spark.api.java.JavaPairRDD;
 import scala.Tuple2;
 /* Local imports */
+import sparkgis.data.Tile;
 import sparkgis.data.DataConfig;
 import sparkgis.enums.Predicate;
+import sparkgis.data.SpatialObject;
 import sparkgis.enums.PartitionMethod;
 import sparkgis.coordinator.SparkGISContext;
 import sparkgis.coordinator.SparkGISJobConf;
@@ -17,16 +20,29 @@ import sparkgis.core.spatialindex.SparkSpatialIndex;
 
 /**
  * Spark Spatial Join
+ * T Input spatial data type (SpatialObject OR byte[])
  */
-public class SparkSpatialJoin extends ASpatialJoin<Iterable<String>> implements Serializable{
+public class SparkSpatialJoin <T>
+    extends ASpatialQuery<T, Iterable<String>> 
+    implements Serializable
+{
 
     public SparkSpatialJoin(
 			    SparkGISJobConf sgjConf,
-			    DataConfig config1,
-			    DataConfig config2,
+			    DataConfig<T> config1,
+			    DataConfig<T> config2,
 			    Predicate predicate
 			    ){
 	super(sgjConf, config1, config2, predicate);
+    }
+    public SparkSpatialJoin(
+			    SparkGISJobConf sgjConf,
+			    DataConfig<T> config1,
+			    DataConfig<T> config2,
+			    Predicate predicate,
+			    List<Tile> partitionIDX
+			    ){
+	super(sgjConf, config1, config2, predicate, partitionIDX);
     }
     
     /**
@@ -39,15 +55,7 @@ public class SparkSpatialJoin extends ASpatialJoin<Iterable<String>> implements 
      */
     public JavaRDD<Iterable<String>> execute(){
 
-	/* 
-	 * Broadcast ssidx 
-	 * ssidx is not very big, will this help???
-	 */
-    	final SparkSpatialIndex ssidx = new SparkSpatialIndex();
-    	ssidx.build(partitionIDX);
-	ssidxBV = SparkGISContext.sparkContext.broadcast(ssidx);
-
-	JavaPairRDD<Integer, Tuple2<Iterable<String>,Iterable<String>>>
+	JavaPairRDD<Integer, Tuple2<Iterable<T>,Iterable<T>>>
 	    groupedMapData = getDataByTile();
 
 	JavaPairRDD<Integer, Iterable<String>> results = 

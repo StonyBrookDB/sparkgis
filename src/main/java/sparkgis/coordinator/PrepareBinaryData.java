@@ -65,10 +65,14 @@ public class PrepareBinaryData implements Serializable{
      * This function allows multiple spatial datasets to be preprocessed
      * concurrently. 
      */
-    public List<BinaryDataConfig> prepareBinaryData(List<String> dataPaths){
+    // public List<BinaryDataConfig> prepareBinaryData(List<String> dataPaths){
+    public List<DataConfig<byte[]>> prepareBinaryData(List<String> dataPaths){
 	final int datasetCount = dataPaths.size();
-	List<BinaryDataConfig> configs = new ArrayList<BinaryDataConfig>(datasetCount);
-	List<Future<BinaryDataConfig>> futures = new ArrayList<Future<BinaryDataConfig>>(datasetCount);
+	// List<BinaryDataConfig> configs = new ArrayList<BinaryDataConfig>(datasetCount);
+	// List<Future<BinaryDataConfig>> futures = new ArrayList<Future<BinaryDataConfig>>(datasetCount);
+	List<DataConfig<byte[]>> configs = new ArrayList<DataConfig<byte[]>>(datasetCount);
+	List<Future<DataConfig<byte[]>>> futures = 
+	    new ArrayList<Future<DataConfig<byte[]>>>(datasetCount);
 	/* To generate data configurations in parallel */
 	final ExecutorService exeServ = Executors.newFixedThreadPool(datasetCount);
 	
@@ -88,24 +92,48 @@ public class PrepareBinaryData implements Serializable{
     /**
      * Inner class to get binary data and generate data configuration
      */
-    private class AsyncPrepareBinaryData implements Callable<BinaryDataConfig>{
+    private class AsyncPrepareBinaryData implements Callable<DataConfig<byte[]>>{
         private final String dataPath;	
     	public AsyncPrepareBinaryData(String dataPath){
     	    this.dataPath = dataPath;
     	}
 	
     	@Override
-    	public BinaryDataConfig call(){
+    	public DataConfig<byte[]> call(){
     	    /* get data from input source and keep in memory */
-	    JavaRDD<byte[]> spatialDataRDD =
-		getTextAsByteArray(dataPath).cache();
-	    long objCount = spatialDataRDD.count();
+    	    JavaRDD<byte[]> spatialDataRDD =
+    		getTextAsByteArray(dataPath).cache();
+    	    long objCount = spatialDataRDD.count();
     	    if (objCount != 0){
-		BinaryDataConfig ret = new BinaryDataConfig(dataPath, spatialDataRDD);
-		ret.prepare();
+    		DataConfig<byte[]> ret = new DataConfig<byte[]>(dataPath, spatialDataRDD);
+    		ret.prepare();
     		return ret;
     	    }
     	    return null;
     	}
     }
+
+    // /**
+    //  * Inner class to get binary data and generate data configuration
+    //  */
+    // private class AsyncPrepareBinaryData implements Callable<BinaryDataConfig>{
+    //     private final String dataPath;	
+    // 	public AsyncPrepareBinaryData(String dataPath){
+    // 	    this.dataPath = dataPath;
+    // 	}
+	
+    // 	@Override
+    // 	public BinaryDataConfig call(){
+    // 	    /* get data from input source and keep in memory */
+    // 	    JavaRDD<byte[]> spatialDataRDD =
+    // 		getTextAsByteArray(dataPath).cache();
+    // 	    long objCount = spatialDataRDD.count();
+    // 	    if (objCount != 0){
+    // 		BinaryDataConfig ret = new BinaryDataConfig(dataPath, spatialDataRDD);
+    // 		ret.prepare();
+    // 		return ret;
+    // 	    }
+    // 	    return null;
+    // 	}
+    // }
 }

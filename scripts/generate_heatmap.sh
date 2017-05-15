@@ -43,4 +43,8 @@ heatmapType=' --metric jaccard'
 # run spark job
 echo "Executing command $SPARK_HOME/bin/spark-submit --class $className $jar $algos $caseIDs $heatmapType"
 
-$SPARK_HOME/bin/spark-submit --class $className --conf "spark.driver.extraLibraryPath=/home/fbaig/sbu-bmi-u24/spark-gis/lib" --conf "spark.executor.extraLibraryPath=/home/fbaig/sbu-bmi-u24/spark-gis/lib" --conf "spark.default.parallelism=96" $jar $algos $caseIDs $heatmapType
+$SPARK_HOME/bin/spark-submit --class $className \
+    --conf "spark.driver.extraLibraryPath=/home/fbaig/sbu-bmi-u24/spark-gis/lib" \
+    --conf "spark.executor.extraLibraryPath=/home/fbaig/sbu-bmi-u24/spark-gis/lib" \
+    --conf "spark.default.parallelism=96" \
+    $jar $algos $caseIDs $heatmapType
