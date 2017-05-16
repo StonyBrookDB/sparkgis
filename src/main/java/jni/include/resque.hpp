@@ -18,10 +18,12 @@ using namespace geos::geom;
 class Resque{
   
 public:
+  Resque(int predicate);
   Resque(int predicate, int geomid1, int geomid2);
   Resque(int predicate, int k, int geomid1, int geomid2);
   // Refer to JNIWrapper.java for documentation of following functions
   void populate(string input_line); 
+  void populate2(string polygon_str, int sid);
   vector<string> join_bucket_spjoin();
   vector<string> join_bucket_knn();
   double tile_dice();

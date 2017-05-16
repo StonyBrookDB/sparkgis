@@ -2,8 +2,8 @@ package sparkgis.pia;
 /* Java imports */
 import java.io.Serializable;
 /* Spark imports */
-import org.apache.spark.api.java.JavaRDD;
 import scala.Tuple2;
+import org.apache.spark.api.java.JavaRDD;
 /* Local imports */
 import sparkgis.enums.HMType;
 import sparkgis.data.TileStats;
@@ -38,7 +38,7 @@ public class SparkSpatialJoinHM_Cogroup <T>
     public JavaRDD<TileStats> execute(){
 
 	/* Spatial join results */
-	JavaRDD<Iterable<String>> results =
+	JavaRDD<Tuple2<Integer, Iterable<String>>> results =
 	    (new SparkSpatialJoin<T>(sgjConf,
 				     config1,
 				     config2,

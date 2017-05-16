@@ -185,46 +185,64 @@ public abstract class ASpatialQuery<T, R> implements Serializable{
 
     	public Iterable<String> call (final Tuple2<Iterable<T>,Iterable<T>> inData){
     	    //List<String> ret = new ArrayList<String>();
-    	    ArrayList<String> data = new ArrayList<String>();
-    	    short setNumber = 1;
-	    short joinIDX = 2;
-	    for (T in : inData._1()){
-		if (in instanceof SpatialObject){
-		    data.add(((SpatialObject)in).getTileID() +
-			     "\t" +
-			     joinIDX +
-			     "\t" +
-			     setNumber +
-			     "\t" +
-			     ((SpatialObject)in).toString());
-		}
-		else
-		    throw new RuntimeException("[ASpatialQuery-Resque] Not implemented yet");
-	    }
-	    setNumber = 2;
-	    joinIDX = 1;
-	    for (T in : inData._2()){
-		if (in instanceof SpatialObject){
-		    data.add(((SpatialObject)in).getTileID() +
-			     "\t" +
-			     joinIDX +
-			     "\t" +
-			     setNumber +
-			     "\t" +
-			     ((SpatialObject)in).toString());
-		}
-		else
-		    throw new RuntimeException("[ASpatialQuery-Resque] Not implemented yet");
-	    }
+	    
+    	    // ArrayList<String> data = new ArrayList<String>();
+	    // short joinIDX = 2;
+	    // for (T in : inData._1()){
+	    // 	if (in instanceof SpatialObject){
+	    // 	    data.add(((SpatialObject)in).getTileID() +
+	    // 		     "\t" +
+	    // 		     joinIDX +
+	    // 		     "\t" +
+	    // 		     ((SpatialObject)in).getSpatialData());
+	    // 	}
+	    // 	else
+	    // 	    throw new RuntimeException("[ASpatialQuery-Resque] Not implemented yet");
+	    // }
+	    
+	    // joinIDX = 1;
+	    // for (T in : inData._2()){
+	    // 	if (in instanceof SpatialObject){
+	    // 	    data.add(((SpatialObject)in).getTileID() +
+	    // 		     "\t" +
+	    // 		     joinIDX +
+	    // 		     "\t" +
+	    // 		     ((SpatialObject)in).getSpatialData());
+	    // 	}
+	    // 	else
+	    // 	    throw new RuntimeException("[ASpatialQuery-Resque] Not implemented yet");
+	    // }
 
-    	    String[] dataArray = new String[data.size()];
-    	    JNIWrapper jni = new JNIWrapper();
-    	    String[] results = jni.resqueSPJ(
-    					  data.toArray(dataArray),
-    					  predicate,
-    					  geomid1,
-    					  geomid2
-    					  );
+    	    // String[] dataArray = new String[data.size()];
+    	    // JNIWrapper jni = new JNIWrapper();
+    	    // String[] results = jni.resqueSPJ(
+    	    // 				  data.toArray(dataArray),
+    	    // 				  predicate,
+    	    // 				  geomid1,
+    	    // 				  geomid2
+    	    // 				  );
+
+	    ArrayList<String> data1 = new ArrayList<String>();
+	    ArrayList<String> data2 = new ArrayList<String>();
+	    for (T in : inData._1()){
+	    	if (in instanceof SpatialObject){
+	    	    data1.add(((SpatialObject)in).getSpatialData());
+	    	}
+	    	else
+	    	    throw new RuntimeException("[ASpatialQuery-Resque] Not implemented yet");
+	    }
+	    for (T in : inData._2()){
+	    	if (in instanceof SpatialObject){
+	    	    data2.add(((SpatialObject)in).getSpatialData());
+	    	}
+	    	else
+	    	    throw new RuntimeException("[ASpatialQuery-Resque] Not implemented yet");
+	    }
+	    
+	    JNIWrapper jniTest = new JNIWrapper();
+	    String[] results = jniTest.resqueSPJIter(data1.iterator(), data2.iterator(), predicate);
+	    /*****************/
+	    
     	    //for (String res : results)
 	    //ret.add(res);
     	    return Arrays.asList(results);

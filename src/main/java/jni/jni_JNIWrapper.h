@@ -31,6 +31,22 @@ JNIEXPORT jdouble JNICALL Java_jni_JNIWrapper_resqueTileDice
 JNIEXPORT jobjectArray JNICALL Java_jni_JNIWrapper_resqueKNN
   (JNIEnv *, jclass, jobjectArray, jint, jint, jint, jint);
 
+/*
+ * Class:     jni_JNIWrapper
+ * Method:    resqueSPJIter
+ * Signature: (Ljava/util/Iterator;Ljava/util/Iterator;I)[Ljava/lang/String;
+ */
+JNIEXPORT jobjectArray JNICALL Java_jni_JNIWrapper_resqueSPJIter
+  (JNIEnv *, jclass, jobject, jobject, jint);
+
+/*
+ * Class:     jni_JNIWrapper
+ * Method:    binaryResqueSPJ
+ * Signature: (Ljava/util/Iterator;Ljava/util/Iterator;I)[Ljava/lang/String;
+ */
+JNIEXPORT jobjectArray JNICALL Java_jni_JNIWrapper_binaryResqueSPJ
+  (JNIEnv *, jclass, jobject, jobject, jint);
+
 #ifdef __cplusplus
 }
 #endif

@@ -117,89 +117,89 @@ bool Resque::join_with_predicate(const Geometry * geom1,
   return flag;
 }
 
-/*
- * Filter selected fields for output
- * If there is no field selected, output all fields (except tileid and joinid)
- */
-string Resque::project( vector<string> & fields, int sid) {
-  std::stringstream ss;
-  switch (sid){
-  case 1:
-    if (st_op.proj1.size() == 0) {
-      /* Do not output tileid and joinid */
-      ss << fields[2];
-      for (size_t i = 3 ; i < fields.size(); i++)
-	{
-	  ss << TAB << fields[i];
-	}
-    } else {
-      for (size_t i = 0 ; i <st_op.proj1.size();i++)
-	{
-	  if ( 0 == i )
-	    ss << fields[st_op.proj1[i]] ;
-	  else
-	    {
-	      if (st_op.proj1[i] < fields.size())
-                ss << TAB << fields[st_op.proj1[i]];
-	    }
-	}
-    }
-    break;
-  case 2:
-    if (st_op.proj2.size() == 0) {
-      /* Do not output tileid and joinid */
-      ss << fields[2];
-      for (size_t i = 3 ; i < fields.size(); i++)
-	{
-	  ss << TAB << fields[i];
-	}
-    } else {
-      for (size_t i = 0 ; i <st_op.proj2.size();i++)
-	{
-	  if ( 0 == i )
-	    ss << fields[st_op.proj2[i]] ;
-	  else
-	    {
-	      if (st_op.proj2[i] < fields.size())
-                ss << TAB << fields[st_op.proj2[i]];
-	    }
-	}
-    }
-    break;
-  default:
-    break;
-  }
+// /*
+//  * Filter selected fields for output
+//  * If there is no field selected, output all fields (except tileid and joinid)
+//  */
+// string Resque::project( vector<string> & fields, int sid) {
+//   std::stringstream ss;
+//   switch (sid){
+//   case 1:
+//     if (st_op.proj1.size() == 0) {
+//       /* Do not output tileid and joinid */
+//       ss << fields[2];
+//       for (size_t i = 3 ; i < fields.size(); i++)
+// 	{
+// 	  ss << TAB << fields[i];
+// 	}
+//     } else {
+//       for (size_t i = 0 ; i <st_op.proj1.size();i++)
+// 	{
+// 	  if ( 0 == i )
+// 	    ss << fields[st_op.proj1[i]] ;
+// 	  else
+// 	    {
+// 	      if (st_op.proj1[i] < fields.size())
+//                 ss << TAB << fields[st_op.proj1[i]];
+// 	    }
+// 	}
+//     }
+//     break;
+//   case 2:
+//     if (st_op.proj2.size() == 0) {
+//       /* Do not output tileid and joinid */
+//       ss << fields[2];
+//       for (size_t i = 3 ; i < fields.size(); i++)
+// 	{
+// 	  ss << TAB << fields[i];
+// 	}
+//     } else {
+//       for (size_t i = 0 ; i <st_op.proj2.size();i++)
+// 	{
+// 	  if ( 0 == i )
+// 	    ss << fields[st_op.proj2[i]] ;
+// 	  else
+// 	    {
+// 	      if (st_op.proj2[i] < fields.size())
+//                 ss << TAB << fields[st_op.proj2[i]];
+// 	    }
+// 	}
+//     }
+//     break;
+//   default:
+//     break;
+//   }
 
-  return ss.str();
-}
+//   return ss.str();
+// }
 
-/*
- * Set output fields
- * Fields are "technically" off by 3 (2 from extra field
- * and 1 because of counting from 1 )
- */
-void Resque::set_projection_param(char * arg)
-{
-  string param(arg);
-  vector<string> fields;
-  vector<string> selec;
-  Util::tokenize(param, fields,":");
+// /*
+//  * Set output fields
+//  * Fields are "technically" off by 3 (2 from extra field
+//  * and 1 because of counting from 1 )
+//  */
+// void Resque::set_projection_param(char * arg)
+// {
+//   string param(arg);
+//   vector<string> fields;
+//   vector<string> selec;
+//   Util::tokenize(param, fields,":");
 
-  if (fields.size()>0)
-    {
-      Util::tokenize(fields[0], selec,",");
-      for (size_t i =0 ;i < selec.size(); i++)
-	st_op.proj1.push_back(atoi(selec[i].c_str()) + 2);
-    }
-  selec.clear();
+//   if (fields.size()>0)
+//     {
+//       Util::tokenize(fields[0], selec,",");
+//       for (size_t i =0 ;i < selec.size(); i++)
+// 	st_op.proj1.push_back(atoi(selec[i].c_str()) + 2);
+//     }
+//   selec.clear();
 
-  if (fields.size()>1)
-    {
-      Util::tokenize(fields[1], selec,",");
-      for (size_t i =0 ;i < selec.size(); i++)
-	st_op.proj2.push_back(atoi(selec[i].c_str()) + 2);
-    }
-}
+//   if (fields.size()>1)
+//     {
+//       Util::tokenize(fields[1], selec,",");
+//       for (size_t i =0 ;i < selec.size(); i++)
+// 	st_op.proj2.push_back(atoi(selec[i].c_str()) + 2);
+//     }
+// }
 
 /*
  * BAIG WAS HERE
@@ -558,17 +558,55 @@ void Resque::populate(string input_line)
   }
   /* populate the bucket for join */
   polydata[sid].push_back(poly);
-  switch(sid){
-  case SID_1:
-    rawdata[sid].push_back(project(fields,SID_1));
-    break;
-  case SID_2:
-    rawdata[sid].push_back(project(fields,SID_2));
-    break;
-  default:
+  // switch(sid){
+  // case SID_1:
+  //   rawdata[sid].push_back(project(fields,SID_1));
+  //   break;
+  // case SID_2:
+  //   rawdata[sid].push_back(project(fields,SID_2));
+  //   break;
+  // default:
+  //   cout << "wrong sid : " << sid << endl;
+  //   return;
+  // }
+  rawdata[sid].push_back(fields[index]);
+}
+
+/*
+ * Populate spatial data in bucket
+ * Takes in raw string spatial data and converts that to local
+ * data structures required for further processing
+ */
+void Resque::populate2(string polygon_str, int sid)
+{
+  Geometry *poly = NULL;
+  if (sid != SID_1 && sid != SID_2){
     cout << "wrong sid : " << sid << endl;
     return;
   }
+
+  try {
+    poly = wkt_reader->read(polygon_str);
+  }
+  catch (...) {
+    cout << "******Geometry Parsing Error******" << endl;
+    cout << polygon_str << endl;
+    return;
+  }
+  /* populate the bucket for join */
+  polydata[sid].push_back(poly);
+  // switch(sid){
+  // case SID_1:
+  //   rawdata[sid].push_back(project(fields,SID_1));
+  //   break;
+  // case SID_2:
+  //   rawdata[sid].push_back(project(fields,SID_2));
+  //   break;
+  // default:
+  //   cout << "wrong sid : " << sid << endl;
+  //   return;
+  // }
+  rawdata[sid].push_back(polygon_str);
 }
 
 void Resque::init_query_op(int predicate, int geomid1, int geomid2){
@@ -580,11 +618,12 @@ void Resque::init_query_op(int predicate, int geomid1, int geomid2){
   // do geomid shifting implicitly from original data geomid
   // tileID appended in addition to setNumber & ID appended before mapping
   // Geomid shifted right by 2 i.e 4
-  st_op.shape_idx[0] = geomid1 + 2;
+  //  - removed redundant setNumber
+  st_op.shape_idx[0] = geomid1; // + 2;
   // st_op.shape_idx_1 = geomid1 + 2;
   st_op.join_cardinality++;
 
-  st_op.shape_idx[1] = geomid2 + 2;
+  st_op.shape_idx[1] = geomid2; // + 2;
   // st_op.shape_idx_2 = geomid2 + 2;
   st_op.join_cardinality++;
 
@@ -610,6 +649,21 @@ void Resque::init_query_op(int predicate, int geomid1, int geomid2){
 }
 
 /*
+ * Constructor for spatial join without geomids
+ */
+Resque::Resque(int predicate){
+
+  init_query_op(predicate, 0, 0);
+  wkt_reader = new WKTReader(new GeometryFactory(new PrecisionModel(),OSM_SRID));
+
+  // print all parametes
+  // set_projection_param("");
+  appendstats = true;
+  appendTileID = true;
+
+}
+
+/*
  * Constructor for spatial join
  */
 Resque::Resque(int predicate, int geomid1, int geomid2){
@@ -618,7 +672,7 @@ Resque::Resque(int predicate, int geomid1, int geomid2){
   wkt_reader = new WKTReader(new GeometryFactory(new PrecisionModel(),OSM_SRID));
 
   // print all parametes
-  set_projection_param("");
+  // set_projection_param("");
   appendstats = true;
   appendTileID = true;
 
@@ -635,7 +689,7 @@ Resque::Resque(int predicate, int k, int geomid1, int geomid2){
   wkt_reader = new WKTReader(new GeometryFactory(new PrecisionModel(),OSM_SRID));
 
   // print all parametes
-  set_projection_param("");
+  // set_projection_param("");
   appendstats = true;
   appendTileID = true;
 

@@ -49,8 +49,9 @@ public class HeatMap{
     	    			pred,
     	    			hmType,
     	    			result_analysis_exe_id,
-				//SpatialObject.class
-				byte[].class);
+				SpatialObject.class
+				//byte[].class
+				);
 	    
     	    tasks.add(t);
     	}

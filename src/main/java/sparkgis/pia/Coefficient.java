@@ -25,7 +25,7 @@ public class Coefficient implements Serializable{
     private static final int numPartitions = 100; 
     
     public static JavaRDD<TileStats> execute(
-					     JavaRDD<Iterable<String>> data, 
+					     JavaRDD<Tuple2<Integer, Iterable<String>>> data, 
 					     List<Tile> partfile, 
 					     final HMType hmType
 					     ){
@@ -34,19 +34,20 @@ public class Coefficient implements Serializable{
     	final int index = hmType.value;
     	// map data to Tuple <tileID,Jaccard Coefficient>
     	JavaPairRDD<Integer, Double> pairs = 
-    	    data.flatMapToPair(new PairFlatMapFunction<Iterable<String>, Integer, Double>(){
-    		    public Iterator<Tuple2<Integer, Double>> call (Iterable<String> is){
+    	    data.flatMapToPair(new PairFlatMapFunction<Tuple2<Integer, Iterable<String>>, Integer, Double>(){
+    		    public Iterator<Tuple2<Integer, Double>> call (Tuple2<Integer, Iterable<String>> t){
 			List<Tuple2<Integer, Double>> ret = new ArrayList<Tuple2<Integer, Double>>();
-			
-			for (String s : is){
+			final int tileId = t._1();
+			for (String s : t._2()){
 			    String[] fields = s.split("\t");
 			    int len = fields.length;
-			    Tuple2<Integer, Double> t = 
+			    Tuple2<Integer, Double> t2 = 
 				new Tuple2<Integer, Double>(
-							    Integer.parseInt(fields[len-1].trim()), 
+							    //Integer.parseInt(fields[len-1].trim()),
+							    tileId,
 							    Double.parseDouble(fields[len-index].trim())
 							    );
-				ret.add(t);
+				ret.add(t2);
 			}
 			return ret.iterator();
 		    }

@@ -3,10 +3,10 @@ package sparkgis.core;
 import java.util.List;
 import java.io.Serializable;
 /* Spark imports */
+import scala.Tuple2;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.broadcast.Broadcast;
 import org.apache.spark.api.java.JavaPairRDD;
-import scala.Tuple2;
 /* Local imports */
 import sparkgis.data.Tile;
 import sparkgis.data.DataConfig;
@@ -23,7 +23,7 @@ import sparkgis.core.spatialindex.SparkSpatialIndex;
  * T Input spatial data type (SpatialObject OR byte[])
  */
 public class SparkSpatialJoin <T>
-    extends ASpatialQuery<T, Iterable<String>> 
+    extends ASpatialQuery<T, Tuple2<Integer, Iterable<String>>> 
     implements Serializable
 {
 
@@ -53,7 +53,8 @@ public class SparkSpatialJoin <T>
      * <p> 
      * polygon-id \t polygon-coordinates \t polygon-id \t polygon-coordinates \t tile-id \t Jaccard \t dice
      */
-    public JavaRDD<Iterable<String>> execute(){
+    // public JavaRDD<Iterable<String>> execute(){
+    public JavaRDD<Tuple2<Integer, Iterable<String>>> execute(){
 
 	JavaPairRDD<Integer, Tuple2<Iterable<T>,Iterable<T>>>
 	    groupedMapData = getDataByTile();
@@ -63,7 +64,8 @@ public class SparkSpatialJoin <T>
 						predicate.value, 
 						config1.getGeomid(),
 						config2.getGeomid())
-				     );	
+				     );
+	return JavaPairRDD.toRDD(results).toJavaRDD();
 	// /* Native C++: Resque */
 	//     JavaPairRDD<Integer, String> results = 
 	// 	groupedMapData.flatMapValues(new Resque(
@@ -71,6 +73,6 @@ public class SparkSpatialJoin <T>
 	// 						config1.getGeomid(),
 	// 						config2.getGeomid())
 	// 				     );
-	return results.values();
+	// return results.values();
     }
 }

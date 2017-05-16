@@ -1,11 +1,64 @@
 #include <iostream>
 #include <jni.h>
+#include <omp.h>
 #include "jni_JNIWrapper.h"
 #include "include/resque.hpp"
 
 using namespace std;
 
 /* RESQUE JNI INTERFACE */
+
+/**
+ * Helper function to run code in parallel
+ */
+void populate(JNIEnv *env, Resque& resq, jobject& iter, int sid){
+  //jmethodID iteratorID = env->GetMethodID(env->FindClass("java/util/Iterable"), "iterator", "()Ljava/util/Iterator;");
+  jclass iterator = env->FindClass("java/util/Iterator");
+  jmethodID hasNextID = env->GetMethodID(iterator, "hasNext", "()Z");
+  jmethodID nextID = env->GetMethodID(iterator, "next", "()Ljava/lang/Object;");
+  
+  //jobject iteratorObj = env->CallObjectMethod(data1, iteratorID);
+  while (env->CallBooleanMethod(iter, hasNextID) == JNI_TRUE) {
+    jstring current = (jstring)env->CallObjectMethod(iter, nextID);
+    const char* polygon_str = env->GetStringUTFChars(current, NULL);
+    
+    resq.populate2(polygon_str, sid);
+    
+    env->ReleaseStringUTFChars(current, polygon_str);
+  }
+}
+/**
+ * To avoid extra copying, pass in iterator
+ */
+JNIEXPORT jobjectArray JNICALL Java_jni_JNIWrapper_resqueSPJIter
+(JNIEnv *env, jclass c, jobject iter1, jobject iter2, jint predicate){
+  /* initialize resque to handle spatial join query */
+  Resque resq(predicate);
+
+#pragma omp parallel for
+  for (int i=1; i<=2; ++i){
+    if (i==1)
+      populate(env, resq, iter1, i);
+    else
+      populate(env, resq, iter2, i);
+  }
+
+  /* data results for this tile */
+  vector<string> hits = resq.join_bucket_spjoin();
+  int size = hits.size();
+
+  /* return as String[] back to Java */
+  jclass clazz = env->FindClass("java/lang/String");
+  jobjectArray objarray = env->NewObjectArray(size ,clazz ,0);
+  
+  for(int i = 0; i < size; i++) {
+    string s = hits[i]; 
+    jstring js = (env)->NewStringUTF(s.c_str());
+    (env)->SetObjectArrayElement(objarray , i , js);
+  }
+  return objarray;
+}
+
 JNIEXPORT jobjectArray JNICALL Java_jni_JNIWrapper_resqueSPJ
 (JNIEnv *env, jclass c, jobjectArray data, jint predicate, jint geomid1, jint geomid2)
 {
@@ -99,6 +152,14 @@ JNIEXPORT jobjectArray JNICALL Java_jni_JNIWrapper_resqueKNN
   }
   return objarray;
 }
+
+/**************************** BINARY *************************/
+JNIEXPORT jobjectArray JNICALL Java_jni_JNIWrapper_binaryResqueSPJ
+(JNIEnv *env, jclass c, jobject data1, jobject data2, jint predicate){
+
+  return NULL;
+}
+/*************************************************************/
 
 namespace Util{
   void tokenize (const string& str,
