@@ -23,14 +23,14 @@ JNIEXPORT jobjectArray JNICALL Java_jni_JNIWrapper_resqueSPJIter
   while (env->CallBooleanMethod(iter1, hasNextID) == JNI_TRUE) {
     jstring current = (jstring)env->CallObjectMethod(iter1, nextID);
     const char* polygon_str = env->GetStringUTFChars(current, NULL);
-    resq.populate2(polygon_str, sid);
+    resq.populate2(polygon_str, 1);
     env->ReleaseStringUTFChars(current, polygon_str);
   }
 
   while (env->CallBooleanMethod(iter2, hasNextID) == JNI_TRUE) {
     jstring current = (jstring)env->CallObjectMethod(iter2, nextID);
     const char* polygon_str = env->GetStringUTFChars(current, NULL);
-    resq.populate2(polygon_str, sid);
+    resq.populate2(polygon_str, 2);
     env->ReleaseStringUTFChars(current, polygon_str);
   }
   
