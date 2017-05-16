@@ -226,34 +226,46 @@ public abstract class ASpatialQuery<T, R> implements Serializable{
     	    // 				  );
 
 	    String[] results;
+	    boolean isBinary = false;
 	    JNIWrapper jni = new JNIWrapper();
 	    // results = jni.resqueSPJIter(inData._1().iterator(), inData._2().iterator(), predicate, false);
-
-	    T element = inData._1().iterator().next();
+	    // T element = inData._1().iterator().next();
 	    ArrayList<String> data1 = new ArrayList<String>();
 	    ArrayList<String> data2 = new ArrayList<String>();
 	    
-	    if (element instanceof SpatialObject){
-	    	
-	    	for (T in : inData._1()){
-	    	    data1.add(((SpatialObject)in).getSpatialData());
-	    	}
-	    	for (T in : inData._2()){
-	    	    data2.add(((SpatialObject)in).getSpatialData());
-	    	}
-	    	results = jni.resqueSPJIter(data1.iterator(), data2.iterator(), predicate, false);
+	    for (T in : inData._1()){
+		if (in instanceof SpatialObject)
+		    data1.add(((SpatialObject)in).getSpatialData());
+		else if (in instanceof byte[]){
+		    data1.add(WKBWriter.toHex((byte[])in));
+		    isBinary = true;
+		}
+		else
+		    throw new RuntimeException("[ASpatialQuery-Resque] Invalid input data type");
 	    }
-	    else if (element instanceof byte[]){
-		for (T in : inData._1()){
-	    	    data1.add(WKBWriter.toHex((byte[])in));
-	    	}
-	    	for (T in : inData._2()){
-	    	    data2.add(WKBWriter.toHex((byte[])in));
-	    	}
-		results = jni.resqueSPJIter(inData._1().iterator(), inData._2().iterator(), predicate, true);
+	    for (T in : inData._2()){
+		if (in instanceof SpatialObject)
+		    data2.add(((SpatialObject)in).getSpatialData());
+		else if (in instanceof byte[])
+		    data2.add(WKBWriter.toHex((byte[])in));
+		else
+		    throw new RuntimeException("[ASpatialQuery-Resque] Invalid input data type");
+	    
 	    }
-	    else
-	    	throw new RuntimeException("[ASpatialQuery-Resque] Invalid input data type");
+	    results = jni.resqueSPJIter(data1.iterator(), data2.iterator(), predicate, isBinary);
+
+	// }
+	//     else if (element instanceof byte[]){
+	// 	for (T in : inData._1()){
+	//     	    data1.add(WKBWriter.toHex((byte[])in));
+	//     	}
+	//     	for (T in : inData._2()){
+	//     	    data2.add(WKBWriter.toHex((byte[])in));
+	//     	}
+	// 	results = jni.resqueSPJIter(inData._1().iterator(), inData._2().iterator(), predicate, true);
+	//     }
+	//     else
+	//     	throw new RuntimeException("[ASpatialQuery-Resque] Invalid input data type");
 
     	    return Arrays.asList(results);
     	}
