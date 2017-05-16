@@ -12,26 +12,41 @@ using namespace std;
  * To avoid extra copying, pass in iterator
  */
 JNIEXPORT jobjectArray JNICALL Java_jni_JNIWrapper_resqueSPJIter
-(JNIEnv *env, jclass c, jobject iter1, jobject iter2, jint predicate){
+(JNIEnv *env, jclass c, jobject iter1, jobject iter2, jint predicate, jboolean is_binary){
   /* initialize resque to handle spatial join query */
   Resque resq(predicate);
 
+  jclass spatialObject = env->FindClass("sparkgis/data/SpatialObject");
+  jmethodID getSpatialData = env->GetMethodID(spatialObject, "getSpatialData", "()Ljava/lang/String");
+  
   jclass iterator = env->FindClass("java/util/Iterator");
   jmethodID hasNextID = env->GetMethodID(iterator, "hasNext", "()Z");
   jmethodID nextID = env->GetMethodID(iterator, "next", "()Ljava/lang/Object;");
   
   while (env->CallBooleanMethod(iter1, hasNextID) == JNI_TRUE) {
-    jstring current = (jstring)env->CallObjectMethod(iter1, nextID);
-    const char* polygon_str = env->GetStringUTFChars(current, NULL);
-    resq.populate2(polygon_str, 1);
-    env->ReleaseStringUTFChars(current, polygon_str);
+    // jstring current = (jstring)env->CallObjectMethod(iter1, nextID);
+
+    jobject current = env->CallObjectMethod(iter1, nextID);
+    if (env->IsInstanceOf(current, spatialObject)){
+      jstring current_str = (jstring)env->CallObjectMethod(current, getSpatialData);
+      const char* polygon_str = env->GetStringUTFChars(current_str, NULL);
+      resq.populate2(polygon_str, 1, is_binary);
+      env->ReleaseStringUTFChars(current_str, polygon_str);
+    }
+    else
+      cout << "Not implemented yet" << endl;
   }
 
   while (env->CallBooleanMethod(iter2, hasNextID) == JNI_TRUE) {
     jstring current = (jstring)env->CallObjectMethod(iter2, nextID);
-    const char* polygon_str = env->GetStringUTFChars(current, NULL);
-    resq.populate2(polygon_str, 2);
-    env->ReleaseStringUTFChars(current, polygon_str);
+    if (env->IsInstanceOf(current, spatialObject)){
+      jstring current_str = (jstring)env->CallObjectMethod(current, getSpatialData);
+      const char* polygon_str = env->GetStringUTFChars(current_str, NULL);
+      resq.populate2(polygon_str, 1, is_binary);
+      env->ReleaseStringUTFChars(current_str, polygon_str);
+    }
+    else
+      cout << "Not implemented yet" << endl;
   }
   
   /* data results for this tile */
@@ -143,14 +158,6 @@ JNIEXPORT jobjectArray JNICALL Java_jni_JNIWrapper_resqueKNN
   }
   return objarray;
 }
-
-/**************************** BINARY *************************/
-JNIEXPORT jobjectArray JNICALL Java_jni_JNIWrapper_binaryResqueSPJ
-(JNIEnv *env, jclass c, jobject data1, jobject data2, jint predicate){
-
-  return NULL;
-}
-/*************************************************************/
 
 namespace Util{
   void tokenize (const string& str,

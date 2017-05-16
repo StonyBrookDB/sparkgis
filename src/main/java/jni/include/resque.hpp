@@ -3,6 +3,7 @@
 
 /* geos */
 #include <geos/io/WKTReader.h>
+#include <geos/io/WKBReader.h>
 #include <geos/io/WKTWriter.h>
 /* for kNN */
 #include <geos/operation/distance/DistanceOp.h>
@@ -23,7 +24,7 @@ public:
   Resque(int predicate, int k, int geomid1, int geomid2);
   // Refer to JNIWrapper.java for documentation of following functions
   void populate(string input_line); 
-  void populate2(string polygon_str, int sid);
+  void populate2(string polygon_str, int sid, bool is_binary);
   vector<string> join_bucket_spjoin();
   vector<string> join_bucket_knn();
   double tile_dice();
@@ -56,7 +57,6 @@ public:
   // }
   
 private:
-  string tile_id = "";
   struct query_op st_op;
   struct bucket_temp b_tmp;
 
@@ -64,18 +64,14 @@ private:
   map<int, vector<string> > rawdata;
   
   WKTReader *wkt_reader;
+  WKBReader *wkb_reader;
   
   bool appendstats = false;
-  bool appendTileID = false;
 
   string report_result(int i, int j);
   void release_shape_mem(const int k);
-  void set_projection_param(char * arg);
-  string project( vector<string> & fields, int sid);  
   void init_query_op(int predicate, int geomid1, int geomid2);
-  void populate_polygon(Geometry *poly, int sid, vector<string> fields);
   
-
   /* nearest neighbor helper function: update nearest neighbor values */
   void update_nn(int object_id, double distance);
   

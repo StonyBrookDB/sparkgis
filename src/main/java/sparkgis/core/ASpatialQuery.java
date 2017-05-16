@@ -166,9 +166,10 @@ public abstract class ASpatialQuery<T, R> implements Serializable{
 
 	return groupedData;
     }
-
+    
     /**
      * Called for all data corresponding to a given key after groupByKey()
+     * Return String format: Polygon1 Polygon2 Area1 Area2 Jaccard Dice
      */
     protected class Resque
 	implements Function<Tuple2<Iterable<T>,Iterable<T>>, Iterable<String>>{
@@ -222,29 +223,28 @@ public abstract class ASpatialQuery<T, R> implements Serializable{
     	    // 				  geomid2
     	    // 				  );
 
-	    ArrayList<String> data1 = new ArrayList<String>();
-	    ArrayList<String> data2 = new ArrayList<String>();
-	    for (T in : inData._1()){
-	    	if (in instanceof SpatialObject){
-	    	    data1.add(((SpatialObject)in).getSpatialData());
-	    	}
-	    	else
-	    	    throw new RuntimeException("[ASpatialQuery-Resque] Not implemented yet");
-	    }
-	    for (T in : inData._2()){
-	    	if (in instanceof SpatialObject){
-	    	    data2.add(((SpatialObject)in).getSpatialData());
-	    	}
-	    	else
-	    	    throw new RuntimeException("[ASpatialQuery-Resque] Not implemented yet");
-	    }
+	    String[] results;
+	    JNIWrapper jni = new JNIWrapper();
+	    results = jni.resqueSPJIter(inData._1().iterator(), inData._2().iterator(), predicate, false);
+	    // T element = inData._1().iterator().next();
 	    
-	    JNIWrapper jniTest = new JNIWrapper();
-	    String[] results = jniTest.resqueSPJIter(data1.iterator(), data2.iterator(), predicate);
-	    /*****************/
-	    
-    	    //for (String res : results)
-	    //ret.add(res);
+	    // if (element instanceof SpatialObject){
+	    // 	ArrayList<String> data1 = new ArrayList<String>();
+	    // 	ArrayList<String> data2 = new ArrayList<String>();
+	    // 	for (T in : inData._1()){
+	    // 	    data1.add(((SpatialObject)in).getSpatialData());
+	    // 	}
+	    // 	for (T in : inData._2()){
+	    // 	    data2.add(((SpatialObject)in).getSpatialData());
+	    // 	}
+	    // 	results = jni.resqueSPJIter(data1.iterator(), data2.iterator(), predicate, false);
+	    // }
+	    // else if (element instanceof byte[]){
+	    // 	results = jni.resqueSPJIter(inData._1().iterator(), inData._2().iterator(), predicate, true);
+	    // }
+	    // else
+	    // 	throw new RuntimeException("[ASpatialQuery-Resque] Invalid input data type");
+
     	    return Arrays.asList(results);
     	}
     }

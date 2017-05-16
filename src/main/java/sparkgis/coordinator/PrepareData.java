@@ -62,13 +62,14 @@ public class PrepareData implements Serializable{
      * This function allows multiple spatial datasets to be preprocessed
      * concurrently. 
      */
-    // public List<DataConfig> prepareData(List<String> dataPaths){
     public List<DataConfig<SpatialObject>> prepareData(List<String> dataPaths){
 	final int datasetCount = dataPaths.size();
 	List<DataConfig<SpatialObject>> configs = 
 	    new ArrayList<DataConfig<SpatialObject>>(datasetCount);
+
 	List<Future<DataConfig<SpatialObject>>> futures = 
 	    new ArrayList<Future<DataConfig<SpatialObject>>>(datasetCount);
+
 	/* To generate data configurations in parallel */
 	final ExecutorService exeServ = Executors.newFixedThreadPool(datasetCount);
 	

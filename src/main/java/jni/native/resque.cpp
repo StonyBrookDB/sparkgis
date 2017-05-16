@@ -221,9 +221,6 @@ string Resque::report_result( int i , int j)
       //stat_report.clear();
       ss << TAB << b_tmp.spj.jaccard << TAB << b_tmp.spj.dice;
     }
-    if (appendTileID) {
-      ss << TAB << tile_id << endl;
-    }
     ss << endl;
     break;
   default:
@@ -525,7 +522,7 @@ void Resque::populate(string input_line)
 
   Util::tokenize(input_line, fields, TAB, true);
   sid = atoi(fields[1].c_str());
-  tile_id = fields[0];
+  // tile_id = fields[0];
 
   if (sid != SID_1 && sid != SID_2){
     cout << "wrong sid : " << sid << endl;
@@ -577,7 +574,7 @@ void Resque::populate(string input_line)
  * Takes in raw string spatial data and converts that to local
  * data structures required for further processing
  */
-void Resque::populate2(string polygon_str, int sid)
+void Resque::populate2(string polygon_str, int sid, bool is_binary)
 {
   Geometry *poly = NULL;
   if (sid != SID_1 && sid != SID_2){
@@ -586,7 +583,10 @@ void Resque::populate2(string polygon_str, int sid)
   }
 
   try {
-    poly = wkt_reader->read(polygon_str);
+    // if (is_binary)
+    //   poly = wkb_reader->read(polygon_str);
+    // else
+      poly = wkt_reader->read(polygon_str);
   }
   catch (...) {
     cout << "******Geometry Parsing Error******" << endl;
@@ -656,11 +656,7 @@ Resque::Resque(int predicate){
   init_query_op(predicate, 0, 0);
   wkt_reader = new WKTReader(new GeometryFactory(new PrecisionModel(),OSM_SRID));
 
-  // print all parametes
-  // set_projection_param("");
   appendstats = true;
-  appendTileID = true;
-
 }
 
 /*
@@ -671,11 +667,7 @@ Resque::Resque(int predicate, int geomid1, int geomid2){
   init_query_op(predicate, geomid1, geomid2);
   wkt_reader = new WKTReader(new GeometryFactory(new PrecisionModel(),OSM_SRID));
 
-  // print all parametes
-  // set_projection_param("");
   appendstats = true;
-  appendTileID = true;
-
 }
 
 /*
@@ -688,11 +680,7 @@ Resque::Resque(int predicate, int k, int geomid1, int geomid2){
 
   wkt_reader = new WKTReader(new GeometryFactory(new PrecisionModel(),OSM_SRID));
 
-  // print all parametes
-  // set_projection_param("");
   appendstats = true;
-  appendTileID = true;
-
 }
 
 

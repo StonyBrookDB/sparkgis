@@ -98,14 +98,18 @@ public class DataConfig<T> implements Serializable
 		    WKTReader reader = new WKTReader();
 		    geometry = reader.read(((SpatialObject)s).getSpatialData());
 		}
-		else if (s.getClass().isArray()){
+		else if (s instanceof byte[]){
 		    WKBReader reader = new WKBReader();
 		    geometry = reader.read((byte[])s);
 		}
+		else if (s instanceof String){
+		    WKTReader reader = new WKTReader();
+		    geometry = reader.read((String)s);
+		}
 		else
 		    throw new RuntimeException("[MBBExtractor] Invalid spatial object type");
-		Envelope env = geometry.getEnvelopeInternal();
 		
+		Envelope env = geometry.getEnvelopeInternal();
 		if (env != null){
 		    ret.minX = env.getMinX();
 		    ret.minY = env.getMinY();

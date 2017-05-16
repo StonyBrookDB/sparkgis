@@ -74,16 +74,9 @@ public class JNIWrapper {
 	native String[] resqueSPJIter(
 				      Iterator data1,
 				      Iterator data2,
-				      int predicate
+				      int predicate,
+				      boolean isBinary
 				      );
-
-    /******************************* BINARY *********************************/
-    public static
-	native String[] binaryResqueSPJ(
-					Iterator data1,
-					Iterator data2,
-					int predicate
-					);
     // Method-2
     /*
      * Alternate approach
