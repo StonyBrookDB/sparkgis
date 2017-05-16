@@ -583,9 +583,12 @@ void Resque::populate2(string polygon_str, int sid, bool is_binary)
   }
 
   try {
-    // if (is_binary)
-    //   poly = wkb_reader->read(polygon_str);
-    // else
+    if (is_binary){
+      std::stringstream ss;//(io_base::binary);
+      ss << polygon_str;
+      poly = wkb_reader->read(ss);
+    }
+    else
       poly = wkt_reader->read(polygon_str);
   }
   catch (...) {
