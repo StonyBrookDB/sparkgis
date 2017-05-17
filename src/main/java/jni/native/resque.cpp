@@ -658,6 +658,7 @@ Resque::Resque(int predicate){
 
   init_query_op(predicate, 0, 0);
   wkt_reader = new WKTReader(new GeometryFactory(new PrecisionModel(),OSM_SRID));
+  wkb_reader = new WKBReader(new GeometryFactory(new PrecisionModel(),OSM_SRID));
 
   appendstats = true;
 }
@@ -669,6 +670,7 @@ Resque::Resque(int predicate, int geomid1, int geomid2){
 
   init_query_op(predicate, geomid1, geomid2);
   wkt_reader = new WKTReader(new GeometryFactory(new PrecisionModel(),OSM_SRID));
+  wkb_reader = new WKBReader(new GeometryFactory(new PrecisionModel(),OSM_SRID));
 
   appendstats = true;
 }
@@ -682,6 +684,7 @@ Resque::Resque(int predicate, int k, int geomid1, int geomid2){
   st_op.k_neighbors = k;
 
   wkt_reader = new WKTReader(new GeometryFactory(new PrecisionModel(),OSM_SRID));
+  wkb_reader = new WKBReader(new GeometryFactory(new PrecisionModel(),OSM_SRID));
 
   appendstats = true;
 }
