@@ -654,14 +654,9 @@ void Resque::init_query_op(int predicate, int geomid1, int geomid2){
 /*
  * Constructor for spatial join without geomids
  */
-Resque::Resque(int predicate){
-
-  init_query_op(predicate, 0, 0);
-  GeometryFactory gf(new PrecisionModel(),OSM_SRID);
-  wkt_reader = new WKTReader(gf);
-  wkb_reader = new WKBReader(gf);
-
-  appendstats = true;
+Resque::Resque(int predicate)
+  :Resque(predicate, 0, 0)
+{
 }
 
 /*
@@ -672,7 +667,7 @@ Resque::Resque(int predicate, int geomid1, int geomid2){
   init_query_op(predicate, geomid1, geomid2);
   GeometryFactory gf(new PrecisionModel(),OSM_SRID);
   wkt_reader = new WKTReader(gf);
-  wkb_reader = new WKBReader(gf);
+  wkb_reader = new WKBReader();
 
   appendstats = true;
 }
@@ -680,16 +675,10 @@ Resque::Resque(int predicate, int geomid1, int geomid2){
 /*
  * Constructor for kNN
  */
-Resque::Resque(int predicate, int k, int geomid1, int geomid2){
-
-  init_query_op(predicate, geomid1, geomid2);
-  st_op.k_neighbors = k;
-  
-  GeometryFactory gf(new PrecisionModel(),OSM_SRID);
-  wkt_reader = new WKTReader(gf);
-  wkb_reader = new WKBReader(gf);
-
-  appendstats = true;
+Resque::Resque(int predicate, int k, int geomid1, int geomid2)
+  :Resque(predicate, geomid1, geomid2)
+{
+  st_op.k_neighbors = k;  
 }
 
 
