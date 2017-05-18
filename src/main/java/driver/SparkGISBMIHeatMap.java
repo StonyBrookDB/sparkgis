@@ -30,45 +30,38 @@ import sparkgis.SparkGISConfig;
 import sparkgis.enums.PartitionMethod;
 
 
-public class SparkGISDriver
+public class SparkGISBMIHeatMap
 {
-    private static int partitionSize;
     /**
-     * Command line arguments: 
+     * Command line arguments:
      * -a Comma separated list of algos [yi-algorithm-v1 | yi-algorithm-v11]
      * -c Comma separated list of caseIDs
      * -m Heatmap type [Dice] - Deafult
-     * -p Partition-type [Jaccard] 
+     * -p Partition-type [Jaccard]
+     * -s Partition tile size
      */
-    
-    public static void main(String[] args) 
-    {	    
-	System.out.println(SparkGISConfig.hdfsCoreSitePath);
-	System.out.println(SparkGISConfig.hdfsHdfsSitePath);
-	System.out.println(SparkGISConfig.hdfsNameNodeIP);
-	
-	System.out.println(SparkGISConfig.mongoHost);
-	System.out.println(SparkGISConfig.mongoPort);
-	
+
+    public static void main(String[] args)
+    {
+	/* Set default values */
 	String jobID = null;
 	Predicate predicate = Predicate.INTERSECTS;
-	HMType hmType = null;
-	PartitionMethod partitionMethod = null;
-	String result_analysis_exe_id = null;
-
+	HMType hmType = HMType.JACCARD;
+	PartitionMethod partitionMethod = PartitionMethod.FIXED_GRID_HM;
+	int partitionSize = 32;
 	/******************************************************/
 	final CommandLineParser parser = new BasicParser();
 	final Options options = new Options();
-	// options.addOption("l", "upload", true, "upload_files");
 	options.addOption("u", "uid", true, "32-bit unique ID");
 	options.addOption("a", "algos", true, "Comma separated list of algorithms [yi-algorithm-v1 | yi-algorithm-v11]");
 	options.addOption("c", "caseids", true, "Comma separated list of caseIDs");
 	options.addOption("m", "metric", true, "Metric type [jaccard|dice|tile_dice] Default:jaccard");
 	options.addOption("p", "partitioner", true, "Distributed partitioner [fixed_grid|step] Default:fixed_grid");
+	options.addOption("s", "tilesize", true, "Partition tile size Default: 32 would create 1024 tiles");
 	HelpFormatter formatter = new HelpFormatter();
-	
+
 	try{
-	    final CommandLine commandLine = parser.parse(options, args);	    
+	    final CommandLine commandLine = parser.parse(options, args);
 
 	    /* Job ID */
 	    if (commandLine.hasOption('u')){
@@ -83,22 +76,20 @@ public class SparkGISDriver
 	    /* Heatmap metric type */
 	    if (commandLine.hasOption('m')){
 		String mType = commandLine.getOptionValue('m');
-		if(mType.equalsIgnoreCase("jaccard")) hmType = HMType.JACCARD;
-		else if(mType.equalsIgnoreCase("dice")) hmType = HMType.DICE;
+		if(mType.equalsIgnoreCase("dice")) hmType = HMType.DICE;
 		else if(mType.equalsIgnoreCase("tile_dice")) hmType = HMType.TILEDICE;
-		else hmType = HMType.JACCARD;
 	    }
-	    
+	    /* Partition size */
+	    final String pSize = getOption('s', commandLine);
+	    partitionSize = pSize == ""? 32 : Integer.parseInt(pSize);
+
 	    final List<String> caseIDs = Arrays.asList(caseIDcsv.split(","));
 	    final List<String> algos = Arrays.asList(algosCsv.split(","));
-	    
-	    /* PARTITION SIZE */
-	    partitionSize = SparkGISConfig.partition_size;
 
-
-	    /* print options */
-	    System.out.println("Starting Job ...");
+	    /* Log job options */
 	    System.out.println("JobID:\t" + jobID);
+	    System.out.println("HDFS Namenode:\t" + SparkGISConfig.hdfsNameNodeIP);
+
 	    System.out.println("caseIDs:");
 	    for (String caseID:caseIDs)
 		System.out.println("\t" + caseID);
@@ -108,12 +99,32 @@ public class SparkGISDriver
 	    System.out.println("Predicate:\t" + predicate.value);
 	    System.out.println("Metric Type:\t" + hmType.value);
 	    System.out.println("Partition size:\t" + partitionSize);
-	    // System.out.println("Input:\t" + ((spIn==IO.HDFS)?"hdfs":"mongo"));
-	    // System.out.println("Output:\t" + ((spOut==IO.MONGODB)?"mongo":"hdfs"));
 
-	    // callHeatMap(jobID, spIn, caseIDs, algos, predicate, hmType, partitionSize, spOut, result_analysis_exe_id);
+	    
+	    /* Initialize SparkConf */
+	    SparkConf conf = new SparkConf().setAppName("SparkGIS-HeatMap");
+	    /* set properties */
+	    conf.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer");
+	    conf.set("textinputformat.record.delimiter", "\n");
+	    conf.set("spark.kryo.registrator", sparkgis.KryoClassRegistrator.class.getName());
+	    /* Initialize SparkGISJobConf */
+	    SparkGISJobConf spgConf =
+		new SparkGISJobConf().
+		setJobID(jobID).
+		setBatchFactor(8).
+		setDelimiter("\t").
+		setSpatialObjectIndex(1).
+		setPartitionSize(partitionSize).
+		setPartitionMethod(partitionMethod);
 
-	    heatmapBMI(algos, caseIDs);
+	    /* Initialize SparkGISContext */
+	    SparkGISContext spgc = new SparkGISContext(conf, spgConf);
+	    
+	    /* Execute job */
+	    String res = HeatMap.execute(spgc, algos, caseIDs, predicate, hmType);
+	    System.out.println("HeatMap results stored at: " + res);
+
+	    spgc.stop();
 	}
 	catch(ParseException e){
 	    e.printStackTrace();
@@ -123,57 +134,6 @@ public class SparkGISDriver
 	/******************************************************/
     }
 
-    /**
-     * Sample code to initialize SparkGISContext
-     * @return SparkGISContext 
-     */
-    private static SparkGISContext initSparkGISContext(){
-	final String jobID = UUID.randomUUID().toString();
-	
-	/* Initialize SparkConf */
-    	SparkConf conf = new SparkConf().setAppName("SparkGIS-HeatMap");
-    	/* set properties */
-    	conf.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer");
-    	conf.set("textinputformat.record.delimiter", "\n");
-    	conf.set("spark.kryo.registrator", sparkgis.KryoClassRegistrator.class.getName());
-	/* Initialize SparkGISJobConf */
-	SparkGISJobConf spgConf = new
-	    SparkGISJobConf().
-	    setJobID(jobID).
-	    setBatchFactor(8).
-	    setDelimiter("\t").
-	    setSpatialObjectIndex(1).
-	    setPartitionSize(partitionSize).
-	    setPartitionMethod(PartitionMethod.FIXED_GRID_HM);
-	
-
-	/* Initialize SparkGISContext */
-	SparkGISContext spgc = new SparkGISContext(conf, spgConf);
-
-	return spgc;
-    }
-    
-    private static void heatmapBMI(List<String> algos, List<String> caseIDs){
-	final Predicate predicate = Predicate.INTERSECTS;
-	final HMType hmType = HMType.JACCARD;
-	final String result_analysis_exe_id = "sparkgis_bmi";
-
-	/* Initialize SparkGISContext */
-	SparkGISContext spgc = initSparkGISContext();
-
-	String res = HeatMap.execute(spgc, algos, caseIDs, predicate, hmType, result_analysis_exe_id);
-	System.out.println("HeatMap results stored at: " + res);
-
-	spgc.stop();
-    }
-
-    private static void spatialJoin(List<String> datasetPaths, Predicate pred){
-
-	/* Initialize SparkGISContext */
-	SparkGISContext spgc = initSparkGISContext();
-	JavaRDD<Iterable<String>> spjResults = SpatialJoin.execute(spgc, datasetPaths, pred);
-    }
-    
     /**
      * Get caseID list to process
      */
@@ -188,7 +148,7 @@ public class SparkGISDriver
     	return images;
     }
 
-    
+
     private static String getOption(final char option, final CommandLine commandLine) {
 	if (commandLine.hasOption(option)) {
 	    return commandLine.getOptionValue(option);

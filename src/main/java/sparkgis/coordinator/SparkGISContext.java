@@ -19,13 +19,12 @@ public class SparkGISContext {
     public static JavaSparkContext sparkContext;
 
     private final SparkGISJobConf jobConf;
-    
+
     /**
      * SparkGISContext constructor with default SparkGISJobConf
      */
     public SparkGISContext(){
-	this.sparkContext = new JavaSparkContext();
-	this.jobConf = new SparkGISJobConf();
+	this(null, null);
     }
 
     /**
@@ -34,8 +33,8 @@ public class SparkGISContext {
      * @param jobConf Custom SparkGIS job configuration
      */
     public SparkGISContext(SparkConf conf, SparkGISJobConf jobConf){
-	this.sparkContext = new JavaSparkContext(conf);
-	this.jobConf = jobConf;
+	this.sparkContext = (conf == null)? new JavaSparkContext() : new JavaSparkContext(conf);
+	this.jobConf = (jobConf == null) ? new SparkGISJobConf() : jobConf;
     }
 
     /**
@@ -46,7 +45,7 @@ public class SparkGISContext {
     /**
      * Prepare JavaRDD's with instances of SpatialObjects
      * @param dataPaths HDFS paths to input spatial data
-     * @return List of dataConfig objects with raw spatialObjects 
+     * @return List of dataConfig objects with raw spatialObjects
      * and required preprocessed spatial data
      */
     public List<DataConfig> prepareData(List<String> dataPaths){
@@ -57,7 +56,7 @@ public class SparkGISContext {
     /**
      * Prepare JavaRDD's with binary spatial data
      * @param dataPaths HDFS paths to input spatial data
-     * @return List of dataConfig objects with binary spatial obejcts 
+     * @return List of dataConfig objects with binary spatial obejcts
      * and required preprocessed spatial data
      */
     public List<BinaryDataConfig> prepareBinaryData(List<String> dataPaths){
@@ -79,7 +78,7 @@ public class SparkGISContext {
      */
     public static < E > String createTSString(E... args){
     	String tss = "";
-    	for (E arg : args){  
+    	for (E arg : args){
     	    if (tss == "")
     		tss = tss + arg;
     	    else

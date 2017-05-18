@@ -29,8 +29,8 @@ public class HeatMap{
 				 List<String> algos,
 				 List<String> caseIDs,
 				 Predicate pred,
-				 HMType hmType,
-				 String result_analysis_exe_id){
+				 HMType hmType
+				 ){
 	
 	String resultsDirPath = null;
 	/* create a thread pool for async jobs */
@@ -46,16 +46,14 @@ public class HeatMap{
     	    			caseID,
     	    			algos,
     	    			pred,
-    	    			hmType,
-    	    			result_analysis_exe_id);
+    	    			hmType);
 
 	    // BinaryHeatMapTask t =
     	    // 	new BinaryHeatMapTask(spgc,
 	    // 			      caseID,
 	    // 			      algos,
 	    // 			      pred,
-	    // 			      hmType,
-	    // 			      result_analysis_exe_id);
+	    // 			      hmType);
 	    
     	    tasks.add(t);
     	}

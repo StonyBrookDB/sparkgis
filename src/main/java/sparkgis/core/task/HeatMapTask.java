@@ -21,7 +21,6 @@ public class HeatMapTask extends Task implements Callable<String>{
     private final List<String> algos;
     private final Predicate predicate;
     private final HMType type;
-    private final String result_analysis_exe_id;
 
     private int algoCount;
     
@@ -29,15 +28,13 @@ public class HeatMapTask extends Task implements Callable<String>{
 		       String caseID,
 		       List<String> algos,
 		       Predicate predicate,
-		       HMType hmType,
-		       String result_analysis_exe_id){
+		       HMType hmType){
 	super(sgc, caseID);
 	
 	this.algos = algos;
 	this.predicate = predicate;
 	this.type = hmType;
 	algoCount = algos.size();
-	this.result_analysis_exe_id = result_analysis_exe_id;
     }
     
     /**
