@@ -30,8 +30,7 @@ public class HeatMap{
 				 List<String> algos,
 				 List<String> caseIDs,
 				 Predicate pred,
-				 HMType hmType,
-				 String result_analysis_exe_id){
+				 HMType hmType){
 	
 	String resultsDirPath = null;
 	/* create a thread pool for async jobs */
@@ -40,7 +39,6 @@ public class HeatMap{
 	
     	/* for a given algorithm pair create parallel heatmap generation tasks */
 	List<HeatMapTask> tasks = new ArrayList<HeatMapTask>();
-    	// List<BinaryHeatMapTask> tasks = new ArrayList<BinaryHeatMapTask>();
     	for (String caseID : caseIDs){
     	    HeatMapTask t =
     	    	new HeatMapTask(spgc,
@@ -48,7 +46,6 @@ public class HeatMap{
     	    			algos,
     	    			pred,
     	    			hmType,
-    	    			result_analysis_exe_id,
 				SpatialObject.class
 				//byte[].class
 				);

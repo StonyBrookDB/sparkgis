@@ -18,34 +18,31 @@ import sparkgis.pia.SparkSpatialJoinHM_Cogroup;
 public class HeatMapTask extends Task implements Callable<String>{
 
     private final String hdfsPrefix = "hdfs://"+SparkGISConfig.hdfsNameNodeIP;
-    
+
     private final List<String> algos;
     private final Predicate predicate;
     private final HMType type;
-    private final String result_analysis_exe_id;
 
     private final Class dataType;
-    
+
     private int algoCount;
 
-    
+
     public HeatMapTask(SparkGISContext sgc,
 		       String caseID,
 		       List<String> algos,
 		       Predicate predicate,
 		       HMType hmType,
-		       String result_analysis_exe_id,
 		       Class dataType){
 	super(sgc, caseID);
-	
+
 	this.algos = algos;
 	this.predicate = predicate;
 	this.type = hmType;
 	algoCount = algos.size();
-	this.result_analysis_exe_id = result_analysis_exe_id;
 	this.dataType = dataType;
     }
-    
+
     /**
      * Each HeatMapTask consists of 2 steps
      *   1. Generate configurations for algorithm pairs of input data (parallel)
@@ -56,9 +53,9 @@ public class HeatMapTask extends Task implements Callable<String>{
 	List<JavaRDD<TileStats>> results = new ArrayList<JavaRDD<TileStats>>();
 	final List<Integer> pairs = generatePairs(algoCount);
 	String caseID = "";
-	
+
 	if (dataType == SpatialObject.class){
-	    List<DataConfig<SpatialObject>> configs = 
+	    List<DataConfig<SpatialObject>> configs =
 		sgc.prepareData(this.generateDataPaths());
 	    for (int i=0; i<pairs.size(); i+=2){
 		/* Step-2: Generate heatmap from configurations */
@@ -73,7 +70,7 @@ public class HeatMapTask extends Task implements Callable<String>{
 	}
 	else if (dataType == byte[].class){
 	    /* Process Binary Data */
-	    List<DataConfig<byte[]>> configs = 
+	    List<DataConfig<byte[]>> configs =
 		sgc.prepareBinaryData(this.generateDataPaths());
 	    for (int i=0; i<pairs.size(); i+=2){
 		/* Step-2: Generate heatmap from configurations */
@@ -87,18 +84,18 @@ public class HeatMapTask extends Task implements Callable<String>{
 	    caseID = configs.get(0).getID();
 	}
 
-	
 
-	/* 
+
+	/*
 	 * heatmap stats generated for all algorithm pairs
-	 * parameters to upload results to mongoDB or HDFS 
+	 * parameters to upload results to mongoDB or HDFS
 	 */
 	final String resultsDir =
 	    hdfsPrefix +
 	    SparkGISConfig.hdfsHMResults +
 	    sgc.getJobConf().getJobID() + "/";
-	
-	
+
+
 	String orig_analysis_exe_id = algos.get(0);
 	String title = "Spark-" + type.strValue + "-";
 	for (String algo:algos)
@@ -126,7 +123,7 @@ public class HeatMapTask extends Task implements Callable<String>{
 	}
 	return dataPaths;
     }
-    
+
     /**
      * Stage-2: Generate heatmap from data configurations
      */
