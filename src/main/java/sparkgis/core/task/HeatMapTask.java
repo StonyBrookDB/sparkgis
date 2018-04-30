@@ -13,7 +13,7 @@ import sparkgis.enums.Predicate;
 import sparkgis.SparkGISConfig;
 import sparkgis.coordinator.SparkGISContext;
 import sparkgis.pia.SparkSpatialJoinHM_Cogroup;
-
+import sparkgis.pia.SparkSpatialKNNHM_Cogroup;
 public class HeatMapTask extends Task implements Callable<String>{
 
     private final String hdfsPrefix = "hdfs://"+SparkGISConfig.hdfsNameNodeIP;
@@ -101,8 +101,8 @@ public class HeatMapTask extends Task implements Callable<String>{
      * Stage-2: Generate heatmap from data configurations
      */
     private JavaRDD<TileStats> generateHeatMap(DataConfig config1, DataConfig config2){
-	SparkSpatialJoinHM_Cogroup heatmap1 =
-	    new SparkSpatialJoinHM_Cogroup(sgc.getJobConf(),
+	SparkSpatialKNNHM_Cogroup heatmap1 =
+	    new SparkSpatialKNNHM_Cogroup(sgc.getJobConf(),
 					   config1,
 					   config2,
 					   predicate,

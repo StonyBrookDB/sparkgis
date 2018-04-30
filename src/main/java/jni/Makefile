@@ -1,7 +1,7 @@
 
 UNAME		= $(shell uname)
 OPTFLAGS	= -O2 -Wno-write-strings -Wno-deprecated-declarations -Wall
-JNIINC		= -I${JAVA_HOME}/../include -I${JAVA_HOME}/../include/linux
+JNIINC		= -I${JAVA_HOME}/include -I${JAVA_HOME}/include/linux
 INCBASE		= -I. -I${SPGIS_INC_PATH}
 LIBBASE		= -L${SPGIS_LIB_PATH}  -lgeos -lspatialindex
 

@@ -39,6 +39,7 @@ public class SparkGISBMIHeatMap
      * -m Heatmap type [Dice] - Deafult
      * -p Partition-type [Jaccard]
      * -s Partition tile size
+     * -q Query type
      */
 
     public static void main(String[] args)
@@ -48,6 +49,7 @@ public class SparkGISBMIHeatMap
 	Predicate predicate = Predicate.INTERSECTS;
 	HMType hmType = HMType.JACCARD;
 	PartitionMethod partitionMethod = PartitionMethod.FIXED_GRID_HM;
+	//String query=null;
 	int partitionSize = 32;
 	/******************************************************/
 	final CommandLineParser parser = new BasicParser();
@@ -58,10 +60,13 @@ public class SparkGISBMIHeatMap
 	options.addOption("m", "metric", true, "Metric type [jaccard|dice|tile_dice] Default:jaccard");
 	options.addOption("p", "partitioner", true, "Distributed partitioner [fixed_grid|step] Default:fixed_grid");
 	options.addOption("s", "tilesize", true, "Partition tile size Default: 32 would create 1024 tiles");
-	HelpFormatter formatter = new HelpFormatter();
+	//options.addOption("q", "query",true,"Query type to be executed, default:join query");
+        HelpFormatter formatter = new HelpFormatter();
 
 	try{
 	    final CommandLine commandLine = parser.parse(options, args);
+	    
+          //  if(commandLine.hasOption('q'))
 
 	    /* Job ID */
 	    if (commandLine.hasOption('u')){

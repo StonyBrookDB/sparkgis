@@ -19,10 +19,15 @@
 #        * /heatmaps/data/algorithm-v2/c1234
 #        * /heatmaps/data/algorithm-v2/c6789
 
-ALGOS=yi-algorithm-v1,yi-algorithm-v11
-CASEIDS=TCGA-06-1802-01Z-00-DX1
+ALGOS=algo-v1,algo-v2
+CASEIDS=TCGA-02-0007-01Z-00-DX1
 METRIC=jaccard
 TILESIZE=64
+
+
+algos=' --algos "algo-v1,algo-v2"'
+caseIDs=' --caseids "TCGA-02-0007-01Z-00-DX1"'
+
 
 # run spark job
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd)"
