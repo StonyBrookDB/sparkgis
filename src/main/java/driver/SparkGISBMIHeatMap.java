@@ -46,7 +46,7 @@ public class SparkGISBMIHeatMap
     {
 	/* Set default values */
 	String jobID = null;
-	Predicate predicate = Predicate.INTERSECTS;
+	Predicate predicate = Predicate.NEAREST_2;
 	HMType hmType = HMType.JACCARD;
 	PartitionMethod partitionMethod = PartitionMethod.FIXED_GRID_HM;
 	//String query=null;
@@ -66,7 +66,9 @@ public class SparkGISBMIHeatMap
 	try{
 	    final CommandLine commandLine = parser.parse(options, args);
 	    
-          //  if(commandLine.hasOption('q'))
+          //  if(commandLine.hasOption('q')){
+	//	query=getOption('q',commandLine);
+	  //   }
 
 	    /* Job ID */
 	    if (commandLine.hasOption('u')){

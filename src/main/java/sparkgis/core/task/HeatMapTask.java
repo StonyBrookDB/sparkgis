@@ -14,6 +14,7 @@ import sparkgis.SparkGISConfig;
 import sparkgis.coordinator.SparkGISContext;
 import sparkgis.pia.SparkSpatialJoinHM_Cogroup;
 import sparkgis.pia.SparkSpatialKNNHM_Cogroup;
+import sparkgis.core.SparkSpatialKNN;
 public class HeatMapTask extends Task implements Callable<String>{
 
     private final String hdfsPrefix = "hdfs://"+SparkGISConfig.hdfsNameNodeIP;
@@ -44,7 +45,7 @@ public class HeatMapTask extends Task implements Callable<String>{
      */
     @Override
     public String call(){
-	List<JavaRDD<TileStats>> results = new ArrayList<JavaRDD<TileStats>>();
+	List<JavaRDD<Iterable<String>>> results = new ArrayList<JavaRDD<Iterable<String>>>();
 	
 	List<DataConfig> configs = sgc.prepareData(this.generateDataPaths());
 
@@ -77,7 +78,7 @@ public class HeatMapTask extends Task implements Callable<String>{
 	title = title.substring(0, title.length()-1);
 	String ret = "";
 
-	for (JavaRDD<TileStats> result:results){
+	for (JavaRDD<Iterable<String>> result:results){
 	    result.saveAsTextFile(resultsDir + super.data);
 	}
 	return resultsDir;
@@ -100,14 +101,20 @@ public class HeatMapTask extends Task implements Callable<String>{
     /**
      * Stage-2: Generate heatmap from data configurations
      */
-    private JavaRDD<TileStats> generateHeatMap(DataConfig config1, DataConfig config2){
-	SparkSpatialKNNHM_Cogroup heatmap1 =
-	    new SparkSpatialKNNHM_Cogroup(sgc.getJobConf(),
+    private JavaRDD<Iterable<String>> generateHeatMap(DataConfig config1, DataConfig config2){
+	//Query can be put here to run the function according to the input from the user.
+	//Query option is integrated in the SparkGISBMIHeatMap
+
+	//if(query=='knn')
+	SparkSpatialKNN heatmap1=new SparkSpatialKNN(sgc.getJobConf(),
 					   config1,
 					   config2,
-					   predicate,
-					   type
-					   );
+					   predicate);
+ 	System.out.println("Inside HeatMap Task");
 	return heatmap1.execute();
+	
+         //if(query=='join')
+	/*SparkSpatialJoinHM_Cogroup heatmap1 = new SparkSpatialJoinHM_Cogroup(sgc.getJobConf(), config1,config2,predicate,type);
+	return heatmap1.execute();*/
     }
 }

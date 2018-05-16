@@ -18,7 +18,7 @@ import sparkgis.coordinator.SparkGISJobConf;
 /**
  * Spark Spatial Join for HeatMap Generation
  */
-public class SparkSpatialKNNHM_Cogroup extends ASpatialKNN<TileStats> implements Serializable{
+public class SparkSpatialKNNHM_Cogroup extends ASpatialKNN<Iterable<String>> implements Serializable{
 
     private final HMType hmType;
     
@@ -32,17 +32,17 @@ public class SparkSpatialKNNHM_Cogroup extends ASpatialKNN<TileStats> implements
 	this.hmType = hmType; 
     }
     
-    public JavaRDD<TileStats> execute(){
+    public JavaRDD<Iterable<String>> execute(){
 
 	/* Spatial join results */
 	JavaRDD<Iterable<String>> results = (new SparkSpatialKNN(sgjConf, config1, config2, predicate)).execute();
 	/* Call function to calculate similarity coefficients per tile */
-	JavaRDD<TileStats> stats = Coefficient.execute(
+	/*JavaRDD<TileStats> stats = Coefficient.execute(
     				   results,
     				   partitionIDX,
     				   hmType
-    				   );
-    	return stats;
+    				   );*/
+    	return results;
 	
 	// /* Native C++: Resque */
 	// if (hmType == HMType.TILEDICE){
