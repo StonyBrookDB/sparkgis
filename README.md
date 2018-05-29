@@ -1,5 +1,7 @@
 # SparkGIS
 
+SparkGIS API documentation: http://bmidb.cs.stonybrook.edu/sparkgisdoc/ 
+
 ## Setup and Installation
 The following steps needs to be followed in order to compile and run SparkGIS from source
 ### Setting up depenedencies
