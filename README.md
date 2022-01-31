@@ -77,3 +77,7 @@ This should generate heatmap results in `hdfs://127.0.0.1:54310:/sparkgis/sample
   * Source code for SparkGIS
   * `src/main/java/sparkgis/*` contains all Java source code
   * `src/main/java/jni/*` contains JNI interface and native c/c++ code
+
+## References:
+
+Furqan Baig, Hoang Vo, Tahsin Kurc, Joel Saltz and Fusheng Wang: [SparkGIS: Resource Aware Efficient In-Memory Spatial Query Processing](https://dl.acm.org/doi/abs/10.1145/3139958.3140019). In Proceedings of SIGSPATIAL 2017. November 7 - 10, 2017, Redondo Beach, California, USA.
